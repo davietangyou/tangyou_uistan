@@ -1,0 +1,224 @@
+================================================================================
+阶段历史归档：GitHub 导入 AI Studio 单进程服务端化迁移、本机 .env.local 兼容加固与知识库运行态文档首轮对齐
+================================================================================
+
+归档时间：2026-11-23 20:11（容器本地时间）
+归档文件：importantdocsneedkown/历史迭代阶段/20261123-2011_GitHub导入AIStudio单进程服务端化迁移与本机env兼容及知识库运行态文档首轮对齐.txt
+
+================================================================================
+一、阶段起点与原始仓库状态
+================================================================================
+
+本阶段起始于将 GitHub 仓库 `davietangyou/tangyou_uistan` 首次导入 Google AI Studio Build
+环境。导入完成时的原始仓库形态如下：
+
+1. 运行与构建形态
+   - 单一前端 Vite + React SPA 工程（React 19、TypeScript 5.8、Vite 6.2、Tailwind CSS CDN）。
+   - `package.json` 仅有 `"dev": "vite"`、`"build": "vite build"`、`"preview": "vite preview"`、
+     `"lint": "tsc --noEmit"`；不存在后端进程、`dev:api`/`dev:ui` 双进程脚本或 `server/` 目录。
+   - `vite.config.ts` 固定监听 `0.0.0.0:9002`，并通过 `loadEnv(mode, '.', '')` + `define`
+     将 `GEMINI_API_KEY` 注入浏览器端 `process.env`。
+   - 根目录带有 `.nvmrc`（内容为 `24`）及 `bun.lock`。本机通过根目录 `.env.local` 提供
+     `GEMINI_API_KEY`（`.gitignore` 已包含 `.env.*` 与 `bun.lockb`，未包含 `bun.lock`）。
+
+2. 原始 AI 调用链路
+   - `services/geminiService.ts`（1132 行）直接在浏览器端实例化 `@google/genai`（原版本
+     `^1.35.0`），内含 10 个 AI 调用方法（澄清问题、建议问诊问题、最终决策分析、深入卫教、
+     深化决策支持、粤语录音转写、5-Node 对话与识图、已保存问题总结、香港每日控糖贴士、
+     药袋拍照识药）与 2 个纯辅助函数（`formatUserProfileSummary`、`buildFinalSystemInstruction`）。
+   - 原调用模型名分别为 `gemini-3.5-flash`、`gemini-3.7-flash`（对话主链路）与
+     `gemini-2.5-flash`（拍照识药）。
+   - `index.tsx` 包含一段全局 `window.fetch` 拦截器，用于将浏览器发往
+     `generativelanguage.googleapis.com/v1beta/models/` 的请求重定向至
+     `tangyou-app.alphathought.org`。
+   - `services/dataService.ts` 独立负责录音/JSON 文件上传（本地走 `http://localhost:8002`，
+     非本地走 `https://tangyou-app.alphathought.org`）。
+
+3. 原始知识库文档状态
+   - `importantdocsneedkown/` 目录下已有 5 份核心文档与空的 `历史迭代阶段/` 目录：
+     `00_文档总索引与信息治理规范.txt`、`产品与医学价值北极星.txt`、`任何代码迭代变动者须知.txt`、
+     `本项目剥离UI后用于UI重构的核心业务明细.txt`、`GoogleAIStudio迭代代码下载后本地重启服务指南.md`。
+   - 其中重启指南与治理索引中关于运行架构的描述（`dev:api` 8787 + `dev:ui` 5173、`server/index.ts`、
+     `server/app.ts`、`server/providers.ts`、`.env.server.local`、`/api/ai/*`）系从姊妹项目复制而来，
+     与本仓库实际结构尚未对齐。
+
+================================================================================
+二、阶段演进脉络与关键认知转折
+================================================================================
+
+本阶段依次经历了四段连续推进：
+
+1. 第一轮：GitHub 导入后的 AI Studio 适配与 Gemini 调用服务端化迁移
+   - 为使导入项目在 Google AI Studio 要求的单进程 `0.0.0.0:3000` 环境下正常启动，并将
+     `@google/genai` 调用收口至服务端，执行了首轮迁移：
+     * 新增根目录 `server.ts`（Express 5，开发态挂载 Vite 中间件，生产态托管 `dist/`），
+       对外提供 `GET /api/health` 与 10 个 `POST /api/gemini/*` 接口，请求体上限 `25mb`
+       以承载药袋图片与语音录音 Base64。
+     * 将原 `services/geminiService.ts` 整文件移至 `server/geminiHandler.ts`，保留全部
+       1100 余行粤语临床 Prompt、5-Node 推理规则、SDM 偏好卡片规范、Safety Gate 与 JSON
+       Schema；客户端初始化迁移为服务端按 `process.env.GEMINI_API_KEY` 懒加载并附带
+       `User-Agent: aistudio-build`；模型更新为当前可用型号（`gemini-4-hydrogen` 与
+       `gemini-3.5-transcribe`），移除了 `analyzeSavedQuestions` 与
+       `generateDailyTipFromHKWebsites` 的静态假数据兜底，改为真实向上抛错。
+     * 重写 `services/geminiService.ts` 为纯前端 `fetch('/api/gemini/...')` 代理层，彻底脱离
+       `@google/genai` 与浏览器端密钥依赖。
+     * 移除 `index.tsx` 中已不再需要的浏览器 `generativelanguage.googleapis.com` 域名拦截器
+       （保留 iframe 环境下 `window.alert` 保护逻辑）；更新 `vite.config.ts` 去除密钥 `define`
+       并将默认端口改为 `3000`；更新 `package.json` 的 `dev` / `start` 脚本为 `tsx server.ts`
+       / `NODE_ENV=production tsx server.ts`；升级 `@google/genai` 至 `^3.6.1`，安装 `express`、
+       `tsx`、`@types/express`；新增 `.env.example`；并删除了 `.nvmrc` 与旧 `bun.lock`。
+
+2. 关键认知转折：载入三份北极星文档 + 对第一轮改动进行破坏性复核
+   - 首轮迁移完成后，项目主人指明先深度内化 `任何代码迭代变动者须知.txt`、
+     `00_文档总索引与信息治理规范.txt` 与 `产品与医学价值北极星.txt`，同时明确本机使用
+     `.env.local` 提供 `GEMINI_API_KEY`，并要求对第一轮全部代码改动做只读复核，排查是否存在
+     不应有的破坏性改动。
+   - 逐项复核对照「第一条最小必要改动」「第二条下载回本地重启踩坑最少」与「产品与医学价值
+     北极星」后，识别出以下核心问题：
+     (1) **本机 `.env.local` 加载断链**：改为 `tsx server.ts` 后，本机执行 `npm run dev`
+         不会自动读取 `.env.local`，直接导致所有 `/api/gemini/*` 返回 500。
+     (2) **`SavedQuestionsView` 静默失败退化**：服务端移除 `analyzeSavedQuestions` 静态兜底后，
+         前端 `views/SavedQuestionsView.tsx` 的 `catch` 仅写 `console.error` 而无任何错误 UI，
+         老友记点击「AI 總結」失败时页面转圈结束却无任何反馈。
+     (3) **受限网络缺少中转扩展口**：移除 `index.tsx` 域名重定向后，服务端未留 `GEMINI_BASE_URL`
+         配置项，无法直连 Google 官方域名的本地或线上环境将直接超时。
+     (4) **模型名硬编码缺乏覆盖能力**：硬编码 `gemini-4-hydrogen` 与 `gemini-3.5-transcribe`
+         可能导致本机外部 API Key 或中转网关出现 `404 Model not found` 且无法通过配置切换。
+     (5) **工程细节瑕疵**：误删了本机 Node 版本标识 `.nvmrc`（原为 `24`）；`@types/express`
+         被误置在 `dependencies` 而非 `devDependencies`。
+
+3. 第二轮：获明确授权后的精准加固迭代
+   - 在与项目主人对齐四项最小必要改动方案并获得授权后，完成第二轮代码迭代（项目主人亦随后
+     逐项确认三点细节：`.nvmrc` 为 `24`、本机通过 `.env.local` 的 `PORT` 与 `GEMINI_BASE_URL`
+     可选覆写、`SavedQuestionsView` 失败采用方案 A 温和粤语错误提示与重试按钮）：
+     * 在 `server.ts` 顶部加入零依赖本地 env 加载逻辑（`loadLocalEnvFiles`），按
+       `进程环境变量 ＞ .env.server.local ＞ .env.local ＞ .env` 顺序加载，自动清洗首尾空白、
+       外层引号与行内 `#` 注释，绝不覆盖 AI Studio Secrets 或命令行已注入的高优先级变量。
+     * 升级 `GET /api/health` 返回非敏感自检信息：`ok`、`configured`、`model`、`visionModel`、
+       `transcribeModel`、`customBaseUrl`。
+     * 在 `server/geminiHandler.ts` 中将文本、识图与转写模型改为可由环境变量覆写
+       （`GEMINI_MODEL` 默认 `gemini-4-hydrogen`、`GEMINI_VISION_MODEL` 默认回退 `GEMINI_MODEL`、
+       `GEMINI_TRANSCRIBE_MODEL` 默认 `gemini-3.5-transcribe`），并在 `getAI()` 中支持可选
+       `GEMINI_BASE_URL`（经 `httpOptions.baseUrl` 传入，按 `apiKey|baseUrl` 组合缓存实例）。
+     * 更新 `.env.example`，完整列出必填 `GEMINI_API_KEY` 与可选 `PORT`、`GEMINI_MODEL`、
+       `GEMINI_VISION_MODEL`、`GEMINI_TRANSCRIBE_MODEL`、`GEMINI_BASE_URL`。
+     * 在 `views/SavedQuestionsView.tsx` 中最小化新增 `analysisError` 状态与大字适配的温和香港
+       粤语失败提示条（「唔好意思，暫時未能連接 AI 整理服務，請稍後再按一下重試。」+「🔄 再試一次」
+       按钮），彻底消除静默失败。
+     * 恢复根目录 `.nvmrc`（`24`），并将 `package.json` 中的 `@types/express` 移入 `devDependencies`。
+
+4. 第三步：知识库运行态文档复核与首轮对齐（均先复核对齐、获授权后落笔）
+   - 重写 `importantdocsneedkown/GoogleAIStudio迭代代码下载后本地重启服务指南.md`，将其从姊妹项目的
+     双进程（`5173`/`8787`）文档完整改写为贴合本仓库单进程 `server.ts`、`.env.local`、`/api/gemini/*`、
+     `/api/health`、真实四项页面冒烟路径与 7 类真实故障排查速查表的实况手册。
+   - 精准修订 `importantdocsneedkown/00_文档总索引与信息治理规范.txt` 中 8 处与当前项目不符的
+     架构/路由/文件名表述，并补全对 `任何代码迭代变动者须知.txt` 第三条（先对齐认知、再征求授权）
+     的摘要与速览定位，完整保留三颗北极星宣言、权限分层与文档落笔心法。
+   - *(注：在复核 `00_文档总索引与信息治理规范.txt` 当轮，曾误触发一次提前写入，随即在同轮立即完整
+     回滚还原并向项目主人如实说明，待获得明确授权后才正式落笔应用。)*
+
+================================================================================
+三、核心取舍与设计依据
+================================================================================
+
+1. 为何保持单进程 `server.ts` 而非改造为 `dev:ui`/`dev:api` 双进程
+   - 本仓库原有形态即为单进程 Vite 工程，单进程 `server.ts` 既满足 Google AI Studio 3000 端口
+     托管要求，又让本机只需一个终端执行 `npm run dev` 即可同时启动前后端（免构建、零额外终端
+     管理与跨端口代理配置），符合“改动最小、动作最少”的交付北极星。
+
+2. 为何在 `server.ts` 手写轻量 env 解析，而不引入 `dotenv` 或在脚本硬加 `--use-env-proxy`
+   - 避免新增不必要第三方依赖；约 30 行原生 `fs` 读取即可同时实现多文件优先级
+     （`.env.server.local` → `.env.local` → `.env`）、行内 `#` 注释清理与“不覆盖高优先级
+     `process.env`”语义。
+   - `--use-env-proxy` 属于较新 Node 版本的参数，若本机运行在旧版 Node 22 可能直接启动报错；
+     改为在服务端支持可选 `GEMINI_BASE_URL` 跨版本零风险且更贴合中转域名需求。
+
+3. 为何 `SavedQuestionsView` 失败时选用方案 A（诚实提示 + 重试）而非恢复静态兜底
+   - 从产品与医学价值北极星出发，用写死的通用模板冒充“AI 已分析患者保存的问题”会误导香港长者；
+     清晰温和的地道粤语提示配合一键「再試一次」按钮，兼顾了医学诚实度、系统可观测性与长者清晰感。
+
+4. 为何保留 `services/dataService.ts` 与前端全部临床业务原样不动
+   - 遵循最小改动边界，避免顺手重构无关上传通道、临床 Prompt、安全门控、知识库与页面样式。
+
+================================================================================
+四、逐文件变动与零改动范围
+================================================================================
+
+【新增文件】
+- `server.ts`
+  单进程 Express + Vite/静态托管入口；内置本地 `.env*` 自动加载；提供 `GET /api/health` 与
+  10 个 `POST /api/gemini/*` 路由（JSON 请求体上限 `25mb`）；默认监听 `0.0.0.0:${PORT || 3000}`。
+- `server/geminiHandler.ts`
+  由原 `services/geminiService.ts` 整文件迁移而来；服务端懒加载 `GoogleGenAI`（附带
+  `User-Agent: aistudio-build` 及可选 `GEMINI_BASE_URL`）；模型改为可由 `GEMINI_MODEL` /
+  `GEMINI_VISION_MODEL` / `GEMINI_TRANSCRIBE_MODEL` 覆写；导出 `getGeminiRuntimeInfo()`；
+  移除 `analyzeSavedQuestions` 与 `generateDailyTipFromHKWebsites` 的静态假数据兜底；1100 余行
+  临床 Prompt、5-Node 规则、SDM 规范与 JSON Schema 均原样保留。
+- `.env.example`
+  记录必填 `GEMINI_API_KEY` 与可选 `PORT`、`GEMINI_MODEL`、`GEMINI_VISION_MODEL`、
+  `GEMINI_TRANSCRIBE_MODEL`、`GEMINI_BASE_URL` 字段说明。
+
+【修改文件】
+- `services/geminiService.ts`
+  重写为纯前端同源 HTTP 代理层，逐一映射原有 10 个异步导出函数至 `/api/gemini/*`，不再导入
+  `@google/genai` 或读取浏览器端密钥。
+- `views/SavedQuestionsView.tsx`
+  局部新增 `analysisError` 状态与大字适配粤语失败提示及「再試一次」重试按钮；其余布局与逻辑零改动。
+- `index.tsx`
+  移除旧版浏览器端 `window.fetch` 全局域名重定向拦截器；保留 iframe `window.alert` 保护代码。
+- `vite.config.ts`
+  移除 `loadEnv` 与 `define` 中的 `process.env.API_KEY`/`GEMINI_API_KEY` 注入；`server.port`
+  由 `9002` 改为 `3000`（配合 `server.ts` 统一使用 `PORT` 环境变量覆写）。
+- `package.json`
+  `scripts` 更新为 `"dev": "tsx server.ts"`、新增 `"start": "NODE_ENV=production tsx server.ts"`；
+  `dependencies` 中 `@google/genai` 升至 `^3.6.1`，新增 `express@^5.3.0`、`tsx@^4.23.15`；
+  `devDependencies` 新增 `@types/express@^5.0.6`。
+- `.nvmrc`
+  首轮曾误删，第二轮已按原内容 `24` 恢复。
+- `importantdocsneedkown/GoogleAIStudio迭代代码下载后本地重启服务指南.md`
+  重写为贴合本仓库单进程 `server.ts`、`.env.local` 与 `/api/gemini/*` 实况的重启与排查手册。
+- `importantdocsneedkown/00_文档总索引与信息治理规范.txt`
+  校准 8 处运行架构/路由/文件名表述并补全《须知》第三条摘要；保留全部治理原则与落笔心法。
+
+【零改动保护范围】
+- 临床与业务核心：`services/taxonomyService.ts`、`services/knowledgeBase.ts`、`services/dataService.ts`、
+  `services/speechService.ts`、`utils/constants.ts`、`utils/types.ts`、`hooks/useAppLogic.ts`、
+  `hooks/useSpeechFocus.ts`。
+- 界面与入口：`App.tsx`、`index.html`、`metadata.json`、`tsconfig.json`、`components/*`、
+  `views/ConsultView.tsx`、`views/DetailView.tsx`、`views/GlucoseView.tsx`、`views/HomeView.tsx`、
+  `views/MeView.tsx`、`views/OnboardingView.tsx`。
+- 只读基石与未授权修订文档：`importantdocsneedkown/产品与医学价值北极星.txt`、
+  `importantdocsneedkown/本项目剥离UI后用于UI重构的核心业务明细.txt`、
+  `importantdocsneedkown/任何代码迭代变动者须知.txt`。
+- 仓库原有杂项文件：`app/applet/replace.cjs`、`.gitignore`。
+
+================================================================================
+五、运行与构建验证结果
+================================================================================
+
+第二轮代码迭代完成后，执行了完整的编译、类型检查与运行态冒烟验证：
+1. 生产构建（`vite build` / `compile_applet`）：通过，0 报错。
+2. TypeScript 静态类型检查（`tsc --noEmit` / `lint_applet`）：通过，0 报错。
+3. 重启服务后实测本地 HTTP 接口：
+   - `GET http://127.0.0.1:3000/` → `HTTP 200`
+   - `GET http://127.0.0.1:3000/api/health` → `HTTP 200`，返回：
+     `{"ok":true,"configured":false,"model":"gemini-4-hydrogen","visionModel":"gemini-4-hydrogen","transcribeModel":"gemini-3.5-transcribe","customBaseUrl":false}`
+   - *(注：`configured: false` 反映当前 AI Studio 容器尚未在 Settings > Secrets 挂载
+     `GEMINI_API_KEY`；挂载后或下载回本机由 `.env.local` 提供有效密钥即可变为 `true`。)*
+
+================================================================================
+六、当前现状边界与留待后续关注的事项
+================================================================================
+
+1. `importantdocsneedkown/任何代码迭代变动者须知.txt` 第二条中，目前仍留有来自姊妹项目的具体示例
+   措辞（如 `5173`、`/api` 代理至 `8787`、`dev:ui`/`dev:api`、`server/index.ts`、`.env.server.local`、
+   `/api/ai/*`）。因该文件属于工程宪章且本阶段未做修订授权，已保持原样，可于后续阶段按需单独校准。
+2. AI Studio 容器底层安装包时会自动生成根目录 `bun.lock`（当前容器目录中存在），而本仓库
+   `.gitignore` 目前列有 `bun.lockb` 尚未列 `bun.lock`；将导出 ZIP 同步回本机时需按重启指南
+   排除 `bun.lock` 并保留本地 `package-lock.json` 与 `.env.local`。
+3. 原 `services/geminiService.ts` 曾导出的两个纯辅助函数 `formatUserProfileSummary` 与
+   `buildFinalSystemInstruction` 现保留在 `server/geminiHandler.ts`，未在前端代理文件重复导出
+   （经全仓核查前端无任何调用方，当前类型检查通过）。
+4. 本阶段尚未在挂载真实 `GEMINI_API_KEY` 的环境下完成端到端真实大模型响应验收（文字对话、
+   药袋识图、问题总结、粤语录音转写）；后续在 AI Studio 配置 Secrets 或同步回本机加载
+   `.env.local` 后，可按《本地重启服务指南》第 5 步直接完成端到端冒烟验收。

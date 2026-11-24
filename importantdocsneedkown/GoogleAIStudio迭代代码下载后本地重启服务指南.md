@@ -1,65 +1,71 @@
-# Google AI Studio 迭代代码下载后本地重启 UI 与 API 服务指南
+# Google AI Studio 迭代代码下载后本地重启服务指南
 
 > **适用前提**
-> 1. 本地目标代码仓库此前已经成功启动过 UI（`dev:ui`）与 API（`dev:api`）服务，基础开发环境已就绪。
-> 2. 本文仅覆盖 **从 Google AI Studio 导出新代码并应用到本地仓库后，如何重新同步依赖、核对配置、重启本地 UI/API 服务并完成验证**；不包含本地基础环境搭建及 ZIP 解压/代码合并步骤。
+> 1. 本地目标代码仓库此前已经具备基础 Node.js / npm 运行环境并曾成功启动过本项目。
+> 2. 本文记录当前仓库的实际运行形态，覆盖**从 Google AI Studio 导出迭代代码并同步回本地仓库后，完成依赖同步、配置核对、服务重启与冒烟验收**的完整操作路径；不包含本地基础环境搭建及 ZIP 解压/手工合并细节。
 
 ---
 
-## 一、核心架构约定（先理解再操作，避免踩坑）
+## 一、当前项目运行架构与接口基线
 
-本项目支持两种运行方式，**日常本地调试与当前线上运行采用「双进程模式」**，无需执行 `npm run build`：
+本项目采用**单进程前后端融合架构**，由根目录的 `server.ts`（Express）统一承接前端页面与后端 AI 接口；开发模式下直接挂载 Vite 中间件，无需预先构建。
 
-| 运行方式 | 启动脚本 | 监听端口 | 适用场景 |
-| --- | --- | --- | --- |
-| **双进程模式（日常本地与当前线上）** | 终端 1：`npm run dev:api`<br>终端 2：`npm run dev:ui` | API：`127.0.0.1:8787`<br>UI：`127.0.0.1:5173`（`/api` 自动代理至 `8787`） | 日常本地调试、迭代验收与当前线上运行（**无需 `build`**） |
-| **单进程融合模式（Google AI Studio 专用）** | `npm run dev` / `npm start`（入口为根目录 `server.ts`） | `0.0.0.0:3000` | Google AI Studio 预览环境或单进程容器托管，本地双进程模式下**无需运行** |
+| 运行方式 | 启动脚本 | 入口与行为 | 默认监听地址 | 适用场景 |
+| --- | --- | --- | --- | --- |
+| **开发模式（日常本地 & AI Studio）** | `npm run dev` | `tsx server.ts`（挂载 Vite 中间件，免 `build`） | `0.0.0.0:3000`（可通过 `PORT` 覆盖） | 日常本地调试、迭代验收与 Google AI Studio 预览环境 |
+| **生产托管模式** | `npm run build` 后执行 `npm start` | `NODE_ENV=production tsx server.ts`（托管 `dist/` 静态产物与 `/api/*`） | `0.0.0.0:3000`（可通过 `PORT` 覆盖） | 单进程生产发布或构建产物回归验证 |
 
-### 需知悉的代码与接口基线（信息自洽清单）
-- **所有 AI 请求已统一收口至 API 端**：包括对话（`/api/ai/chat`、`/api/ai/chat/photo`）、问诊问题整理（`/api/ai/questions/organize`）、三类拍照识别（`/api/ai/medications/recognize`、`/api/ai/glucose/recognize`、`/api/ai/hba1c/recognize`），以及新增的语音录音兜底转写（`/api/ai/transcribe`）。前端不再直接持有密钥或直连 Google Gemini，旧版 `index.tsx` 中的浏览器 `fetch` 重定向拦截器已移除。
-- **Vite 代理与端口配置保持原貌**：`vite.config.ts` 固定监听 `127.0.0.1:5173`（`strictPort: true`），并将所有 `/api` 请求转发至 `http://127.0.0.1:8787`（可通过 `BACKEND_PORT` 或 `AI_PORT` 覆盖）。
-- **API 环境变量文件约定**：`npm run dev:api` 执行的是：
-  ```bash
-  node --use-env-proxy --env-file-if-exists=.env.server.local --import tsx server/index.ts
-  ```
-  它**只自动加载根目录下的 `.env.server.local`**（不会自动读取 `.env`）。仓库中新增的 `.env.example` 仅作配置字段参考模板，不包含真实密钥。
-- **依赖锁文件差异（`bun.lock` 与 `package-lock.json`）**：Google AI Studio 容器底层使用 Bun 管理依赖，因此导出的 ZIP 包中带有 `bun.lock` 而没有 `package-lock.json`。本地与当前线上统一使用 `npm`，日常只需维护本地仓库原有的 `package-lock.json` 这一份锁文件，不需要将 `bun.lock` 纳入 Git 提交（可在本地 `.gitignore` 中添加 `bun.lock`）。
+### 当前代码与运行态基线（信息自洽清单）
 
----
-
-## 二、标准操作流程（每次应用新代码后执行）
-
-### 第 1 步：从 Google AI Studio 获取最新代码
-1. 在 Google AI Studio 当前项目页面右上角点击 **Download / 导出代码**，将最新迭代代码下载到本地。
-2. 将新代码应用到本机目标仓库时，注意区分“本地保留项”与“导出包排除项”：
-   - **本地保留（避免被覆盖或误删）**：`.git`、`.idea`、`node_modules`、`.env.server.local`、`.gitignore`、`.nvmrc`、**`package-lock.json`**；
-   - **导出包排除（无需带入本地仓库）**：**`bun.lock`**；
-   - **按需对照**：`.env.example` 为非敏感配置字段模板，如希望同步 AI Studio 侧新增的环境变量说明，可放行更新或与本地版本做一次对照。
-   - *同步小贴士*：
-     * 解压新 ZIP 前先清空上一次的临时解压目录，避免旧 ZIP 中已删除的文件残留；
-     * 若采用 `rsync -avm --delete` 做镜像同步，使用 `--exclude` 列出上述保留项及 `bun.lock` 即可（被 `--exclude` 匹配的路径既不会从源目录拷入，也不会在目标目录被 `--delete` 删除），无需将 `.git`、`node_modules` 等目录临时移出再移回，可避免中断后隐藏文件残留或目录嵌套；
-     * 若目标仓库之前曾同步入 `bun.lock`，手动删除一次后，后续靠 `--exclude='bun.lock'` 与 `.gitignore` 即可保持干净。
+- **所有 Gemini AI 请求均收口于后端 API 端**：前端通过 `services/geminiService.ts` 调用同源 `/api/gemini/*` 路由，不再在浏览器端持有密钥、导入 `@google/genai` 或使用旧版 `index.tsx` 的全局 `window.fetch` 域名重定向拦截器。后端具体接口位于 `server.ts` 与 `server/geminiHandler.ts`：
+  - 健康与配置自检：`GET /api/health`
+  - 决策咨询与对话：`POST /api/gemini/chat`（支持文字与图片附件）、`POST /api/gemini/clarification-questions`、`POST /api/gemini/suggested-questions`、`POST /api/gemini/final-decision`、`POST /api/gemini/deeper-education`、`POST /api/gemini/deeper-choice`
+  - 语音与识图能力：`POST /api/gemini/transcribe-audio`、`POST /api/gemini/recognize-medications`
+  - 问题整理与贴士：`POST /api/gemini/analyze-saved-questions`、`POST /api/gemini/daily-tip`
+  - *(注：`services/dataService.ts` 中的外部文件上传逻辑保持原样，独立于上述 Gemini 后端路由。)*
+- **环境变量自动加载约定**：`server.ts` 启动时内置了零依赖的本地环境变量读取逻辑，按以下优先级生效，且**不会覆盖**已存在的进程环境变量：
+  1. 进程环境变量（Google AI Studio **Settings > Secrets** 或启动命令传入，如 `PORT=9002 npm run dev`）
+  2. `.env.server.local`
+  3. `.env.local`（本机日常推荐使用的配置文件）
+  4. `.env`
+  - 解析时自动清理首尾空白、外层引号与行内 `#` 注释；仓库根目录的 `.env.example` 仅作字段说明模板，不含真实密钥。
+- **端口策略**：默认监听 `0.0.0.0:3000`（兼容 Google AI Studio 容器约定）。若本地或线上习惯沿用原 `9002` 端口，可在 `.env.local` 中设置 `PORT=9002`（或启动时传入 `PORT=9002 npm run dev`），无需修改代码。
+- **依赖锁文件差异（`bun.lock` 与 `package-lock.json`）**：Google AI Studio 容器底层在安装依赖时会生成 `bun.lock`，导出包中通常带有 `bun.lock` 而无 `package-lock.json`。本地统一使用 `npm`，只需保留本地原有的 `package-lock.json`，并在同步时排除 `bun.lock`（也可在本地 `.gitignore` 中补充 `bun.lock`，当前 `.gitignore` 仅列有 `bun.lockb`）。
 
 ---
 
-### 第 2 步：停止正在运行的旧 UI 与 API 进程
-在原本运行 `dev:ui` 和 `dev:api` 的两个终端中分别按 `Ctrl + C` 彻底停止旧进程。
+## 二、标准同步与重启流程
 
-- **重启原因**：
-  - `dev:api` 直接由 `node --import tsx server/index.ts` 启动，不会自动热重载 `server/` 与 `shared/` 目录下的代码变动；
-  - `dev:ui` 在 `vite.config.ts` 中启用了 `strictPort: true`，若 `5173` 端口仍被旧进程占用，重新启动会直接报错退出。
+### 第 1 步：从 Google AI Studio 导出并安全同步代码
+
+1. 在 Google AI Studio 项目页面导出最新代码 ZIP 包并解压至干净的临时目录（解压前先清空上次临时目录，避免已删除的旧文件残留）。
+2. 将解压后的代码同步到本地仓库时，区分「本地保留项」与「导出包排除项」：
+   - **本地保留（避免覆盖或误删）**：`.git`、`.idea`、`node_modules`、**`.env.local`**（如有 `.env.server.local` 亦一并保留）、`.gitignore`、`.nvmrc`、**`package-lock.json`**；
+   - **导出包排除（不带入本地仓库）**：**`bun.lock`**；
+   - **按需对照**：`.env.example` 为非敏感配置字段参考，可同步更新或与本地版本做一次字段核对。
+   - *同步参考*：使用 `rsync -avm --delete` 镜像同步时，通过 `--exclude` 列出上述保留项与 `bun.lock` 即可，无需把 `.git` 或 `node_modules` 临时移出目录。
+
+---
+
+### 第 2 步：停止正在运行的旧服务进程
+
+在原有运行服务的终端中按 `Ctrl + C` 停止旧进程。
+
+- `server.ts` 与 `server/geminiHandler.ts` 由 `tsx server.ts` 直接运行，后端文件改动不会自动热重载，需要重启进程才会生效；
+- 若旧进程仍占用目标端口（`3000` 或自定义的 `9002`），新启动会报端口占用错误（`EADDRINUSE`）。
 
 ---
 
 ### 第 3 步：切换 Node 版本并同步依赖
-在项目根目录打开终端，切换到项目使用的 Node 版本（`engines.node` 要求 `>=22.0.0`，本机推荐使用 Node 24）：
+
+在项目根目录切换到 `.nvmrc` 约定的 Node 版本（当前 `.nvmrc` 为 `24`，同时兼容 Node 22+）：
 
 ```bash
 cd <项目根目录>
-nvm use 24
+nvm use
 ```
 
-若本次从 Google AI Studio 带回的代码更新了 `package.json`（例如 `@google/genai` 升级至 `^3.6.1`、`tsx` 移入 `dependencies` 等），执行一次依赖安装，npm 会基于保留的 `package-lock.json` 做增量更新，避免本地 `node_modules` 中的旧版 SDK 引起接口调用或启动异常：
+若本次迭代更新了 `package.json` 中的依赖（例如 `express`、`tsx`、`@google/genai` 版本变动），执行一次增量安装，让 npm 基于保留的 `package-lock.json` 同步 `node_modules`：
 
 ```bash
 npm install
@@ -67,95 +73,82 @@ npm install
 
 ---
 
-### 第 4 步：核对 API 端环境变量（`.env.server.local`）
-确认项目根目录下的 `.env.server.local` 仍存在且配置完整。使用 Gemini 时推荐配置如下（完整字段说明可对照 `.env.example`）：
+### 第 4 步：核对本地环境变量（`.env.local`）
+
+确认根目录下的 `.env.local` 存在且配置完整。完整可选字段可随时对照 `.env.example`：
 
 ```env
-AI_PROVIDER=gemini
+# 必填：Google Gemini API Key
 GEMINI_API_KEY=<你的有效 Gemini API Key>
-GEMINI_MODEL=gemini-4-hydrogen
-GEMINI_VISION_MODEL=gemini-4-hydrogen
-# 可选：用于不支持浏览器原生 SpeechRecognition 时的后端录音转写兜底（默认 gemini-3.5-transcribe）
+
+# 可选：服务监听端口（未填默认 3000；如需沿用原 9002 端口可取消注释）
+# PORT=9002
+
+# 可选：覆写默认模型名称（本机 Key 或中转网关不支持默认模型时使用）
+# GEMINI_MODEL=gemini-4-hydrogen
+# GEMINI_VISION_MODEL=gemini-4-hydrogen
 # GEMINI_TRANSCRIBE_MODEL=gemini-3.5-transcribe
-# 可选：若通过非 127.0.0.1/localhost 域名（如 https://tangyou-app.alphathought.org）访问，需填入完整 Origin，多个用逗号分隔
-# AI_ALLOWED_ORIGINS=https://tangyou-app.alphathought.org
+
+# 可选：本机或受限网络环境需经反代/中转访问 Gemini API 时填写
+# GEMINI_BASE_URL=https://tangyou-app.alphathought.org
 ```
 
-> **说明**：`server/providers.ts` 已内置对空白字符和行内 `#` 注释的自动清理逻辑（如 `GEMINI_MODEL=gemini-4-hydrogen # 备注` 可正常解析）；若未填写 `GEMINI_VISION_MODEL`，默认自动回退使用 `GEMINI_MODEL`。
+> 说明：若未设置 `GEMINI_VISION_MODEL`，默认自动回退使用 `GEMINI_MODEL`。
 
 ---
 
-### 第 5 步：先启动 API 服务并验证就绪（终端 1）
+### 第 5 步：启动服务并完成接口与页面冒烟自检
+
+在项目根目录的单个终端启动开发服务：
 
 ```bash
 cd <项目根目录>
-nvm use 24
-AI_LOG_LEVEL=debug AI_LOG_RAW=1 npm run dev:api 2>&1 | tee /tmp/diaguide-api.log
+nvm use
+npm run dev
 ```
 
-**启动成功标志**：终端应输出类似日志（重点确认 `gemini/<模型名>; configured`）：
-```text
-AI backend: http://127.0.0.1:8787 (gemini/gemini-4-hydrogen; configured)
-```
+*(如需验证生产构建与静态托管，可改为执行 `npm run build && npm start`。)*
 
-另开终端快速检查健康接口：
-```bash
-curl -sS http://127.0.0.1:8787/api/health
-```
-预期返回：
-```json
-{"configured":true,"provider":"gemini","model":"gemini-4-hydrogen"}
-```
-*(若 `configured` 为 `false`，说明 `.env.server.local` 未被正确读取或 `GEMINI_API_KEY` 为空。)*
-
----
-
-### 第 6 步：启动 UI 服务并验证前后端联动（终端 2）
-
-```bash
-cd <项目根目录>
-nvm use 24
-npm run dev:ui
-```
-
-1. **验证 Vite 代理链路**：
+1. **确认启动日志**：终端输出 `Server running on http://0.0.0.0:3000`（若在 `.env.local` 配置了 `PORT=9002`，则显示对应端口）。
+2. **核验健康与配置自检接口**（将端口号按实际 `PORT` 替换）：
    ```bash
-   curl -sS http://127.0.0.1:5173/api/health
+   curl -sS http://127.0.0.1:3000/api/health
    ```
-   预期返回与 `8787` 端口一致的 JSON（证明 `5173 -> 8787` 代理已打通）。
-2. **在浏览器打开应用**：
-   - 设计预览模式（带示例数据）：`http://127.0.0.1:5173/?preview=design`
-   - 常规本地模式：`http://127.0.0.1:5173/`
-   - 建议按 `Cmd + Shift + R`（Windows：`Ctrl + Shift + R`）强制刷新一次，避免加载到旧版静态缓存。
-3. **快速冒烟自检**：
-   - 打开「問問 AI」发送一条对话，确认能正常收到回复且 `/tmp/diaguide-api.log` 中出现 `ai.request.finish`（`status: 200`）；
-   - 如涉及拍照识别或语音输入改动，可顺带触发一次拍照上传或麦克风录音确认无报错。
+   预期返回示例：
+   ```json
+   {"ok":true,"configured":true,"model":"gemini-4-hydrogen","visionModel":"gemini-4-hydrogen","transcribeModel":"gemini-3.5-transcribe","customBaseUrl":false}
+   ```
+   *(重点确认 `"configured": true`、模型名以及是否启用 `customBaseUrl` 均与本地预期一致。)*
+3. **浏览器冒烟自检**：
+   - 打开 `http://127.0.0.1:3000/`（或自定义 `PORT`），建议按 `Cmd + Shift + R`（Windows：`Ctrl + Shift + R`）强制刷新一次；
+   - **「問問 AI」**：发送一条文字咨询（及可选图片附件），确认回复正常返回；
+   - **「個人檔案 → 拍照識藥」**：按需上传一张药袋/药盒照片，确认识药接口正常返回；
+   - **「問題紀錄 → AI 總結」**：点击触发 AI 总结，确认能正常整理分类与建议提問（异常时也会展示清晰粤语提示与「再試一次」按钮）；
+   - **「全局語音麥克風」**：聚焦输入框后录音测试，确认 `/api/gemini/transcribe-audio` 正常返回粤语转写结果。
 
 ---
 
-### 第 7 步：代码类型检查与格式化（可选，改动落库前推荐）
+### 第 6 步：代码类型检查与构建验证（可选，落库前推荐）
 
 ```bash
 cd <项目根目录>
-nvm use 24
+nvm use
 npm run lint
-npx tsc --noEmit
-npx prettier --write "**/*.{js,jsx,css,json}"
+npm run build
 ```
 
-*(注：`package.json` 中 `npm run lint` 的底层命令即为 `tsc --noEmit`，两者任选其一或按习惯依次执行均可，确保输出 0 报错。)*
+*(注：`npm run lint` 底层执行 `tsc --noEmit`，确认类型检查与 Vite 生产构建均为 0 报错。)*
 
 ---
 
 ## 三、常见问题排查速查表
 
-| 现象 / 报错 | 常见原因 | 解决方法 |
+| 现象 / 报错 | 常见原因 | 处理方式 |
 | --- | --- | --- |
-| `npm run dev:ui` 报错 `Port 5173 is already in use` | 上一次的 `dev:ui` 进程未退出，且 `vite.config.ts` 开启了 `strictPort: true` | 结束占用 5173 的旧终端或执行 `lsof -ti:5173 \| xargs kill -9` 后重启 |
-| `npm run dev:api` 报错 `AI backend could not start; check AI_PORT.` | 8787 端口被旧的 API 进程占用 | 结束旧的 `dev:api` 进程或执行 `lsof -ti:8787 \| xargs kill -9` 后重启 |
-| `/api/health` 返回 `"configured": false` | 密钥写在了 `.env` 而非 `.env.server.local`，或变量名拼写有误 | `dev:api` 只读取 `.env.server.local`，将密钥配置写入 `.env.server.local` 后重启 `dev:api` |
-| 前端报 `暫時未能連接 AI 服務` | `dev:api` 未启动，或 `dev:api` 监听端口与 Vite 代理端口不一致 | 先确认终端 1 的 `dev:api` 正常运行在 `8787`，并核对 `curl http://127.0.0.1:5173/api/health` |
-| AI 接口报 `403 不接受此來源的請求` | 通过自定义域名访问本地服务，但该域名未加入白名单 | 在 `.env.server.local` 中配置 `AI_ALLOWED_ORIGINS=https://<你的访问域名>` 并重启 `dev:api` |
-| AI 请求报模型不可用 / SDK 异常 | 同步了新代码但未更新本地依赖（本地仍为旧版 `@google/genai`） | 在项目根目录执行 `npm install` 后重启 `dev:api` |
-| 看到根目录多出 `server.ts` 不确定该跑哪个 | `server.ts` 是为 Google AI Studio 3000 端口单进程环境新增的入口 | 本地与当前线上继续使用 `npm run dev:api` + `npm run dev:ui`，无需运行 `server.ts` |
-| 同步后发现 `package-lock.json` 被删，或仓库多出 `bun.lock` | AI Studio 底层使用 Bun，导出包携带 `bun.lock` 且不含 `package-lock.json`，同步时未排除两者 | 从 Git 恢复本地 `package-lock.json`，删除 `bun.lock` 并在 `.gitignore` 与同步排除项中加入 `bun.lock`，再执行 `npm install` 增量更新锁文件 |
+| 启动报 `EADDRINUSE: address already in use` | 上一次的服务进程尚未退出，端口（`3000` 或自定义的 `9002`）仍被占用 | 结束旧终端，或执行 `lsof -ti:3000 \| xargs kill -9`（按实际端口替换）后重启 |
+| `/api/health` 返回 `"configured": false` | `.env.local` 在同步时被覆盖/丢失，或 `GEMINI_API_KEY` 为空/拼写有误 | 检查根目录 `.env.local` 内容后重启 `npm run dev` |
+| 调用 AI 报 `404` / `Model not found` | 当前本地 API Key 或外部中转网关不支持默认模型名（`gemini-4-hydrogen` / `gemini-3.5-transcribe`） | 在 `.env.local` 中配置该渠道可用的 `GEMINI_MODEL`、`GEMINI_VISION_MODEL`、`GEMINI_TRANSCRIBE_MODEL` 后重启 |
+| 本地调用 AI 长时间超时或连接失败 | 本机处于无法直连 `generativelanguage.googleapis.com` 的网络环境（旧版前端域名拦截器已移除） | 在 `.env.local` 中配置 `GEMINI_BASE_URL=https://<中转域名>`，或确保本机网络/代理可访问目标地址后重启 |
+| 启动报找不到 `express` / `tsx` 或 `@google/genai` 异常 | 同步新代码后尚未更新本地 `node_modules` | 在项目根目录执行 `npm install` 后重启服务 |
+| 同步后出现 `bun.lock` 或 `package-lock.json` 变动 | AI Studio 容器导出包携带 `bun.lock` 且不含 `package-lock.json` | 从 Git 恢复本地 `package-lock.json`，删除 `bun.lock` 并在 `.gitignore` 及同步排除列表加入 `bun.lock`，再执行 `npm install` |
+| 页面能打开但所有 `/api/gemini/*` 返回 `404` | 直接运行了 `npx vite`，未通过包含后端路由的 `server.ts` 启动 | 停止 `vite` 进程，统一使用 `npm run dev` 启动前后端融合服务 |

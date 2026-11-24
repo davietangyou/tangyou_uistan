@@ -48,6 +48,7 @@ export const SavedQuestionsView: React.FC<SavedQuestionsViewProps> = ({
 
     // AI 總結狀態
     const [analysisLoading, setAnalysisLoading] = useState(false);
+    const [analysisError, setAnalysisError] = useState<string | null>(null);
     const [analysisResult, setAnalysisResult] = useState<{
         summary: string;
         categories?: {
@@ -72,11 +73,13 @@ export const SavedQuestionsView: React.FC<SavedQuestionsViewProps> = ({
     const handleRefreshAnalysis = async () => {
         if (savedQuestions.length === 0 || analysisLoading) return;
         setAnalysisLoading(true);
+        setAnalysisError(null);
         try {
             const res = await analyzeSavedQuestions(savedQuestions);
             setAnalysisResult(res);
         } catch (e) {
             console.error("AI 總結載入失敗", e);
+            setAnalysisError("唔好意思，暫時未能連接 AI 整理服務，請稍後再按一下重試。");
         } finally {
             setAnalysisLoading(false);
         }
@@ -236,6 +239,24 @@ export const SavedQuestionsView: React.FC<SavedQuestionsViewProps> = ({
                                 <p className={`text-slate-600 font-black ${isLargeFont ? 'text-base' : 'text-xs sm:text-sm'}`}>
                                     AI 正在為您智慧歸納常問類別與就診建議，請稍候...
                                 </p>
+                            </div>
+                        )}
+
+                        {analysisError && !analysisLoading && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="flex items-start gap-2.5">
+                                    <span className="text-xl shrink-0">⚠️</span>
+                                    <p className={`text-amber-900 font-bold leading-relaxed ${isLargeFont ? 'text-base' : 'text-xs sm:text-sm'}`}>
+                                        {analysisError}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleRefreshAnalysis}
+                                    className="shrink-0 bg-[#4A6E85] hover:bg-[#3d5b6e] text-white font-black px-4 py-2 rounded-xl shadow-xs cursor-pointer active:scale-95 transition-all text-xs sm:text-sm"
+                                >
+                                    🔄 再試一次
+                                </button>
                             </div>
                         )}
 

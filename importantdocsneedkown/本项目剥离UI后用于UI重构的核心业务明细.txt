@@ -2192,7 +2192,7 @@ AI返回的 optionComparison 中 pros 和 cons 字段是以换行符(`\n`)分隔
 
 ## 应用元数据
 
-- 应用名称：tangde01
+- 应用名称：tangyou_uistan
 - 请求的设备权限：麦克风(microphone)、摄像头(camera)
 - 运行端口：9002
 [[/技术环境信息]]

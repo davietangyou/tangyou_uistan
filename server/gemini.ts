@@ -30,6 +30,69 @@ const EXERCISE_INTENSITY_LABEL_MAP: Record<string, string> = {
     VIGOROUS: '劇烈強度（明顯氣喘）'
 };
 
+function cleanEnvValue(raw?: string): string {
+    if (!raw) return "";
+    const trimmed = raw.trim();
+    const commentIdx = trimmed.indexOf(" #");
+    return (commentIdx >= 0 ? trimmed.slice(0, commentIdx) : trimmed).trim();
+}
+
+function getTextModel(): string {
+    return cleanEnvValue(process.env.GEMINI_MODEL) || "gemini-4-hydrogen";
+}
+
+function getFastModel(): string {
+    return cleanEnvValue(process.env.GEMINI_FAST_MODEL) || "gemini-3.1-flash-lite";
+}
+
+function getVisionModel(): string {
+    return cleanEnvValue(process.env.GEMINI_VISION_MODEL) || getTextModel();
+}
+
+function getTranscribeModel(): string {
+    return cleanEnvValue(process.env.GEMINI_TRANSCRIBE_MODEL) || "gemini-3.5-transcribe";
+}
+
+function getBaseUrl(): string {
+    return cleanEnvValue(process.env.GEMINI_BASE_URL);
+}
+
+export function getGeminiRuntimeInfo() {
+    return {
+        configured: Boolean(cleanEnvValue(process.env.GEMINI_API_KEY)),
+        model: getTextModel(),
+        fastModel: getFastModel(),
+        visionModel: getVisionModel(),
+        transcribeModel: getTranscribeModel(),
+        hasCustomBaseUrl: Boolean(getBaseUrl()),
+    };
+}
+
+let cachedAi: GoogleGenAI | null = null;
+let cachedConfigKey: string | undefined;
+
+function getAiClient(): GoogleGenAI {
+    const apiKey = cleanEnvValue(process.env.GEMINI_API_KEY);
+    if (!apiKey) {
+        throw new Error("伺服器未配置 GEMINI_API_KEY，請檢查環境變數設定。");
+    }
+    const baseUrl = getBaseUrl();
+    const configKey = `${apiKey}|${baseUrl}`;
+    if (!cachedAi || cachedConfigKey !== configKey) {
+        cachedAi = new GoogleGenAI({
+            apiKey,
+            httpOptions: {
+                ...(baseUrl ? { baseUrl } : {}),
+                headers: {
+                    "User-Agent": "aistudio-build",
+                },
+            },
+        });
+        cachedConfigKey = configKey;
+    }
+    return cachedAi;
+}
+
 function buildProfileConstraints(profile?: Partial<UserProfile>): string[] {
     const safeProfile = profile || {};
     const constraints: string[] = [];
@@ -81,30 +144,6 @@ function buildProfileConstraints(profile?: Partial<UserProfile>): string[] {
     return constraints;
 }
 
-let cachedAi: GoogleGenAI | null = null;
-
-function getAiClient(): GoogleGenAI {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-        throw new Error("伺服器未配置 GEMINI_API_KEY，請檢查環境變數設定。");
-    }
-    if (!cachedAi) {
-        cachedAi = new GoogleGenAI({
-            apiKey,
-            httpOptions: {
-                headers: {
-                    "User-Agent": "aistudio-build",
-                },
-            },
-        });
-    }
-    return cachedAi;
-}
-
-const DEEP_TEXT_MODEL = "gemini-4-hydrogen";
-const FAST_TEXT_MODEL = "gemini-3.1-flash-lite";
-const TEXT_MODEL = DEEP_TEXT_MODEL;
-const TRANSCRIBE_MODEL = "gemini-3.5-transcribe";
 const PRIMARY_COOLDOWN_MS = 60_000;
 let primaryCooldownUntil = 0;
 
@@ -145,7 +184,7 @@ export function selectChatModelRoute(params: {
 
     if (hasImage) {
         return {
-            model: DEEP_TEXT_MODEL,
+            model: getVisionModel(),
             thinkingLevel: ThinkingLevel.LOW,
             tier: 'deep',
             reason: 'multimodal_image',
@@ -154,7 +193,7 @@ export function selectChatModelRoute(params: {
 
     if (isPreferenceResponse) {
         return {
-            model: DEEP_TEXT_MODEL,
+            model: getTextModel(),
             thinkingLevel: ThinkingLevel.LOW,
             tier: 'deep',
             reason: 'preference_decision_synthesis',
@@ -166,7 +205,7 @@ export function selectChatModelRoute(params: {
         MAJOR_DECISION_PATTERNS.some(kw => text.includes(kw))
     ) {
         return {
-            model: DEEP_TEXT_MODEL,
+            model: getTextModel(),
             thinkingLevel: ThinkingLevel.LOW,
             tier: 'deep',
             reason: 'major_decision_support',
@@ -180,7 +219,7 @@ export function selectChatModelRoute(params: {
             MAJOR_DECISION_PATTERNS.some(kw => lastTurn.content.toLowerCase().includes(kw)))
     ) {
         return {
-            model: DEEP_TEXT_MODEL,
+            model: getTextModel(),
             thinkingLevel: ThinkingLevel.LOW,
             tier: 'deep',
             reason: 'major_decision_followup',
@@ -188,7 +227,7 @@ export function selectChatModelRoute(params: {
     }
 
     return {
-        model: FAST_TEXT_MODEL,
+        model: getFastModel(),
         thinkingLevel: ThinkingLevel.MINIMAL,
         tier: 'fast',
         reason: 'everyday_education_fast_path',
@@ -231,25 +270,35 @@ async function generateContentWithRetry(
     params: Parameters<GoogleGenAI["models"]["generateContent"]>[0]
 ) {
     const ai = getAiClient();
+    const deepModel = getTextModel();
+    const fastModel = getFastModel();
+    const visionModel = getVisionModel();
+    const requestedModel = params.model;
+
     const useFastFallbackOnly =
-        params.model === DEEP_TEXT_MODEL && Date.now() < primaryCooldownUntil;
-    const modelsToTry =
-        params.model === DEEP_TEXT_MODEL
-            ? (useFastFallbackOnly ? [FAST_TEXT_MODEL] : [DEEP_TEXT_MODEL, FAST_TEXT_MODEL])
-            : params.model === FAST_TEXT_MODEL
-                ? [FAST_TEXT_MODEL, DEEP_TEXT_MODEL]
-                : [params.model];
+        requestedModel === deepModel && Date.now() < primaryCooldownUntil;
+
+    let modelsToTry: string[];
+    if (requestedModel === deepModel) {
+        modelsToTry = useFastFallbackOnly ? [fastModel] : [deepModel, fastModel];
+    } else if (requestedModel === fastModel) {
+        modelsToTry = [fastModel, deepModel];
+    } else if (requestedModel === visionModel && visionModel !== deepModel) {
+        modelsToTry = [visionModel, deepModel, fastModel];
+    } else {
+        modelsToTry = [requestedModel, deepModel, fastModel];
+    }
+    modelsToTry = Array.from(new Set(modelsToTry));
 
     let lastError: unknown;
     for (let idx = 0; idx < modelsToTry.length; idx++) {
         const modelName = modelsToTry[idx];
         const isLastModel = idx === modelsToTry.length - 1;
-        // Primary model fails over immediately on transient errors; fallback gets up to 2 attempts
         const maxAttempts = isLastModel ? 2 : 1;
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
                 let nextConfig = params.config;
-                if (modelName === DEEP_TEXT_MODEL) {
+                if (modelName === deepModel) {
                     const requestedLevel = params.config?.thinkingConfig?.thinkingLevel;
                     const safeDeepLevel =
                         !requestedLevel || requestedLevel === ThinkingLevel.MINIMAL
@@ -262,7 +311,7 @@ async function generateContentWithRetry(
                             thinkingLevel: safeDeepLevel,
                         },
                     };
-                } else if (modelName === FAST_TEXT_MODEL) {
+                } else if (modelName === fastModel) {
                     nextConfig = {
                         ...params.config,
                         thinkingConfig: params.config?.thinkingConfig ?? {
@@ -281,7 +330,7 @@ async function generateContentWithRetry(
                 if (!isTransientGeminiError(error)) {
                     throw error;
                 }
-                if (modelName === DEEP_TEXT_MODEL && isServiceUnavailableError(error)) {
+                if (modelName === deepModel && isServiceUnavailableError(error)) {
                     primaryCooldownUntil = Date.now() + PRIMARY_COOLDOWN_MS;
                 }
                 console.warn(
@@ -300,13 +349,18 @@ async function generateContentWithRetry(
     throw lastError;
 }
 
-export const MAX_HISTORY_ROUNDS = 8; // 保留最近 8 輪有效對話（最多 16 條訊息）
+export const MAX_HISTORY_ROUNDS = 8;
 const MAX_HISTORY_TURN_CHARS = 600;
+const MAX_PREFERENCE_TURN_CHARS = 2000;
 
 const ERROR_REPLY_PREFIXES = [
     "⚠️ 唔好意思，系統暫時未能完成回覆",
     "唔好意思，系統暫時未能完成回覆",
 ];
+
+function isPreferenceHistoryText(text: string): boolean {
+    return text.includes("我已選擇我的個人偏好") || text.includes("重視：【");
+}
 
 function isValidHistoryTurn(turn: ChatTurn | null | undefined): turn is ChatTurn {
     if (!turn || (turn.role !== 'user' && turn.role !== 'assistant')) return false;
@@ -342,10 +396,13 @@ export function trimConversationHistory(
         if (prev && prev.role === 'user' && rawTurn.role === 'user' && prev.content === cleanedContent) {
             continue;
         }
+        const limit = isPreferenceHistoryText(cleanedContent)
+            ? MAX_PREFERENCE_TURN_CHARS
+            : MAX_HISTORY_TURN_CHARS;
         validTurns.push({
             role: rawTurn.role,
-            content: cleanedContent.length > MAX_HISTORY_TURN_CHARS
-                ? `${cleanedContent.slice(0, MAX_HISTORY_TURN_CHARS)}…（早期內容已精簡）`
+            content: cleanedContent.length > limit
+                ? `${cleanedContent.slice(0, limit)}…（早期內容已精簡）`
                 : cleanedContent,
         });
     }
@@ -371,6 +428,14 @@ export function trimConversationHistory(
     }
 
     const windowTurns = selectedReversed.reverse();
+
+    const lastPreferenceTurn = [...validTurns]
+        .reverse()
+        .find(t => isPreferenceHistoryText(t.content));
+    if (lastPreferenceTurn && !windowTurns.some(t => isPreferenceHistoryText(t.content))) {
+        windowTurns.unshift(lastPreferenceTurn);
+    }
+
     while (windowTurns.length > 0 && windowTurns[0].role === 'assistant') {
         windowTurns.shift();
     }
@@ -495,7 +560,6 @@ export function formatUserProfileSummary(profileInput?: Partial<UserProfile>): s
 - 識字與溝通偏好: ${profile.literacyLevel || '一般'} (如為低識字，請使用更簡短、生活化、口語化且親切的語言)${constraintsBlock}`;
 }
 
-
 function parseRecordTimestamp(record: { timestamp?: number; date?: string }): number {
     if (typeof record.timestamp === "number" && !isNaN(record.timestamp) && record.timestamp > 0) {
         return record.timestamp;
@@ -580,7 +644,6 @@ export function formatGlucoseContext(records?: GlucoseRecord[], nowMs: number = 
         return `【資料充分性】：近 30 天僅有症狀／生活備註、無血糖數值（SYMPTOMS_ONLY，共 ${recent30.length} 筆）。\n⚠️ 約束：缺少實際指尖血糖數值，不可推斷血糖高低或是否達標。\n【近 30 天症狀與備註紀錄】：\n${recentDetails}`;
     }
 
-    // Distinct calendar days covered in 30d
     const dayKeys = new Set<string>();
     numeric30.forEach(item => {
         if (item.ts > 0) {
@@ -591,7 +654,6 @@ export function formatGlucoseContext(records?: GlucoseRecord[], nowMs: number = 
     });
     const distinctDays = Math.max(1, dayKeys.size);
 
-    // Group by timeType
     const fastingVals = numeric30.filter(i => i.record.timeType === '空腹').map(i => i.numValue);
     const preMealVals = numeric30.filter(i => i.record.timeType === '餐前').map(i => i.numValue);
     const postMealVals = numeric30.filter(i => i.record.timeType === '餐後2小時').map(i => i.numValue);
@@ -605,14 +667,12 @@ export function formatGlucoseContext(records?: GlucoseRecord[], nowMs: number = 
     const overallMin = Math.min(...allVals).toFixed(1);
     const overallMax = Math.max(...allVals).toFixed(1);
 
-    // Event counts
     const lowItems = numeric30.filter(i => i.numValue < 3.9);
     const severeLowCount = numeric30.filter(i => i.numValue < 3.0).length;
     const highItems = numeric30.filter(i => i.numValue > 10.0);
     const veryHighCount = numeric30.filter(i => i.numValue >= 13.9).length;
     const highFastingCount = fastingVals.filter(v => v > 7.0).length;
 
-    // Data sufficiency assessment
     const hasPreOrFasting = fastingVals.length > 0 || preMealVals.length > 0;
     const hasPostMeal = postMealVals.length > 0;
     let sufficiencyLine: string;
@@ -630,7 +690,6 @@ export function formatGlucoseContext(records?: GlucoseRecord[], nowMs: number = 
         sufficiencyLine = `【資料充分性】：充足（ADEQUATE — 近 30 天共 ${numeric30.length} 筆有效讀數，涵蓋 ${distinctDays} 天，包含空腹／餐前與餐後對照）。`;
     }
 
-    // Time-bucket summary lines
     const bucketLines = [
         summarizeGlucoseBucket('空腹', fastingVals),
         summarizeGlucoseBucket('餐前', preMealVals),
@@ -639,7 +698,6 @@ export function formatGlucoseContext(records?: GlucoseRecord[], nowMs: number = 
         summarizeGlucoseBucket('其他時段', otherVals),
     ].filter((s): s is string => Boolean(s));
 
-    // Risk event lines
     const riskParts: string[] = [
         `低血糖（<3.9 mmol/L）：${lowItems.length} 次${severeLowCount > 0 ? `（其中嚴重低血糖 <3.0 達 ${severeLowCount} 次）` : ''}`,
         `高血糖（>10.0 mmol/L）：${highItems.length} 次${veryHighCount > 0 ? `（其中明顯偏高 ≥13.9 達 ${veryHighCount} 次）` : ''}`,
@@ -648,7 +706,6 @@ export function formatGlucoseContext(records?: GlucoseRecord[], nowMs: number = 
         riskParts.push(`空腹偏高（>7.0 mmol/L）：${highFastingCount}/${fastingVals.length} 次`);
     }
 
-    // Symptom frequency across 30 days
     const symptomCounts = new Map<string, number>();
     recent30.forEach(item => {
         (item.record.symptoms || []).forEach(sym => {
@@ -663,7 +720,6 @@ export function formatGlucoseContext(records?: GlucoseRecord[], nowMs: number = 
             .join('、')
         : '';
 
-    // Blood pressure summary across 30 days
     const bpEntries = recent30
         .map(item => {
             const sys = parseFloat(item.record.bpSystolic || '');
@@ -680,7 +736,6 @@ export function formatGlucoseContext(records?: GlucoseRecord[], nowMs: number = 
         bpSummary = `近 30 天血壓紀錄 ${bpEntries.length} 次，最新 ${latestBp.sys}/${latestBp.dia} mmHg（${latestBp.date}${latestBp.pulse ? `，脈搏 ${latestBp.pulse}` : ''}）${elevatedBpCount > 0 ? `，其中偏高（≥140/90）${elevatedBpCount} 次` : ''}`;
     }
 
-    // Recent detailed entries (up to 6 most recent records within 30 days, retaining diet/exercise/mealTag/BP notes)
     const recentDetails = recent30
         .slice(0, 6)
         .map(item => `  - ${formatSingleGlucoseDetail(item.record, item.numValue)}`)
@@ -753,7 +808,7 @@ export function formatHbA1cContext(records?: HbA1cRecord[]): string {
 export async function transcribeAudioServer(base64Audio: string, mimeType: string): Promise<string> {
     const prompt = "你是一個語音輸入法助手。請將這段錄音準確地轉換為繁體中文（廣東話）。請只返回聽寫出的文字內容，不要包含任何額外的解釋、旁白或標點。";
     const response = await generateContentWithRetry({
-        model: TRANSCRIBE_MODEL,
+        model: getTranscribeModel(),
         contents: {
             parts: [
                 {
@@ -772,16 +827,22 @@ export async function transcribeAudioServer(base64Audio: string, mimeType: strin
 
 const CORE_CHAT_INSTRUCTION = `你是專業、溫暖、有同理心的香港長者糖尿病健康管理助手，以親切地道的香港廣東話口語（「老友記」、「篤手指」、「食嘢」）提供科學、實用、易明的控糖建議。
 
+【角色定位與臨床底線】
+你是醫療決策的協作者，非最後決策者；嚴格遵守「三不二要」：不改藥、不診斷、不保證；要同理、要依據。不可提供個人化診斷、不可建議自行更改醫生處方、不可保證治療效果。
+
 【長者閱讀與格式鐵律】
-1. 主回覆 reply 必須簡短（2-4 句），善用換行符（\n）分段，行首可加適量溫馨 emoji（如 🌟、💊、🩸），減輕閱讀負擔。
+1. 主回覆 reply 必須簡短（2-4 句），善用換行符（\\n）分段，行首可加適量溫馨 emoji（如 🌟、💊、🩸），減輕閱讀負擔。
 2. 開頭稱呼（如「陳伯，」、「老友記，」）後【禁止緊接換行】，第一句須直接接在稱呼後面。
-3. 嚴禁在任何欄位輸出任何 HTML 標籤（如 <br/>、<p>），只可用標準換行符（\n）。
+3. 嚴禁在任何欄位輸出任何 HTML 標籤（如 <br/>、<p>），只可用標準換行符（\\n）。
 4. 切勿把長篇解釋或覆診清單塞進 reply，請妥善分工放入 briefVersion 與 detailedVersion。
 
 【安全底線與數據誠實原則】
 1. 若用戶描述當下正發生急性低血糖（手震、冷汗、心悸、頭暈、意識模糊）、酮酸中毒／嚴重高血糖危象（極度口渴、嘔吐、果味呼吸）、嚴重足部感染或情緒／自傷危機，必須將 activeNode 設為 1、safetyModeTriggered 設為 true，並提醒立即求醫或尋求家人／熱線協助。
 2. 嚴格遵守患者檔案中的共病安全約束、日常飲食習慣與喜好食物，不可給出與其病況或生活脫節的通用模板。
 3. 涉及整體控糖成效或 HbA1c 時須準確引用實際紀錄與趨勢；若無紀錄或僅單次紀錄須誠實說明，不可猜測。涉及指尖血糖時須參考近 30 天時段統計與情境備註；若資料不足／過時，須誠實告知不可過度推論。
+
+【輸出結構與 4-Layer 對應】
+reply 承載 Layer 1 一句話重點／主體回應；briefVersion 承載 Layer 2 核心行動重點；detailedVersion.generalExplanation 承載 Layer 2/3 生活化解釋；detailedVersion.optionComparison 承載 Layer 3 方案取捨；detailedVersion.suggestedDiscussionPoints 承載 Layer 4 問診議題。
 
 【雙通道輸出分工（嚴禁重複）】
 - briefVersion.takeHomeMessages：需要具體行動時提供 2-3 條量化、立即可執行的重點（含具體份量／數值／時機，並用 **關鍵詞** 加粗）；若屬純名詞概念科普，給 1-2 條核心概念摘要或 []，絕不寫空泛套話。
@@ -836,15 +897,21 @@ const PDA_ORAL_MED_OPTIONS = `  * 「降糖藥物更換／加藥抉擇」標準�
     3. label: "給藥簡便性與依從性" | valueCategory: "Convenience" | description: "每日服藥次數與生活規律配合程度"
     4. label: "自費藥費負擔" | valueCategory: "Cost" | description: "長期用藥的醫療自費支出"`;
 
-function buildDecisionSdmBlock(message: string, trimmedHistory: TrimmedHistoryResult, isPreferenceResponse: boolean): string {
+function buildDecisionSdmBlock(
+    message: string,
+    trimmedHistory: TrimmedHistoryResult,
+    isPreferenceResponse: boolean,
+    hasPreferenceInHistory: boolean
+): string {
     const recentContext = `${message} ${trimmedHistory.turns.slice(-2).map(t => t.content).join(' ')}`.toLowerCase();
     const isCgm = /(cgm|連續血糖|動態血糖|感應器|無痛血糖)/.test(recentContext);
     const isInsulin = /(打針|胰島素|insulin|控糖針|排糖針|轉針|換針|注射)/.test(recentContext);
+    const wantsOral = /(換藥|加藥|停藥|減藥|口服藥|降糖藥)/.test(recentContext);
 
     const pdaTable = isCgm && !isInsulin
         ? PDA_CGM_OPTIONS
         : isInsulin && !isCgm
-            ? PDA_INSULIN_OPTIONS
+            ? (wantsOral ? `${PDA_INSULIN_OPTIONS}\n${PDA_ORAL_MED_OPTIONS}` : PDA_INSULIN_OPTIONS)
             : `${PDA_INSULIN_OPTIONS}\n${PDA_CGM_OPTIONS}\n${PDA_ORAL_MED_OPTIONS}`;
 
     if (isPreferenceResponse) {
@@ -854,6 +921,14 @@ function buildDecisionSdmBlock(message: string, trimmedHistory: TrimmedHistoryRe
 1. 將 activeNode 設為 5，preferenceQuestions 設為 []。
 2. 結合用戶所選偏好、HbA1c 趨勢、近 30 天血糖統計與個人檔案，在 detailedVersion.optionComparison 輸出 2 個核心方案的客觀平衡優缺點對照（option、pros、cons），供長者與醫生商討。
 3. 在 briefVersion.takeHomeMessages 給出 2-3 條針對其偏好的量化行動重點，在 detailedVersion.suggestedDiscussionPoints 提供 2-3 條覆診提問。`;
+    }
+
+    if (hasPreferenceInHistory) {
+        return `
+【共同決策 (SDM) — 已提交偏好】
+1. 使用者已於較早對話提交個人偏好。若本輪仍屬同一決策話題，請將 activeNode 設為 5，直接結合該偏好給出 Node 5 建議與 2 個核心方案 Pros/Cons，切勿重複詢問偏好。
+2. 若本輪是全新且無關的決策話題，才可重新判斷是否需要 Node 3 偏好探索。
+3. 不得捏造使用者未提交的偏好；只使用對話中明確出現的偏好內容。`;
     }
 
     return `
@@ -878,6 +953,7 @@ export interface BuildChatPromptsParams {
     isDecisionSensitive: boolean;
     isComparisonRequest?: boolean;
     isPreferenceResponse: boolean;
+    hasPreferenceInHistory: boolean;
     scenarios: ScenarioValue[];
 }
 
@@ -897,6 +973,7 @@ export function buildChatPrompts(params: BuildChatPromptsParams): {
         isDecisionSensitive,
         isComparisonRequest = false,
         isPreferenceResponse,
+        hasPreferenceInHistory,
         scenarios,
     } = params;
 
@@ -915,7 +992,7 @@ export function buildChatPrompts(params: BuildChatPromptsParams): {
         instructionParts.push(IMAGE_MULTIMODAL_BLOCK);
     }
     if (isDecisionSensitive) {
-        instructionParts.push(buildDecisionSdmBlock(message, trimmedHistory, isPreferenceResponse));
+        instructionParts.push(buildDecisionSdmBlock(message, trimmedHistory, isPreferenceResponse, hasPreferenceInHistory));
     } else if (isComparisonRequest) {
         instructionParts.push(KNOWLEDGE_COMPARISON_BLOCK);
     } else {
@@ -929,7 +1006,9 @@ export function buildChatPrompts(params: BuildChatPromptsParams): {
     const taskReminder = isDecisionSensitive
         ? (isPreferenceResponse
             ? '請依據長者剛提交的個人偏好與臨床檔案，直接進入 Node 5 輸出量身建議與 2 個方案的 Pros/Cons 對照 JSON。'
-            : '請按共同決策規則判斷：若未確認偏好則停駐 Node 3 返回標準 preferenceQuestions（且 briefVersion.takeHomeMessages 與 optionComparison 必須為 []）；若已有偏好則進入 Node 5 輸出利弊對照與建議 JSON。')
+            : hasPreferenceInHistory
+                ? '請留意使用者已於較早對話提交偏好：若本輪仍屬同一決策話題，直接 Node 5 結合偏好輸出；若屬全新決策話題，才可重新 Node 3。'
+                : '請按共同決策規則判斷：若未確認偏好則停駐 Node 3 返回標準 preferenceQuestions（且 briefVersion.takeHomeMessages 與 optionComparison 必須為 []）；若已有偏好則進入 Node 5 輸出利弊對照與建議 JSON。')
         : isComparisonRequest
             ? '用戶明確要求作對比整理，請直接以 Node 5 輸出 JSON：preferenceQuestions 設為 []，並務必在 detailedVersion.optionComparison 輸出 3-5 項清晰易明的客觀對比。'
             : '請依據上述檔案、數據與指引，直接以 Node 5 返回簡明親切的 JSON（preferenceQuestions 與 optionComparison 設為 []）。';
@@ -968,7 +1047,6 @@ export async function getConversationalChatResponseServer(
     imageAttachment?: { data: string; mimeType: string },
     hba1cRecords: HbA1cRecord[] = []
 ): Promise<any> {
-    // Node 1: Deterministic Safety Gate runs BEFORE any LLM call
     const safety = checkSafetyGate(message, profile);
     if (safety.triggered && safety.blockLLM) {
         return {
@@ -1005,7 +1083,9 @@ export async function getConversationalChatResponseServer(
         return entry ? `【${entry.title}】: ${entry.content}` : "";
     }).filter(t => t !== "").join('\n\n');
 
-    const trimmedHistory = trimConversationHistory(history, MAX_HISTORY_ROUNDS);
+    const fullHistory = Array.isArray(history) ? history : [];
+    const hasPreferenceInHistory = fullHistory.some(h => isPreferenceHistoryText(h.content || ''));
+    const trimmedHistory = trimConversationHistory(fullHistory, MAX_HISTORY_ROUNDS);
     const isPreferenceResponse = message.includes("我已選擇我的個人偏好") || message.includes("重視：【");
     const hasImage = Boolean(imageAttachment && imageAttachment.data);
     const modelRoute = selectChatModelRoute({
@@ -1039,6 +1119,7 @@ export async function getConversationalChatResponseServer(
         isDecisionSensitive,
         isComparisonRequest,
         isPreferenceResponse,
+        hasPreferenceInHistory,
         scenarios,
     });
 
@@ -1160,6 +1241,7 @@ export async function getConversationalChatResponseServer(
             category: 'high_risk_unwell',
             title: '安全提醒：請優先尋求醫護協助',
             message: '系統留意到您的情況可能需要即時醫護評估，請勿單靠 AI 回覆，安全第一。',
+            replyMessage: '⚠️ 系統留意到您的情況可能需要即時醫護評估，請先停下對話，通知身邊家人或照顧者，並儘快求醫；如情況危急請致電 999。',
             actionSteps: [
                 '先停下活動並通知身邊家人或照顧者留意您的身體狀況。',
                 '如感到明顯不適或徵狀加重，請儘快前往門診／急症室求醫，或自行致電 999。'
@@ -1171,9 +1253,13 @@ export async function getConversationalChatResponseServer(
     }
 
     const hardSafetyActive = Boolean(finalSafety.blockLLM || llmTriggeredSafety);
+    const resolvedReply = hardSafetyActive && finalSafety.replyMessage
+        ? finalSafety.replyMessage
+        : parsed.reply;
 
     return {
         ...parsed,
+        reply: resolvedReply,
         activeNode: hardSafetyActive ? 1 : resolvedActiveNode,
         safety: finalSafety,
         traceability: {
@@ -1237,7 +1323,7 @@ export async function analyzeSavedQuestionsServer(questions: string[]): Promise<
     `;
 
     const response = await generateContentWithRetry({
-        model: TEXT_MODEL,
+        model: getTextModel(),
         contents: prompt,
         config: {
             systemInstruction: "你是一位香港糖尿病就診溝通助理。你的任務是總結長者保存的問題，歸納出 3-5 個經常保存的類別問題，並根據重點精準給出 3-5 個建議就診提問句子。文字精簡、親切廣東話口語，不囉嗦。",
@@ -1308,7 +1394,7 @@ export async function generateDailyTipFromHKWebsitesServer(): Promise<{
 請嚴格以符合 Schema 的 JSON 格式返回。`;
 
     const response = await generateContentWithRetry({
-        model: TEXT_MODEL,
+        model: getTextModel(),
         contents: prompt,
         config: {
             systemInstruction: "你是一位精通香港長者健康衛教的糖尿病管理專家。你擅長用極其親切、充滿關懷的地道香港廣東話，為糖尿病長者提供易讀、易懂、實用的日常生活小建議。",
@@ -1359,7 +1445,7 @@ export async function recognizeMedicationsFromImageServer(
 請嚴格按照 JSON Schema 格式回傳。`;
 
     const response = await generateContentWithRetry({
-        model: TEXT_MODEL,
+        model: getVisionModel(),
         contents: [
             {
                 role: "user",

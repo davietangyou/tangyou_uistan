@@ -46,7 +46,7 @@ async function postGeminiApi<T>(endpoint: string, payload: Record<string, unknow
 }
 
 export async function transcribeAudio(base64Audio: string, mimeType: string): Promise<string> {
-    const data = await postGeminiApi<{ text: string }>("/api/gemini/transcribe", {
+    const data = await postGeminiApi<{ text: string }>("/api/gemini/transcribe-audio", {
         base64Audio,
         mimeType,
     });

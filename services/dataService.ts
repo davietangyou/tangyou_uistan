@@ -1,12 +1,78 @@
+/**
+ * /Users/davie/Desktop/EffLearn/tangyou_uistan/services/dataService.ts
+ *
+ * 数据服务层
+ * 负责处理所有与后端 API 的交互，包括文件上传。
+ * 同时包含纯数据转换辅助函数（如 Profile 自动写回）。
+ */
+
 import { UserProfile, DecisionResult } from "../utils/types";
+
+// === 环境判断逻辑 ===
+const isLocalEnv = () => {
+    if (typeof window === 'undefined') return false;
+    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+};
+
+// === API 配置 ===
+const PROD_HOST = 'https://tangyou-app.alphathought.org';
+const LOCAL_HOST = 'http://localhost:8002';
+// 保持原有的长路径结构
+const API_PATH = '/chtatain-datacent/client-api/tangserv/newyshwo/vidoquse';
+
+// 根据环境动态生成 Base URL
+const API_BASE = isLocalEnv()
+    ? `${LOCAL_HOST}${API_PATH}`
+    : `${PROD_HOST}${API_PATH}`;
+
+// 调试日志，方便确认当前连接的地址
+console.log(`[DataService] Current Environment: ${isLocalEnv() ? 'Local' : 'Production'}, API Base: ${API_BASE}`);
+
+const UPLOAD_URL = `${API_BASE}/fileupload`;
+const DOWNLOAD_BASE = `${API_BASE}/fileget`;
+
+// 统一的鉴权 Header
+const BASE_HEADERS = {
+    'fixed-pwd': '8875be1014764426',
+};
+
+/**
+ * 上传单个文件（录音或 JSON 数据）
+ *
+ * @param blob - 要上传的文件 Blob 对象
+ * @param filename - 文件名
+ * @returns Promise<string> - 返回文件的下载链接 (URL)
+ */
+export const uploadFile = async (blob: Blob, filename: string): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', blob, filename);
+
+    const res = await fetch(UPLOAD_URL, {
+        method: 'POST',
+        headers: {
+            ...BASE_HEADERS,
+            'check-same-md5': 'true'
+        },
+        body: formData
+    });
+
+    if (!res.ok) {
+        throw new Error(`Upload failed: ${res.statusText}`);
+    }
+
+    const json = await res.json();
+
+    // 构造并返回下载链接
+    return `${DOWNLOAD_BASE}/${json.alphathought_anon_id}/${json.filename}`;
+};
 
 /**
  * Split Write-back Logic (Corresponds to Flowchart Stage B)
+ * 将 AI 返回的 extractedProfileData 合并到用户 Profile 中。
  * - Auto-write: Explicit, low-risk fields.
- * - (Potential future) Flag for review: Speculative or risky data.
  */
 export function applyProfileUpdate(
-    currentProfile: UserProfile, 
+    currentProfile: UserProfile,
     extracted?: DecisionResult['extractedProfileData']
 ): UserProfile {
     if (!extracted) return currentProfile;
@@ -20,7 +86,7 @@ export function applyProfileUpdate(
             newProfile.expressedConcerns = [...concerns, extracted.statedConcern];
         }
     }
-    
+
     if (extracted.scenarioTheme) {
         const themes = newProfile.recentQuestionThemes || [];
         if (!themes.includes(extracted.scenarioTheme)) {
@@ -65,46 +131,4 @@ export function applyProfileUpdate(
     }
 
     return newProfile;
-}
-
-/**
- * Generic file upload mock (Corresponds to Data Reporting Path)
- */
-export async function uploadFile(blob: Blob | File, filename: string): Promise<string> {
-    // 模擬網絡延遲
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // 返回一個模擬的 URL
-    const mockId = Math.random().toString(36).substring(7);
-    return `https://mock-storage.example.com/uploads/${mockId}/${filename}`;
-}
-
-/**
- * Mock fetching admin JSON data
- */
-export async function fetchAdminJson(): Promise<Record<string, Record<string, any>>> {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return {
-        "report_1": {
-            id: "report_1",
-            date: "2024-05-20",
-            summary: "病人在飲食控制方面有明顯進步。",
-            details: "HbA1c 下降了 0.2%"
-        },
-        "report_2": {
-            id: "report_2",
-            date: "2024-05-15",
-            summary: "建議增加運動頻率。",
-            details: "平均每日步數小於 3000"
-        }
-    };
-}
-
-/**
- * Mock fetching a secure blob (e.g. for audio playback with auth)
- */
-export async function fetchSecureBlob(url: string): Promise<Blob> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    // 返回一個空的音頻 Blob 模擬
-    return new Blob([], { type: 'audio/webm' });
 }

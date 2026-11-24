@@ -150,7 +150,6 @@ function extractCriticalGlucoseFromText(text: string): { kind: 'low' | 'high'; v
             const afterChar = text.slice(fullIdx + match[0].length, fullIdx + match[0].length + 2);
             const beforeContext = text.slice(Math.max(0, fullIdx - 10), fullIdx + match[0].length).toLowerCase();
 
-            // Skip HbA1c percentage values (e.g., "糖化血色素 7.4%", "HbA1c 6.8")
             if (afterChar.includes('%') || /糖化|hba1c|a1c/.test(beforeContext)) {
                 continue;
             }
@@ -184,7 +183,7 @@ function isEducationalSafetyInquiry(text: string): boolean {
 
     const educationalPatterns = [
         '該如何緊急處理', '该如何紧急处理', '該如何處理', '该如何处理',
-        '點樣緊急處理', '點樣處理', '點處理', '應該點處理',
+        '點樣緊急處理', '點樣處理', '點處理', '點做', '點樣做', '應該點處理',
         '怎麼處理', '怎么处理', '如何處理', '如何处理', '如何緊急處理', '如何紧急处理',
         '什麼是', '甚麼是', '什么是', '係咩', '代表咩',
         '點樣預防', '如何預防', '如何预防', '有咩症狀', '有哪些症狀', '有哪些症状',
@@ -213,7 +212,6 @@ export function checkSafetyGate(query: string, profile?: Partial<UserProfile>): 
     const isEducational = isEducationalSafetyInquiry(text);
     const criticalGlucose = extractCriticalGlucoseFromText(text);
 
-    // 1. Mental health / self-harm crisis — ALWAYS hard-intercept for patient safety
     const mentalHealthKeywords = [
         '自殺', '自杀', '想死', '唔想做人', '不想做人', '死咗去', '傷害自己', '伤害自己',
         '輕生', '轻生', '生無可戀', '生无可恋', '厭世', '厌世', '絕望', '绝望',
@@ -246,7 +244,6 @@ export function checkSafetyGate(query: string, profile?: Partial<UserProfile>): 
         };
     }
 
-    // 2. Severe Hyperglycemia / DKA / HHS crisis
     const dkaKeywords = [
         '口渴難忍', '口渴难忍', '極度口渴', '极度口渴',
         '不停嘔吐', '不停呕吐', '嘔吐', '呕吐', '吐咗',
@@ -290,10 +287,9 @@ export function checkSafetyGate(query: string, profile?: Partial<UserProfile>): 
         };
     }
 
-    // 3. Acute Hypoglycemia (carefully avoid false positives on exercise sweat like "運動微出汗")
     const hypoSymptomKeywords = [
         '手震', '手抖', '冒冷汗', '出冷汗', '狂標汗', '大汗淋漓',
-        '心悸', '心慌', '頭暈', '头晕', '意識不清', '意识不清', '發軟', '发软'
+        '心悸', '心慌', '頭暈', '头晕', '昏', '意識不清', '意识不清', '發軟', '发软'
     ];
     const hasSweatWithHypoContext =
         (text.includes('冒汗') || (text.includes('出汗') && !/運動|运动|微出汗|無明顯出汗|無出汗|冇出汗/.test(text))) &&
@@ -331,7 +327,6 @@ export function checkSafetyGate(query: string, profile?: Partial<UserProfile>): 
         };
     }
 
-    // 4. Diabetic Foot Wound / Infection
     const footKeywords = [
         '傷口不癒合', '伤口不愈合', '唔埋口', '紅腫發熱', '红肿发热',
         '潰瘍', '溃疡', '腳趾變黑', '脚趾变黑', '腳發黑', '脚发黑',
@@ -365,7 +360,6 @@ export function checkSafetyGate(query: string, profile?: Partial<UserProfile>): 
         };
     }
 
-    // 5. High-Risk Profile Expressing Acute General Unwell State
     const hasHighRiskProfile = Boolean(
         safeProfile.isInsulinUser ||
         safeProfile.hasHypoUnawareness ||

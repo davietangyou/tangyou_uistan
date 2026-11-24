@@ -1,4 +1,4 @@
-import "dotenv/config";
+import fs from 'fs';
 import express, { type Request, type Response } from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -8,13 +8,57 @@ import {
     getConversationalChatResponseServer,
     recognizeMedicationsFromImageServer,
     transcribeAudioServer,
+    getGeminiRuntimeInfo,
 } from "./server/gemini.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/**
+ * Load local env files without overwriting already-present process.env values
+ * (so AI Studio Secrets and CLI env vars always take highest precedence).
+ */
+function loadLocalEnvFiles() {
+    const candidates = ['.env.server.local', '.env.local', '.env'];
+    for (const filename of candidates) {
+        const filePath = path.resolve(__dirname, filename);
+        if (!fs.existsSync(filePath)) continue;
+        try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            for (const rawLine of content.split(/\r?\n/)) {
+                const trimmed = rawLine.trim();
+                if (!trimmed || trimmed.startsWith('#')) continue;
+                const line = trimmed.startsWith('export ') ? trimmed.slice(7).trim() : trimmed;
+                const eqIdx = line.indexOf('=');
+                if (eqIdx <= 0) continue;
+                const key = line.slice(0, eqIdx).trim();
+                if (!key || (process.env[key] !== undefined && process.env[key] !== '')) continue;
+
+                let val = line.slice(eqIdx + 1).trim();
+                if (
+                    (val.startsWith('"') && val.endsWith('"') && val.length >= 2) ||
+                    (val.startsWith("'") && val.endsWith("'") && val.length >= 2)
+                ) {
+                    val = val.slice(1, -1);
+                } else {
+                    const hashIdx = val.indexOf(' #');
+                    if (hashIdx >= 0) {
+                        val = val.slice(0, hashIdx).trim();
+                    }
+                }
+                process.env[key] = val;
+            }
+        } catch (err) {
+            console.warn(`[env] Could not read ${filename}:`, err);
+        }
+    }
+}
+
+loadLocalEnvFiles();
+
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+const HOST = "0.0.0.0";
 
 app.use(express.json({ limit: "25mb" }));
 
@@ -58,7 +102,20 @@ function handleGeminiError(res: Response, error: unknown, context: string) {
     res.status(status).json({ error: friendlyMessage });
 }
 
-app.post("/api/gemini/transcribe", async (req: Request, res: Response) => {
+app.get("/api/health", (_req: Request, res: Response) => {
+    const info = getGeminiRuntimeInfo();
+    res.json({
+        ok: true,
+        configured: info.configured,
+        model: info.model,
+        fastModel: info.fastModel,
+        visionModel: info.visionModel,
+        transcribeModel: info.transcribeModel,
+        customBaseUrl: info.hasCustomBaseUrl,
+    });
+});
+
+app.post("/api/gemini/transcribe-audio", async (req: Request, res: Response) => {
     try {
         const { base64Audio, mimeType } = req.body ?? {};
         if (!base64Audio) {
@@ -138,16 +195,23 @@ async function startServer() {
         });
         app.use(vite.middlewares);
     } else {
-        const distPath = path.join(__dirname, "dist");
-        app.use(express.static(distPath));
-        app.use((_req, res) => {
-            res.sendFile(path.join(distPath, "index.html"));
+        const distDir = path.resolve(__dirname, "dist");
+        app.use(express.static(distDir));
+        app.use((req, res, next) => {
+            if (req.method === "GET" && !req.path.startsWith("/api/")) {
+                res.sendFile(path.join(distDir, "index.html"));
+                return;
+            }
+            next();
         });
     }
 
-    app.listen(PORT, "0.0.0.0", () => {
-        console.log(`Server running on http://localhost:${PORT}`);
+    app.listen(PORT, HOST, () => {
+        console.log(`Server running on http://${HOST}:${PORT}`);
     });
 }
 
-startServer();
+startServer().catch((err) => {
+    console.error("Failed to start server:", err);
+    process.exit(1);
+});

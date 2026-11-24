@@ -6,7 +6,6 @@ export enum View {
     Me = 'ME',
     Result = 'RESULT',
     Detail = 'DETAIL',
-    Admin = 'ADMIN',
     SavedQuestions = 'SAVED_QUESTIONS'
 }
 

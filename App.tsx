@@ -10,7 +10,6 @@ import {GlucoseView} from './views/GlucoseView';
 import {ConsultView} from './views/ConsultView';
 import {MeView} from './views/MeView';
 import {DetailView} from './views/DetailView';
-import {AdminView} from './views/AdminView';
 import {SavedQuestionsView} from './views/SavedQuestionsView';
 
 // === Components / 全局組件 ===
@@ -35,8 +34,6 @@ const App: React.FC = () => {
     const {
         view,
         setView,
-        showDetailTab,
-        showAdminTab,
         showFocusToast,
         isListening,
         isProcessing,
@@ -67,8 +64,6 @@ const App: React.FC = () => {
                 {view === View.SavedQuestions && <SavedQuestionsView {...logic} />}
 
                 {view === View.Detail && <DetailView {...logic} />}
-
-                {view === View.Admin && <AdminView {...logic} />}
             </div>
 
             {/* 3. 全局組件區域 */}
@@ -94,8 +89,6 @@ const App: React.FC = () => {
                 <Navigation
                     view={view}
                     setView={setView}
-                    showDetailTab={showDetailTab}
-                    showAdminTab={showAdminTab}
                 />
             )}
         </Layout>

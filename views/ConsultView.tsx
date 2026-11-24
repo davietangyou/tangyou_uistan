@@ -1,5 +1,5 @@
 /**
- * src/views/ConsultView.tsx
+ * /Users/davie/Desktop/EffLearn/tangyou_uistan/views/ConsultView.tsx
  */
 
 import React, {useState, useEffect, useRef} from 'react';
@@ -55,9 +55,24 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
     });
 
     // 當對話訊息更新時自動持久化保存
+    // 存入 localStorage 前剝離圖片 base64 和 previewUrl，防止 localStorage 溢出
     useEffect(() => {
         try {
-            localStorage.setItem('dia_chat_messages', JSON.stringify(chatMessages));
+            const messagesToStore = chatMessages.map(msg => {
+                if (msg.imageAttachment) {
+                    return {
+                        ...msg,
+                        imageAttachment: {
+                            mimeType: msg.imageAttachment.mimeType,
+                            base64: '',
+                            previewUrl: '',
+                            name: msg.imageAttachment.name
+                        }
+                    };
+                }
+                return msg;
+            });
+            localStorage.setItem('dia_chat_messages', JSON.stringify(messagesToStore));
         } catch (e) {
             console.error("儲存對話紀錄失敗", e);
         }
@@ -289,6 +304,18 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
             previousTurns.shift();
         }
 
+        const hasOlderPreference = chatMessages.some(m =>
+            !m.isWelcome &&
+            typeof m.content === 'string' &&
+            m.content.includes('我已選擇我的個人偏好')
+        );
+        if (hasOlderPreference && !previousTurns.some(t => t.content.includes('我已選擇我的個人偏好'))) {
+            previousTurns.unshift({
+                role: 'user',
+                content: '我已選擇我的個人偏好（系統提示：此偏好已於較早對話提交，請勿重複詢問）。'
+            });
+        }
+
         try {
             const res = await getConversationalChatResponse(
                 profile,
@@ -319,11 +346,10 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
             setChatMessages(prev => [...prev, aiMsg]);
         } catch (e) {
             console.error("Chat mode error:", e);
-            const detail = e instanceof Error && e.message ? `\n（${e.message}）` : "";
             setChatMessages(prev => [...prev, {
                 id: (Date.now() + 2).toString(),
                 role: 'assistant',
-                content: `⚠️ 唔好意思，系統暫時未能完成回覆，請稍等幾秒再試一次。${detail}`,
+                content: "⚠️ 唔好意思，系統暫時未能完成回覆，請稍等幾秒再試一次。",
                 isError: true
             }]);
         } finally {

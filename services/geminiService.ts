@@ -59,7 +59,8 @@ export async function getConversationalChatResponse(
     message: string,
     history: ChatTurn[] = [],
     imageAttachment?: { data: string; mimeType: string },
-    hba1cRecords: HbA1cRecord[] = []
+    hba1cRecords: HbA1cRecord[] = [],
+    preferenceAlreadySubmitted: boolean = false
 ): Promise<any> {
     return postGeminiApi<any>("/api/gemini/chat", {
         profile,
@@ -68,6 +69,7 @@ export async function getConversationalChatResponse(
         message,
         history,
         imageAttachment,
+        preferenceAlreadySubmitted,
     });
 }
 

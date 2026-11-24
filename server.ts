@@ -131,14 +131,23 @@ app.post("/api/gemini/transcribe-audio", async (req: Request, res: Response) => 
 
 app.post("/api/gemini/chat", async (req: Request, res: Response) => {
     try {
-        const { profile, glucoseRecords, hba1cRecords, message, history, imageAttachment } = req.body ?? {};
+        const {
+            profile,
+            glucoseRecords,
+            hba1cRecords,
+            message,
+            history,
+            imageAttachment,
+            preferenceAlreadySubmitted
+        } = req.body ?? {};
         const result = await getConversationalChatResponseServer(
             profile,
             glucoseRecords || [],
             message || "",
             history || [],
             imageAttachment,
-            hba1cRecords || []
+            hba1cRecords || [],
+            Boolean(preferenceAlreadySubmitted)
         );
         res.json(result);
     } catch (error) {

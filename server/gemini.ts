@@ -155,6 +155,10 @@ const MAJOR_DECISION_PATTERNS = [
     '利弊', '方案比較', '點揀好', '點決定', '加藥定打針', '換藥定打針', '篤手指定cgm'
 ];
 
+const PREFERENCE_CONTINUATION_PATTERNS = [
+    '點揀', '點選', '點算', '點做好', '點決定', '應該點', '咁我', '即係', '下一步'
+];
+
 const EXPLICIT_COMPARISON_PATTERNS = [
     '對比', '对比', '比較', '比较', '區別', '区别', '分別', '分别', '不同之處', '不同之处',
     '優缺點', '优缺点', '有邊幾種', '有哪幾種', '有哪几种', '各類', '各类', '常見藥物', '常见药物', '常用糖尿病藥', '常用糖尿病药'
@@ -176,10 +180,11 @@ export function selectChatModelRoute(params: {
     message: string;
     scenarios: ScenarioValue[];
     isPreferenceResponse: boolean;
+    preferenceContinuation?: boolean;
     hasImage: boolean;
     trimmedHistory: ChatTurn[];
 }): ChatModelRoute {
-    const { message, scenarios, isPreferenceResponse, hasImage, trimmedHistory } = params;
+    const { message, scenarios, isPreferenceResponse, preferenceContinuation, hasImage, trimmedHistory } = params;
     const text = (message || '').toLowerCase();
 
     if (hasImage) {
@@ -188,6 +193,15 @@ export function selectChatModelRoute(params: {
             thinkingLevel: ThinkingLevel.LOW,
             tier: 'deep',
             reason: 'multimodal_image',
+        };
+    }
+
+    if (preferenceContinuation) {
+        return {
+            model: getTextModel(),
+            thinkingLevel: ThinkingLevel.LOW,
+            tier: 'deep',
+            reason: 'preference_continuation',
         };
     }
 
@@ -267,26 +281,32 @@ function isServiceUnavailableError(error: unknown): boolean {
 }
 
 async function generateContentWithRetry(
-    params: Parameters<GoogleGenAI["models"]["generateContent"]>[0]
+    params: Parameters<GoogleGenAI["models"]["generateContent"]>[0],
+    options?: { allowFallback?: boolean }
 ) {
     const ai = getAiClient();
     const deepModel = getTextModel();
     const fastModel = getFastModel();
     const visionModel = getVisionModel();
     const requestedModel = params.model;
+    const allowFallback = options?.allowFallback ?? true;
 
     const useFastFallbackOnly =
         requestedModel === deepModel && Date.now() < primaryCooldownUntil;
 
     let modelsToTry: string[];
-    if (requestedModel === deepModel) {
+    if (!allowFallback) {
+        modelsToTry = [requestedModel];
+    } else if (requestedModel === deepModel) {
         modelsToTry = useFastFallbackOnly ? [fastModel] : [deepModel, fastModel];
     } else if (requestedModel === fastModel) {
         modelsToTry = [fastModel, deepModel];
-    } else if (requestedModel === visionModel && visionModel !== deepModel) {
-        modelsToTry = [visionModel, deepModel, fastModel];
+    } else if (requestedModel === visionModel && visionModel !== deepModel && visionModel !== fastModel) {
+        modelsToTry = [visionModel, deepModel];
+    } else if (requestedModel === visionModel) {
+        modelsToTry = [requestedModel];
     } else {
-        modelsToTry = [requestedModel, deepModel, fastModel];
+        modelsToTry = [requestedModel];
     }
     modelsToTry = Array.from(new Set(modelsToTry));
 
@@ -431,8 +451,8 @@ export function trimConversationHistory(
 
     const lastPreferenceTurn = [...validTurns]
         .reverse()
-        .find(t => isPreferenceHistoryText(t.content));
-    if (lastPreferenceTurn && !windowTurns.some(t => isPreferenceHistoryText(t.content))) {
+        .find(t => t.role === 'user' && isPreferenceHistoryText(t.content));
+    if (lastPreferenceTurn && !windowTurns.some(t => t.role === 'user' && isPreferenceHistoryText(t.content))) {
         windowTurns.unshift(lastPreferenceTurn);
     }
 
@@ -459,7 +479,7 @@ export function formatHistoryContext(trimmed: TrimmedHistoryResult): string {
     );
 
     if (trimmed.omittedMessages > 0) {
-        return `（系統僅保留最近 ${trimmed.keptRounds} 輪有效對話，更早的歷史對話已省略；請聚焦最新用戶訊息與近期脈絡，勿受早期無關話題干擾）\n${lines.join('\n')}`;
+        return `（系統僅保留最近 ${trimmed.keptRounds} 輪有效對話，以及最近一次已提交偏好（如有）；更早的歷史對話已省略。請聚焦最新用戶訊息與近期脈絡，勿受早期無關話題干擾）\n${lines.join('\n')}`;
     }
 
     return lines.join('\n');
@@ -820,7 +840,7 @@ export async function transcribeAudioServer(base64Audio: string, mimeType: strin
                 { text: prompt }
             ]
         }
-    });
+    }, { allowFallback: false });
 
     return response.text?.trim() || '';
 }
@@ -831,9 +851,9 @@ const CORE_CHAT_INSTRUCTION = `你是專業、溫暖、有同理心的香港長�
 你是醫療決策的協作者，非最後決策者；嚴格遵守「三不二要」：不改藥、不診斷、不保證；要同理、要依據。不可提供個人化診斷、不可建議自行更改醫生處方、不可保證治療效果。
 
 【長者閱讀與格式鐵律】
-1. 主回覆 reply 必須簡短（2-4 句），善用換行符（\\n）分段，行首可加適量溫馨 emoji（如 🌟、💊、🩸），減輕閱讀負擔。
+1. 主回覆 reply 必須簡短（2-4 句），善用換行符分段，行首可加適量溫馨 emoji（如 🌟、💊、🩸），減輕閱讀負擔。
 2. 開頭稱呼（如「陳伯，」、「老友記，」）後【禁止緊接換行】，第一句須直接接在稱呼後面。
-3. 嚴禁在任何欄位輸出任何 HTML 標籤（如 <br/>、<p>），只可用標準換行符（\\n）。
+3. 嚴禁在任何欄位輸出任何 HTML 標籤（如 <br/>、<p>），只可使用標準換行符。
 4. 切勿把長篇解釋或覆診清單塞進 reply，請妥善分工放入 briefVersion 與 detailedVersion。
 
 【安全底線與數據誠實原則】
@@ -1045,7 +1065,8 @@ export async function getConversationalChatResponseServer(
     message: string,
     history: ChatTurn[] = [],
     imageAttachment?: { data: string; mimeType: string },
-    hba1cRecords: HbA1cRecord[] = []
+    hba1cRecords: HbA1cRecord[] = [],
+    preferenceAlreadySubmitted: boolean = false
 ): Promise<any> {
     const safety = checkSafetyGate(message, profile);
     if (safety.triggered && safety.blockLLM) {
@@ -1084,25 +1105,36 @@ export async function getConversationalChatResponseServer(
     }).filter(t => t !== "").join('\n\n');
 
     const fullHistory = Array.isArray(history) ? history : [];
-    const hasPreferenceInHistory = fullHistory.some(h => isPreferenceHistoryText(h.content || ''));
+    const hasPreferenceInHistory =
+        Boolean(preferenceAlreadySubmitted) ||
+        fullHistory.some(h => h.role === 'user' && isPreferenceHistoryText(h.content || ''));
     const trimmedHistory = trimConversationHistory(fullHistory, MAX_HISTORY_ROUNDS);
     const isPreferenceResponse = message.includes("我已選擇我的個人偏好") || message.includes("重視：【");
     const hasImage = Boolean(imageAttachment && imageAttachment.data);
+    const messageText = (message || '').toLowerCase();
+    const hasDecisionContext =
+        scenarios.includes(Scenario.DECISION_SUPPORT_PREFERENCE) ||
+        MAJOR_DECISION_PATTERNS.some(kw => messageText.includes(kw)) ||
+        (hasPreferenceInHistory && PREFERENCE_CONTINUATION_PATTERNS.some(kw => messageText.includes(kw)));
+    const isPreferenceContinuation = hasPreferenceInHistory && hasDecisionContext && !isPreferenceResponse;
+
     const modelRoute = selectChatModelRoute({
         message,
         scenarios,
         isPreferenceResponse,
+        preferenceContinuation: isPreferenceContinuation,
         hasImage,
         trimmedHistory: trimmedHistory.turns,
     });
     const isDecisionSensitive =
+        isPreferenceContinuation ||
         modelRoute.reason === 'major_decision_support' ||
         modelRoute.reason === 'preference_decision_synthesis' ||
         modelRoute.reason === 'major_decision_followup' ||
         (hasImage && (
             scenarios.includes(Scenario.DECISION_SUPPORT_PREFERENCE) ||
             isPreferenceResponse ||
-            MAJOR_DECISION_PATTERNS.some(kw => (message || '').toLowerCase().includes(kw))
+            MAJOR_DECISION_PATTERNS.some(kw => messageText.includes(kw))
         ));
 
     const isComparisonRequest = !isDecisionSensitive && isExplicitComparisonQuery(message);

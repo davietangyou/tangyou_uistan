@@ -181,9 +181,14 @@ function isEducationalSafetyInquiry(text: string): boolean {
         return false;
     }
 
+    const hypotheticalMarkers = ['如果', '假如', '一旦', '萬一'];
+    if (hypotheticalMarkers.some(m => text.includes(m))) {
+        return true;
+    }
+
     const educationalPatterns = [
         '該如何緊急處理', '该如何紧急处理', '該如何處理', '该如何处理',
-        '點樣緊急處理', '點樣處理', '點處理', '點做', '點樣做', '應該點處理',
+        '點樣緊急處理', '點樣處理', '點處理', '應該點處理',
         '怎麼處理', '怎么处理', '如何處理', '如何处理', '如何緊急處理', '如何紧急处理',
         '什麼是', '甚麼是', '什么是', '係咩', '代表咩',
         '點樣預防', '如何預防', '如何预防', '有咩症狀', '有哪些症狀', '有哪些症状',
@@ -289,7 +294,7 @@ export function checkSafetyGate(query: string, profile?: Partial<UserProfile>): 
 
     const hypoSymptomKeywords = [
         '手震', '手抖', '冒冷汗', '出冷汗', '狂標汗', '大汗淋漓',
-        '心悸', '心慌', '頭暈', '头晕', '昏', '意識不清', '意识不清', '發軟', '发软'
+        '心悸', '心慌', '頭暈', '头晕', '昏咗', '昏倒', '昏低', '意識不清', '意识不清', '發軟', '发软'
     ];
     const hasSweatWithHypoContext =
         (text.includes('冒汗') || (text.includes('出汗') && !/運動|运动|微出汗|無明顯出汗|無出汗|冇出汗/.test(text))) &&

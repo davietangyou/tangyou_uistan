@@ -304,17 +304,11 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
             previousTurns.shift();
         }
 
-        const hasOlderPreference = chatMessages.some(m =>
-            !m.isWelcome &&
+        const preferenceAlreadySubmitted = chatMessages.some(m =>
+            m.role === 'user' &&
             typeof m.content === 'string' &&
             m.content.includes('我已選擇我的個人偏好')
         );
-        if (hasOlderPreference && !previousTurns.some(t => t.content.includes('我已選擇我的個人偏好'))) {
-            previousTurns.unshift({
-                role: 'user',
-                content: '我已選擇我的個人偏好（系統提示：此偏好已於較早對話提交，請勿重複詢問）。'
-            });
-        }
 
         try {
             const res = await getConversationalChatResponse(
@@ -323,7 +317,8 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                 effectiveText,
                 previousTurns,
                 imgToSend ? { data: imgToSend.base64, mimeType: imgToSend.mimeType } : undefined,
-                hba1cRecords
+                hba1cRecords,
+                preferenceAlreadySubmitted
             );
 
             const aiMsg = {
@@ -882,25 +877,28 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                                 </div>
 
                                                 <ul className="space-y-1.5">
-                                                    {msg.briefVersion.takeHomeMessages.map((item: string, iIdx: number) => (
-                                                        <li key={iIdx} className="flex items-start gap-2">
-                                                            <span className={`flex-shrink-0 bg-emerald-600 text-white font-black rounded-full flex items-center justify-center ${isLargeFont ? 'w-5 h-5 text-[11px] mt-1' : 'w-4 h-4 text-[10px] mt-0.5'}`}>
-                                                                {iIdx + 1}
-                                                            </span>
-                                                            <span className={`text-slate-800 leading-snug ${isLargeFont ? 'text-[16px] sm:text-[17px] font-bold' : 'text-[13px] font-semibold'}`}>
-                                                                {item.split(/\*\*(.*?)\*\*/g).map((part: string, pIdx: number) => {
-                                                                    if (pIdx % 2 === 1) {
-                                                                        return (
-                                                                            <strong key={pIdx} className="font-black text-emerald-950">
-                                                                                {part}
-                                                                            </strong>
-                                                                        );
-                                                                    }
-                                                                    return part;
-                                                                })}
-                                                            </span>
-                                                        </li>
-                                                    ))}
+                                                    {msg.briefVersion.takeHomeMessages.map((item: string, iIdx: number) => {
+                                                        const normalizedItem = item.replace(/\\n/g, '\n');
+                                                        return (
+                                                            <li key={iIdx} className="flex items-start gap-2">
+                                                                <span className={`flex-shrink-0 bg-emerald-600 text-white font-black rounded-full flex items-center justify-center ${isLargeFont ? 'w-5 h-5 text-[11px] mt-1' : 'w-4 h-4 text-[10px] mt-0.5'}`}>
+                                                                    {iIdx + 1}
+                                                                </span>
+                                                                <span className={`text-slate-800 leading-snug whitespace-pre-line ${isLargeFont ? 'text-[16px] sm:text-[17px] font-bold' : 'text-[13px] font-semibold'}`}>
+                                                                    {normalizedItem.split(/\*\*(.*?)\*\*/g).map((part: string, pIdx: number) => {
+                                                                        if (pIdx % 2 === 1) {
+                                                                            return (
+                                                                                <strong key={pIdx} className="font-black text-emerald-950">
+                                                                                    {part}
+                                                                                </strong>
+                                                                            );
+                                                                        }
+                                                                        return part;
+                                                                    })}
+                                                                </span>
+                                                            </li>
+                                                        );
+                                                    })}
                                                 </ul>
                                             </div>
                                         )}

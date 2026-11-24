@@ -1,0 +1,291 @@
+================================================================================
+阶段历史归档：基於落後源碼回灌的權威基線校準、Chat-only 核心保護與代碼精準再交付
+================================================================================
+
+归档时间：2026-11-24 17:01（容器本地时间）
+归档文件：importantdocsneedkown/历史迭代阶段/20261124-1701_基於落後源碼回灌的權威基線校準與Chat-only核心保護及代碼精準再交付.txt
+
+================================================================================
+一、阶段起点与原始处境
+================================================================================
+
+本阶段并非一次普通的功能迭代，而是一次针对“代码回灌失真”的基线校准与安全再交付。
+
+阶段开始时，仓库已经落地了一份由智能体产出的新代码。该新代码并非直接基于当时最新的权威代码迭代，而是基于一份落后于权威仓库的源码继续演进而成。经回溯确认，该落后源码至少缺失两项非核心业务性质的工程/接入变更：
+
+1. admindata 专属管理端功能的完整剔除；
+2. 接入 Google AI Studio 所带来的一系列工程兼容性变更，包括但不限于：
+   - 新增 `server.ts` 与 `server/geminiHandler.ts`；
+   - `services/geminiService.ts` 由浏览器端直连 Gemini 改为同源 `/api/gemini/*` 代理层；
+   - `index.tsx` 移除浏览器端 `generativelanguage.googleapis.com` fetch 拦截器；
+   - `package.json` 增加 `express`、`tsx`、`start` 脚本与 `@types/express`；
+   - `vite.config.ts` 改为端口 `3000`、保留 `strictPort`/`allowedHosts`/`base`；
+   - `SavedQuestionsView.tsx` 增加 AI 总结失败提示与重试按钮；
+   - 新增 `importantdocsneedkown` 知识库及相关运行态文档。
+
+由于新代码基于落后源码重写，落地后的仓库同时混合了四类内容：
+
+1. 智能体本次迭代的真实意图与核心业务增强；
+2. 落后版本中的 admindata 回潮；
+3. pre-AI-Studio 旧形态回潮与重写回归；
+4. 属于产品取舍的灰色地带。
+
+本阶段的核心目标，是让最终仓库呈现出“智能体一开始就是基于最新权威源码完成迭代”的效果，而非“基于落后源码迭代后再打补丁”的拼合状态。
+
+================================================================================
+二、关键输入与认知转折
+================================================================================
+
+本阶段依次吸收了三组关键输入：
+
+1. 当前权威源码；
+2. 基于落后源码迭代后、相对于权威源码发生变化的新代码；
+3. admindata 功能剔除工作的前后全量对照；
+4. 接入 Google AI Studio 工作的前后全量对照；
+5. `importantdocsneedkown` 中关于三颗北极星、工程克制、运行态手册与历史阶段的既有文档。
+
+由此形成了以下关键认知转折：
+
+### 2.1 admindata 噪音的边界被实证
+
+admindata 剔除工作的实际改动集中在六个文件：
+
+- `components/Navigation.tsx`
+- `hooks/useAppLogic.ts`
+- `services/dataService.ts`
+- `utils/types.ts`
+- `views/AdminView.tsx`
+- `App.tsx`
+
+其中：
+
+- Navigation 删除 `showAdminTab`、Admin nav item、`show` 字段与 `filter` 机制；
+- useAppLogic 删除 `adminData`、`isAdminLoading`、`playingAdminUrl`、`adminAudioPlayerRef`、`showAdminTab`、`fetchAdminData`、`playSecureAudio`、`downloadSecureAudio`，并移除仅因 admin 引入的 `useRef` import；
+- dataService 删除 `ALL_JSON_URL`、`fetchAdminJson`、`fetchSecureBlob`；
+- types 仅删除 `View.Admin`；
+- AdminView 整体删除；
+- App 删除 AdminView import、View.Admin 路由、showAdminTab 与 showDetailTab 传参。
+
+同时确认：核心业务并不依赖 admindata。真正需要小心的是“文件混合”，例如 `dataService.uploadFile` 与 `applyProfileUpdate` 服务 DetailView 与 Profile 写回，不能因同文件含 admin 函数而整文件回退或整文件保留。
+
+### 2.2 新代码的基底可能早于“admindata 剔除前”
+
+新代码中的 `Navigation.tsx` 同时包含 `showDetailTab` 与 `showAdminTab`，而 admindata 剔除前版本只有 `showAdminTab`；新代码还恢复了 `index.tsx` 的 fetch 拦截器、缺少 `vite.config.ts` 的 `strictPort`/`allowedHosts`/`base`、使用 `dotenv` 与 `node server.ts`、把 `dataService.uploadFile` mock 化。这些均说明：新代码的实际基底可能比“落后两个 commit”更早，不能假设简单的线性关系。
+
+因此，最终不能采用“新代码整文件覆盖 + 删 admin”的方式，而必须以当前权威代码为基线，逐文件、逐函数甄别。
+
+### 2.3 Guided 删除是新代码带来的核心业务形态变更
+
+Guided 是权威代码中与 Chat 并列的结构化多步问诊模式，包含：
+
+- INPUT → CLARIFY → SUPPLEMENT → SELECT_QUESTIONS → RESULT 状态机；
+- `getClarificationQuestions`、`getSuggestedQuestions`、`getFinalDecisionResult`、`getDeeperEducationResult`、`getDeeperChoiceResult`；
+- `DecisionResult`、问诊笔记下载、Guided 结果页自动上报、`extractedProfileData` Profile 写回。
+
+admindata 剔除与 AI Studio 接入都没有删除 Guided；新代码删除 Guided，是智能体自身的 Chat-only 简化，属于核心业务形态变更。
+
+### 2.4 核心业务新旧冲突的裁决原则
+
+本阶段明确并执行了以下裁决：
+
+- Guided 状态机、澄清问题、最终决策、深入卫教：不恢复；
+- Chat 的 `extractedProfileData` Profile 写回：不接回；
+- 问诊笔记下载：不恢复；
+- `briefVersion.takeHomeMessages` 保存按钮：不恢复；
+- RAG 面板 / Agent Trace：不恢复；
+- 保留新代码的 Chat-only SDM、安全分级、30 天血糖、HbA1c、Profile 约束、偏好卡、Node 3 禁令、对比模式与知识检索；
+- 保留权威代码中的核心临床不变量：三不二要、4-Layer 与双通道等价、Node 3 禁止提前给建议、个性化饮食强制规则。
+
+================================================================================
+三、最终文件级变更与零改动范围
+================================================================================
+
+### 3.1 新增文件
+
+- `server/gemini.ts`
+  在保留新代码真实增强的前提下，补回 AI Studio 基线与核心临床不变量：
+  - `cleanEnvValue`；
+  - `getTextModel` / `getFastModel` / `getVisionModel` / `getTranscribeModel` / `getBaseUrl`；
+  - `getGeminiRuntimeInfo`；
+  - `getAiClient` 支持 `baseUrl` 与 `aistudio-build` User-Agent；
+  - 模型路由、trim history、30 天血糖、HbA1c、Profile 约束、安全 gate 前置、对比模式；
+  - 图片走 vision 模型、转写走 transcribe 模型；
+  - 三不二要、4-Layer 对应、Node 3 禁令、个性化饮食规则；
+  - 偏好记忆保护与 `preferenceAlreadySubmitted` 可选字段；
+  - 安全 LLM 判断时的回复一致性处理。
+
+- `server/taxonomy.ts`
+  保留新代码的安全分级与场景分类，并做了安全边界校准：
+  - 移除裸 `'昏'`，改用 `'昏咗'`、`'昏倒'`、`'昏低'`，避免「黃昏」误伤；
+  - 移除泛化 `'點做'`/`'點樣做'`，改以「如果／假如／一旦／萬一」假设词触发教育性判断，避免「手震點做」被降级；
+  - 保留心理危机、低血糖、DKA/HHS、足部感染、高风险档案不适的分级处理。
+
+### 3.2 修改文件
+
+- `server.ts`
+  - 恢复零依赖 `loadLocalEnvFiles`；
+  - 恢复 `GET /api/health`；
+  - 保留 5 个 Gemini 端点：chat、transcribe-audio、analyze-saved-questions、daily-tip、recognize-medications；
+  - 删除 dotenv、旧 Guided 端点与 `transcribe` 路径；
+  - 恢复 `startServer().catch` 与生产静态托管逻辑；
+  - chat 路由支持 `preferenceAlreadySubmitted`。
+
+- `services/geminiService.ts`
+  - 保留 5 个前端代理函数、`hba1cRecords` 参数与健壮错误处理；
+  - 转写路径恢复为 `/api/gemini/transcribe-audio`；
+  - 增加可选 `preferenceAlreadySubmitted` 参数。
+
+- `views/ConsultView.tsx`
+  - 保留 Chat-only、安全分级卡、偏好卡、对比表、讨论点保存、客户端 history trim、`isError`；
+  - 恢复 localStorage 图片剥离；
+  - 错误消息恢复长者友好主文案，技术细节只进 console；
+  - 不恢复 Guided、RAG、Agent Trace、briefVersion 保存按钮、Profile 写回、问诊笔记下载；
+  - 移除 synthetic preference turn，改为从完整用户消息计算 `preferenceAlreadySubmitted` 并随请求发送；
+  - `briefVersion` 渲染支持字面 `\n` 的防御性换行。
+
+- `.env.example`
+  - 新增 `GEMINI_FAST_MODEL` 可选说明。
+
+- `importantdocsneedkown/GoogleAIStudio迭代代码下载后本地重启服务指南.md`
+  - 同步 5 个 Gemini 端点 + `/api/health`；
+  - 同步 `fastModel`、`GEMINI_FAST_MODEL` 与模型路由；
+  - 同步 Chat、偏好卡、安全提问、识药、问题总结、语音转写冒烟路径；
+  - 说明 Guided 相关端点已随 Chat-only 迭代移除。
+
+- `importantdocsneedkown/00_文档总索引与信息治理规范.txt`
+  - 将 AI 能力落点修正为 `server/gemini.ts` 与 `server.ts`；
+  - 对《任何代码迭代变动者须知》的摘要改为不列具体旧文件名，避免与尚未同步的须知正文产生矛盾。
+
+### 3.3 删除文件
+
+- `views/AdminView.tsx`
+- `server/geminiHandler.ts`
+- `services/taxonomyService.ts`
+
+### 3.4 恢复为权威版本、零 diff 的文件
+
+- `App.tsx`
+- `components/Navigation.tsx`
+- `hooks/useAppLogic.ts`
+- `utils/types.ts`
+- `services/dataService.ts`
+- `index.tsx`
+- `vite.config.ts`
+- `package.json`
+- `metadata.json`
+- `views/SavedQuestionsView.tsx`
+
+### 3.5 明确保留的遗留代码
+
+按 B/B/B/A 决策，以下 Guided 相关遗留代码保留但不重接、不清理：
+
+- `useAppLogic.updateProfileWithExtraction`
+- `useAppLogic.handleDownload`
+- `consultStep` / `clarifications` / `result` 等 Guided state
+- `DecisionResult.extractedProfileData` 类型
+
+### 3.6 零改动保护范围
+
+- 只读北极星文档与核心业务明细；
+- `services/knowledgeBase.ts`
+- `utils/constants.ts`
+- `hooks/useSpeechFocus.ts`
+- `services/speechService.ts`
+- `components/Layout.tsx`、`GlobalMic.tsx`、`MedicationReminders.tsx`
+- `views/HomeView.tsx`、`GlucoseView.tsx`、`MeView.tsx`、`OnboardingView.tsx`、`DetailView.tsx`
+- `.nvmrc`
+- `app/applet/replace.cjs`
+- `index.html`
+
+================================================================================
+四、两次严格复核与最终修正
+================================================================================
+
+本阶段在代码交付后进行了两轮逐文件严格复核。
+
+### 4.1 第一次复核定位的问题
+
+- taxonomy 裸 `'昏'` 误伤「黃昏」；
+- `'點做'`/`'點樣做'` 导致「手震點做」安全降级；
+- `generateContentWithRetry` 对转写/自定义 vision 模型产生错误 fallback；
+- `CORE_CHAT_INSTRUCTION` 的 `\\n` 与 `briefVersion` 渲染不匹配；
+- 偏好记忆保护未进入模型路由与 decision-sensitive 判断；
+- `ConsultView.hasOlderPreference` 未限定用户角色；
+- synthetic preference turn 可能污染新话题；
+- 00 索引中 taxonomy 被误写成 AI 能力路由落点；
+- 00 索引对《任何代码迭代变动者须知》的摘要与正文不一致；
+- `ThinkingLevel` 与 fast model 可用性尚未验证。
+
+### 4.2 第二次复核补充的问题
+
+- `generateContentWithRetry` 的 `else` 分支会把转写模型 fallback 到 deep/fast，属于新增回归；
+- `CORE_CHAT_INSTRUCTION` 的字面 `\\n` 需要同时修 prompt 与 `briefVersion` 渲染；
+- 偏好记忆链路需要从 synthetic turn 改为可选 `preferenceAlreadySubmitted` 字段，避免角色误判与新话题污染；
+- `formatHistoryContext` 需要说明「另保留最近一次已提交偏好」；
+- 00 索引需要修正 taxonomy 路由表述与须知摘要。
+
+### 4.3 最终再交付文件
+
+针对上述问题，最终重新交付了 6 份文件全文：
+
+1. `src/server/taxonomy.ts`
+2. `src/server/gemini.ts`
+3. `src/server.ts`
+4. `src/services/geminiService.ts`
+5. `src/views/ConsultView.tsx`
+6. `importantdocsneedkown/00_文档总索引与信息治理规范.txt`
+
+其余此前已交付且本次无需再改的文件保持不变。
+
+================================================================================
+五、运行态、验证结果与当前边界
+================================================================================
+
+### 5.1 已验证的部分
+
+- 已通过代码级逐文件比对确认：
+  - admindata 相关代码不再出现在 App/Navigation/useAppLogic/types/dataService；
+  - 旧 `server/geminiHandler.ts` 与 `services/taxonomyService.ts` 已被新架构替代；
+  - index.tsx 不再含 fetch 拦截器；
+  - dataService 恢复真实上传；
+  - package/vite/metadata 恢复 AI Studio 接入后的权威配置；
+  - SavedQuestionsView 恢复温和错误提示与重试按钮。
+
+- 已通过两轮复核修正：
+  - taxonomy 安全关键词误伤与降级；
+  - retry fallback 对转写/vision 的错误扩展；
+  - CORE prompt 字面 `\\n`；
+  - 偏好记忆字段化；
+  - 00 索引两处文档失真。
+
+### 5.2 尚未验证的部分
+
+本阶段尚未在真实仓库执行以下运行态验证：
+
+- `npm install`；
+- `npm run lint`（`tsc --noEmit`）；
+- `npm run build`；
+- `/api/health` 实际返回；
+- Chat / 偏好卡 / 安全提问 / 拍照识药 / 问题总结 / 语音转写冒烟；
+- `.env.local` 的 `PORT`、`GEMINI_MODEL`、`GEMINI_FAST_MODEL`、`GEMINI_BASE_URL` 覆写；
+- `ThinkingLevel` 是否由当前 `@google/genai` 解析版本导出；
+- `gemini-3.1-flash-lite` 是否在目标环境可用。
+
+### 5.3 当前边界
+
+- 若 `ThinkingLevel` 不存在，需移除 `thinkingConfig` 与相关 import，保留模型路由；
+- 若 fast model 不可用，需通过 `GEMINI_FAST_MODEL` 覆写，或临时把 fast 路由指向 deep；
+- `server/gemini.ts` 与 `server/taxonomy.ts` 仍为服务端核心文件，旧文件删除后不应再出现引用；
+- Guided/RAG/AgentTrace/Profile 写回/问诊笔记下载/briefVersion 保存按钮按本阶段决策不恢复；
+- `useAppLogic` 与 `types` 中的 Guided 遗留代码保留，不视为本阶段缺陷；
+- 只读基石文档与历史归档未作未经授权修改。
+
+================================================================================
+六、阶段结论
+================================================================================
+
+本阶段完成了一次“代码回灌失真”的系统性校准：以当前权威代码为基线，保留了智能体 Chat-only 迭代的真实核心增强，剔除了 admindata 回潮与 pre-AI-Studio 旧形态回潮，修复了 mock 化、env 加载断链、模型硬编码、retry fallback 越界、安全关键词误伤、偏好记忆链路不完整与文档失真等问题。
+
+最终目标形态是：新代码看起来就像一开始就基于“admindata 已剔除 + Google AI Studio 已接入”的权威源码完成迭代；核心业务既保留权威临床不变量，也保留新迭代的 Chat-only SDM、安全分级、30 天血糖、HbA1c 与 Profile 约束增强。
+
+本阶段结束时，代码文件已完成最终再交付；运行态验证与依赖兼容性确认仍待下一阶段在真实仓库中完成。

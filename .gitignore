@@ -1,0 +1,83 @@
+
+# === 系统与编辑器 ===
+.idea
+.DS_Store
+*.AppleDouble
+*.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN
+*.swp
+*.swo
+*~
+.vscode
+.history
+
+# === Git（按要求默认保留 .gitignore）===
+.git
+.github
+
+# === NodeJS（按要求默认保留 package-lock.json）===
+node_modules
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+dist
+build
+out
+release
+.next
+.nuxt
+coverage
+*.log
+.eslintcache
+.vite
+vite
+test-results
+playwright-report
+blob-report
+tsconfig.tsbuildinfo
+
+# === Python ===
+venv
+examples
+INSTALL.*
+LICENSE.*
+Makefile
+pyproject.toml
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.venv
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.tox
+*.egg-info
+*.egg
+.coverage
+htmlcov
+.ipynb_checkpoints
+
+# === Java ===
+target
+*.class
+*.jar
+*.war
+*.ear
+bin
+.gradle
+gradle-wrapper.jar
+maven-wrapper.jar
+*.iml
+.classpath
+.project
+.settings
+
+# === Codex / AI ===
+.openai
+
+# cur project
+.env.*

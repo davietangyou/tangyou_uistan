@@ -4,91 +4,28 @@
 
 import React, {useState, useEffect, useRef} from 'react';
 import ReactMarkdown from 'react-markdown';
-import {ClarificationQuestion, DecisionResult, GlucoseRecord, UserProfile, View, ChatTurn} from '../utils/types';
-import {getClarificationQuestions, getFinalDecisionResult, getSuggestedQuestions, getDeeperEducationResult, getDeeperChoiceResult, getConversationalChatResponse} from '../services/geminiService';
-import {CLINICAL_KNOWLEDGE} from '../services/knowledgeBase';
+import {GlucoseRecord, HbA1cRecord, UserProfile, View, ChatTurn} from '../utils/types';
+import {getConversationalChatResponse} from '../services/geminiService';
 
 interface ConsultViewProps {
     loading: boolean;
-    setLoading: (loading: boolean) => void;
-    consultStep: 'INPUT' | 'CLARIFY' | 'SUPPLEMENT' | 'SELECT_QUESTIONS' | 'RESULT';
-    setConsultStep: (step: 'INPUT' | 'CLARIFY' | 'SUPPLEMENT' | 'SELECT_QUESTIONS' | 'RESULT') => void;
-    concern: string;
-    setConcern: (concern: string) => void;
     profile: UserProfile;
     glucoseRecords: GlucoseRecord[];
-    clarifications: ClarificationQuestion[];
-    setClarifications: (qs: ClarificationQuestion[]) => void;
-    answers: Record<string, string[]>;
-    setAnswers: (answers: Record<string, string[]>) => void;
-    supplementalAnswer: string;
-    setSupplementalAnswer: (val: string) => void;
-    suggestedQuestions: string[];
-    setSuggestedQuestions: (qs: string[]) => void;
-    selectedQuestionTexts: string[];
-    setSelectedQuestionTexts: (qs: string[]) => void;
-    result: DecisionResult | null;
-    setResult: (result: DecisionResult | null) => void;
-    history: ChatTurn[];
-    setHistory: (history: ChatTurn[]) => void;
-    handleDownload: (customQuestions?: string[]) => void;
+    hba1cRecords?: HbA1cRecord[];
     setView: (view: View) => void;
-    updateProfileWithExtraction: (data: any) => void;
     saveDoctorQuestions: (qs: string[]) => void;
+    isLargeFont?: boolean;
     [key: string]: any;
 }
 
-const OTHER_OPTION_LABEL = "其他（支持輸入語音/文字）";
-
-const VALUE_CATEGORY_KEYWORDS: Record<string, string> = {
-    Effectiveness: "治療效果",
-    Safety: "安全性",
-    Cost: "醫療費用",
-    Convenience: "使用便利",
-    "Quality of Life": "生活品質",
-    Autonomy: "自主控糖",
-    "Psychological Burden": "心理負擔"
-};
-
 export const ConsultView: React.FC<ConsultViewProps> = (props) => {
     const {
-        loading, setLoading,
-        consultStep, setConsultStep,
-        concern, setConcern,
-        profile, glucoseRecords,
-        clarifications, setClarifications,
-        answers, setAnswers,
-        supplementalAnswer, setSupplementalAnswer,
-        suggestedQuestions, setSuggestedQuestions,
-        selectedQuestionTexts, setSelectedQuestionTexts,
-        result, setResult,
-        history, setHistory,
-        handleDownload,
+        loading,
+        profile, glucoseRecords, hba1cRecords = [],
         setView,
-        updateProfileWithExtraction,
         saveDoctorQuestions,
         isLargeFont
     } = props;
-
-    const [otherAnswers, setOtherAnswers] = useState<Record<string, string>>({});
-    const [deeperLoading, setDeeperLoading] = useState(false);
-    const [selectedDocQs, setSelectedDocQs] = useState<string[]>([]);
-    const [savedStatus, setSavedStatus] = useState(false);
-
-    // 實時檢索源（RAG 知識底座）狀態
-    const [selectedKnowledgeKey, setSelectedKnowledgeKey] = useState<string | null>(null);
-    const [isRAGPanelExpanded, setIsRAGPanelExpanded] = useState<boolean>(true);
-
-    // 專家查詢模式結果頁專用的追問狀態
-    const [resultFollowUps, setResultFollowUps] = useState<{role: 'user'|'assistant', content: string}[]>([]);
-    const [resultFollowUpInput, setResultFollowUpInput] = useState('');
-    const [resultFollowUpLoading, setResultFollowUpLoading] = useState(false);
-
-    // 選擇性顯示狀態（自訂報告呈現 / 減少認知負荷）
-    const [showOptionsComparison, setShowOptionsComparison] = useState(true);
-    const [showDoctorQuestions, setShowDoctorQuestions] = useState(true);
-    const [expandedChatOptions, setExpandedChatOptions] = useState<Record<string, boolean>>({});
-    const [expandedChatQuestions, setExpandedChatQuestions] = useState<Record<string, boolean>>({});
 
     // 預設歡迎訊息
     const DEFAULT_CHAT_MESSAGES = [
@@ -100,8 +37,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
         }
     ];
 
-    // AI 聊天室模式狀態 (支援 LocalStorage 自動保存)
-    const [activeMode, setActiveMode] = useState<'CHAT' | 'GUIDED'>('CHAT');
+    // AI 聊天室狀態 (支援 LocalStorage 自動保存)
     const [chatInput, setChatInput] = useState('');
     const [chatMessages, setChatMessages] = useState<any[]>(() => {
         try {
@@ -119,24 +55,9 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
     });
 
     // 當對話訊息更新時自動持久化保存
-    // 【微調】存入 localStorage 前剝離圖片 base64 和 previewUrl，防止 localStorage 溢出
     useEffect(() => {
         try {
-            const messagesToStore = chatMessages.map(msg => {
-                if (msg.imageAttachment) {
-                    return {
-                        ...msg,
-                        imageAttachment: {
-                            mimeType: msg.imageAttachment.mimeType,
-                            base64: '',
-                            previewUrl: '',
-                            name: msg.imageAttachment.name
-                        }
-                    };
-                }
-                return msg;
-            });
-            localStorage.setItem('dia_chat_messages', JSON.stringify(messagesToStore));
+            localStorage.setItem('dia_chat_messages', JSON.stringify(chatMessages));
         } catch (e) {
             console.error("儲存對話紀錄失敗", e);
         }
@@ -151,10 +72,8 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
         setSelectedPreferenceOptions({});
         setIsOtherSelected({});
         setOtherCustomText({});
-        setOtherCustomRating({});
         setExpandedDetailedSections({});
         setExpandedDiscussionPoints({});
-        setActiveVersionTab({});
         try {
             localStorage.removeItem('dia_chat_messages');
         } catch (e) {
@@ -162,27 +81,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
         }
     };
     const [chatLoading, setChatLoading] = useState(false);
-    const [simulatedActiveNode, setSimulatedActiveNode] = useState<number>(0);
-
-    useEffect(() => {
-        let intervalId: any;
-        if (chatLoading) {
-            setSimulatedActiveNode(1);
-            intervalId = setInterval(() => {
-                setSimulatedActiveNode(prev => {
-                    if (prev < 4) return prev + 1;
-                    return prev;
-                });
-            }, 800);
-        } else {
-            setSimulatedActiveNode(0);
-        }
-        return () => {
-            if (intervalId) clearInterval(intervalId);
-        };
-    }, [chatLoading]);
     const [chatSavedQs, setChatSavedQs] = useState<Record<string, boolean>>({});
-    const [chatSavedTakeaways, setChatSavedTakeaways] = useState<Record<string, boolean>>({});
     const [toastMessage, setToastMessage] = useState<string | null>(null);
     const [isQuickMemoOpen, setIsQuickMemoOpen] = useState(false);
     const [quickMemoInput, setQuickMemoInput] = useState('');
@@ -234,7 +133,6 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
             setIsQuickMemoListening(false);
         }
     };
-    const [activeVersionTab, setActiveVersionTab] = useState<Record<string, 'brief' | 'detailed'>>({});
     const [expandedDetailedSections, setExpandedDetailedSections] = useState<Record<string, boolean>>({});
     const [expandedDiscussionPoints, setExpandedDiscussionPoints] = useState<Record<string, boolean>>({});
     const [selectedPreferenceOptions, setSelectedPreferenceOptions] = useState<Record<string, Record<string, Record<string, { questionText: string, label: string, valueCategory: string, rating?: number }>>>>({});
@@ -243,9 +141,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
     // 📷 拍照上傳問答相關狀態
     const [attachedImage, setAttachedImage] = useState<{ base64: string, mimeType: string, previewUrl: string, name?: string } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [showTrace, setShowTrace] = useState(false);
     const [otherCustomText, setOtherCustomText] = useState<Record<string, Record<string, string>>>({});
-    const [otherCustomRating, setOtherCustomRating] = useState<Record<string, Record<string, number>>>({});
 
     // 🎤 語音輸入狀態
     const [isListening, setIsListening] = useState(false);
@@ -308,14 +204,18 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
     const renderBulletPoints = (text: string, isPros: boolean, defaultTextSizeClass = "text-xs", defaultFontWeightClass = "font-black") => {
         if (!text) return null;
         
+        // 1. 將字面量 "\\n" 或 "\n" 的字串替換為真正的換行符，確保能正確切割
         let processedText = text.replace(/\\n/g, '\n');
         
+        // 2. 僅依據換行符進行切割，避免因分號 (；) 或連字符 (-) 將完整句子切斷
         const rawLines = processedText.split('\n');
         const cleanedLines = rawLines
             .map(line => {
                 let trimmed = line.trim();
+                // 3. 清除開頭的項目符號 (如 -, *, •, ▪, ●) 以及可能殘留的字面量 \n
                 trimmed = trimmed.replace(/\\n/g, '').replace(/\n/g, '');
                 trimmed = trimmed.replace(/^[\s•\-*▪●]+\s*/, '');
+                // 4. 清除開頭的編號 (如 1., a., (1) 等)
                 trimmed = trimmed.replace(/^(\d+\.|[a-zA-Z]\.|\([0-9]+\)|[①-⑨])\s*/, '');
                 return trimmed;
             })
@@ -340,308 +240,6 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
         );
     };
 
-    const toggleAnswer = (qid: string, opt: string) => {
-        const current = answers[qid] || [];
-        if (current.includes(opt)) {
-            setAnswers({...answers, [qid]: current.filter(i => i !== opt)});
-        } else {
-            setAnswers({...answers, [qid]: [...current, opt]});
-        }
-    };
-
-    const prepareAnswerPairs = () => {
-        return clarifications.map(q => {
-            const isPreferenceQ = ('questionText' in q);
-            const questionTitle = isPreferenceQ ? (q as any).questionText : (q as any).question;
-            
-            if (isPreferenceQ) {
-                const qid = q.id;
-                const msgId = "guided";
-                const msgSelections = selectedPreferenceOptions[msgId]?.[qid] || {};
-                const otherActive = isOtherSelected[msgId]?.[qid] || false;
-                const customTxt = (otherCustomText[msgId]?.[qid] || "").trim();
-                const otherRating = otherCustomRating[msgId]?.[qid] || 2;
-                
-                const answersList: string[] = [];
-                Object.values(msgSelections).forEach((sel: any) => {
-                    const stars = "⭐".repeat(sel.rating);
-                    const ratingLabel = sel.rating === 1 ? "一般重視" : sel.rating === 2 ? "非常重視" : "首要考量";
-                    const displayKeyword = sel.label || VALUE_CATEGORY_KEYWORDS[sel.valueCategory];
-                    answersList.push(`重視：【${displayKeyword}】（重要程度：${stars} ${ratingLabel}，價值維度：${sel.valueCategory}）`);
-                });
-                
-                if (otherActive && customTxt.length > 0) {
-                    const stars = "⭐".repeat(otherRating);
-                    const ratingLabel = otherRating === 1 ? "一般重視" : otherRating === 2 ? "非常重視" : "首要考量";
-                    answersList.push(`其他想法：【${customTxt}】（重要程度：${stars} ${ratingLabel}，價值維度：其他）`);
-                }
-                
-                return {
-                    question: questionTitle,
-                    answer: answersList.length > 0 ? answersList.join('；') : "無特定偏好"
-                };
-            } else {
-                if (!q.options || q.options.length === 0) {
-                    return {
-                        question: questionTitle,
-                        answer: otherAnswers[q.id] || "無回答"
-                    };
-                }
-                const selectedOpts = answers[q.id] || [];
-                const realAnswers = selectedOpts.filter(o => o !== OTHER_OPTION_LABEL);
-                if (selectedOpts.includes(OTHER_OPTION_LABEL)) {
-                    const customText = otherAnswers[q.id] || '';
-                    if (customText.trim()) {
-                        realAnswers.push(`其他補充：${customText}`);
-                    }
-                }
-                return {
-                    question: questionTitle,
-                    answer: realAnswers.length > 0 ? realAnswers.join('、') : "無回答"
-                };
-            }
-        });
-    };
-
-    const handleSendResultFollowUp = async (text: string) => {
-        if (!text.trim() || resultFollowUpLoading) return;
-
-        const newUserMsg = { role: 'user' as const, content: text };
-        const updatedFollowUps = [...resultFollowUps, newUserMsg];
-        setResultFollowUps(updatedFollowUps);
-        setResultFollowUpInput('');
-        setResultFollowUpLoading(true);
-
-        const baseHistory: ChatTurn[] = [
-            { role: 'user', content: concern },
-            { role: 'assistant', content: result?.summary || '' }
-        ];
-
-        const finalHistory: ChatTurn[] = [
-            ...baseHistory,
-            ...resultFollowUps.map(m => ({ role: m.role, content: m.content }))
-        ];
-
-        try {
-            const res = await getConversationalChatResponse(profile, glucoseRecords, text, finalHistory);
-            setResultFollowUps(prev => [...prev, { role: 'assistant', content: res.reply }]);
-        } catch (e) {
-            console.error(e);
-            setResultFollowUps(prev => [...prev, { role: 'assistant', content: "⚠️ 唔好意思，系統暫時忙碌，請重試。" }]);
-        } finally {
-            setResultFollowUpLoading(false);
-        }
-    };
-
-    // renderAgentTrace 保留定義（技術備用，當前未調用）
-    const renderAgentTrace = (currentStep: 'INPUT' | 'CLARIFY' | 'SUPPLEMENT' | 'SELECT_QUESTIONS' | 'RESULT') => {
-        const lastAssistantMsg = [...chatMessages].reverse().find(msg => msg.role === 'assistant');
-        let nodes;
-        
-        if (activeMode === 'GUIDED') {
-            const hasRealMessages = chatMessages.some(m => m.role === 'user');
-            const activeNodeVal = chatLoading 
-                ? (simulatedActiveNode || 4) 
-                : (hasRealMessages ? (lastAssistantMsg?.activeNode || 5) : 0);
-            nodes = [
-                { 
-                    id: 'safety', 
-                    label: '🛡️ 安全監控', 
-                    desc: '急症與心理安全檢測', 
-                    status: activeNodeVal >= 1 ? 'completed' : 'pending' 
-                },
-                { 
-                    id: 'intent', 
-                    label: '🧭 意圖分流', 
-                    desc: '臨床場景智能路由', 
-                    status: activeNodeVal > 2 ? 'completed' : (activeNodeVal === 2 ? 'active' : 'pending') 
-                },
-                { 
-                    id: 'preference', 
-                    label: '🗣️ 偏好釐清', 
-                    desc: '共同決策 (SDM) 偏好探索及細節收集', 
-                    status: activeNodeVal > 3 ? 'completed' : (activeNodeVal === 3 ? 'active' : 'pending') 
-                },
-                { 
-                    id: 'reasoner', 
-                    label: '📚 臨床推理', 
-                    desc: '實證指南 (ADA/HK) 動態知識檢索', 
-                    status: activeNodeVal > 4 ? 'completed' : (activeNodeVal === 4 ? 'active' : 'pending') 
-                },
-                { 
-                    id: 'output', 
-                    label: '✍️ 整合輸出層', 
-                    desc: '低認知負荷、臨床共情編排，生成患者覆診提問備忘', 
-                    status: activeNodeVal === 5 ? 'completed' : 'pending' 
-                }
-            ];
-        } else {
-            nodes = [
-                { id: 'safety', label: '🛡️ 安全監控', desc: '急症與心理安全檢測', status: 'completed' },
-                { id: 'intent', label: '🧭 意圖分流', desc: '臨床場景智能路由', status: currentStep === 'INPUT' ? 'pending' : 'completed' },
-                { id: 'preference', label: '🗣️ 偏好釐清', desc: '共同決策 (SDM) 偏好探索及細節收集', status: currentStep === 'INPUT' ? 'pending' : (currentStep === 'CLARIFY' ? 'active' : 'completed') },
-                { id: 'reasoner', label: '📚 臨床推理', desc: '實證指南 (ADA/HK) 動態知識檢索', status: ['INPUT', 'CLARIFY', 'SUPPLEMENT', 'SELECT_QUESTIONS'].includes(currentStep) ? 'pending' : 'completed' },
-                { id: 'output', label: '✍️ 整合輸出層', desc: '低認知負荷、臨床共情編排，生成患者覆診提問備忘', status: currentStep === 'RESULT' ? 'active' : 'pending' }
-            ];
-        }
-
-        return (
-            <div className="premium-card bg-[#F1F5F9]/50 border border-slate-200/80 p-6 md:p-8 rounded-[2rem] space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
-                    <div className="flex items-center gap-3">
-                        <span className="text-2xl animate-[spin_6s_linear_infinite]">⚙️</span>
-                        <h3 className="font-extrabold text-slate-800 text-lg">LangGraph 糖尿病專家體系決策引擎軌跡</h3>
-                    </div>
-                    <span className="font-black bg-[#4A6E85]/10 text-[#4A6E85] text-xs px-3.5 py-1.5 rounded-full self-start sm:self-auto">
-                        共同決策支援 (Shared Decision Making) 運作中
-                    </span>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-                    {nodes.map((node, index) => {
-                        let cardStyle = 'bg-white border-slate-200/60 text-slate-400';
-                        let badge = <span className="text-slate-300 font-extrabold text-xs">未激活 (Pending)</span>;
-                        
-                        if (node.status === 'completed') {
-                            cardStyle = 'bg-emerald-50/50 border-emerald-200/80 text-emerald-800 shadow-xs';
-                            badge = <span className="bg-emerald-100/80 text-emerald-700 font-extrabold text-xs px-2.5 py-1 rounded-full flex items-center gap-1">✓ Node {index + 1} 已執行</span>;
-                        } else if (node.status === 'active' || (activeMode !== 'GUIDED' && currentStep === 'SUPPLEMENT' && node.id === 'preference') || (activeMode !== 'GUIDED' && currentStep === 'SELECT_QUESTIONS' && node.id === 'output')) {
-                            cardStyle = 'bg-amber-50/50 border-amber-305 text-amber-800 ring-4 ring-amber-100/50 shadow-xs animate-pulse';
-                            badge = <span className="bg-amber-150 text-amber-700 font-black text-xs px-2.5 py-1 rounded-full">⏳ Node {index + 1} 運作中</span>;
-                        }
-
-                        return (
-                            <div key={node.id} className={`p-5 rounded-2xl border transition-all space-y-3 flex flex-col justify-between ${cardStyle}`}>
-                                <div>
-                                    <h4 className="font-extrabold text-sm md:text-[15px] leading-snug">{node.label}</h4>
-                                    <p className="text-xs font-bold leading-normal mt-1 opacity-80">{node.desc}</p>
-                                </div>
-                                <div className="pt-2.5 border-t border-dashed border-current/10 flex items-center justify-between">
-                                    {badge}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                <div className="border-t border-slate-200/60 pt-6">
-                    <div className="flex items-center justify-between cursor-pointer select-none" onClick={() => setIsRAGPanelExpanded(!isRAGPanelExpanded)}>
-                        <div className="flex items-center gap-2">
-                            <span className="text-lg">📚</span>
-                            <div>
-                                <h4 className={`font-black text-slate-850 flex items-center gap-2 flex-wrap ${isLargeFont ? 'text-lg md:text-xl' : 'text-sm md:text-base'}`}>
-                                    <span>實時檢索源：糖尿病臨床決策知識底座 (RAG Context)</span>
-                                    <span className="bg-[#4A6E85]/10 text-[#4A6E85] text-[10px] font-black px-2 py-0.5 rounded-md">
-                                        循證依據可追溯性
-                                    </span>
-                                </h4>
-                                <p className="text-xs font-bold text-slate-400 mt-0.5">
-                                    Node 4 (臨床推理節點) 實時檢索與比對的官方循證依據（Evidence-based Guidelines）
-                                </p>
-                            </div>
-                        </div>
-                        <span className="text-slate-400 font-extrabold text-xs sm:text-sm hover:text-slate-600 transition-colors whitespace-nowrap">
-                            {isRAGPanelExpanded ? '收起 ▴' : '展開檢索源 ▾'}
-                        </span>
-                    </div>
-
-                    {isRAGPanelExpanded && (
-                        <div className="mt-5 space-y-4 animate-soft">
-                            <div className="bg-[#4A6E85]/5 border border-[#4A6E85]/10 rounded-2xl p-4 text-xs font-bold text-slate-600 leading-relaxed">
-                                <span className="text-base mr-1">💡</span> 
-                                <strong>專家查詢說明：</strong>
-                                系統採用 <strong>毫秒級 RAG (檢索增強生成)</strong> 技術。當患者輸入血糖、膳食、用藥主訴後，系統在 <strong>Node 4 (臨床推理節點)</strong> 會自動將主訴與下方權威指引進行嵌入向量比對，並即時提取最相關的 1-3 條臨床指南作為 LLM 推理的硬約束，防止 AI 幻覺。
-                                <span className="text-[#4A6E85] underline cursor-pointer ml-1" onClick={() => setSelectedKnowledgeKey(selectedKnowledgeKey ? null : "ADA-13")}>
-                                    點擊下方指引卡片可查看對應原文 RAG 內容。
-                                </span>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                {(() => {
-                                    const groups = [
-                                        { title: "🌎 國際金標準 (ADA 2026)", keys: ["ADA-13", "ADA-6", "ADA-5"] },
-                                        { title: "🇭🇰 香港官方指南 (DH / HA)", keys: ["HA-DIET", "CHP-DIET", "EHS-DIET", "HA-SMART"] },
-                                        { title: "🍜 本地生活與地道飲食", keys: ["HK-HB", "OUTSIDE-HK", "MONITOR-PRO", "FLUCTUATE-HK"] },
-                                        { title: "🌿 中西協作與心理防線", keys: ["TCM-HK", "INSULIN-HK"] }
-                                    ];
-
-                                    return groups.map((g, idx) => (
-                                        <div key={idx} className="bg-white border border-slate-200/50 rounded-2xl p-3.5 space-y-2.5">
-                                            <h5 className="font-extrabold text-[11px] text-slate-500 tracking-wider border-b border-slate-100 pb-1.5">{g.title}</h5>
-                                            <div className="space-y-1.5">
-                                                {g.keys.map(k => {
-                                                    const item = CLINICAL_KNOWLEDGE[k as keyof typeof CLINICAL_KNOWLEDGE];
-                                                    if (!item) return null;
-                                                    const lastAssistantMsg = [...chatMessages].reverse().find(msg => msg.role === 'assistant');
-                                                    const currentSources = lastAssistantMsg?.traceability?.sources || result?.traceability?.sources || [];
-                                                    const isMatchedInTrace = currentSources.includes(k);
-                                                    const isSelected = selectedKnowledgeKey === k;
-
-                                                    let itemBg = "bg-slate-50 hover:bg-slate-100 border-slate-200/60 hover:scale-[1.01]";
-                                                    if (isMatchedInTrace) {
-                                                        itemBg = isSelected 
-                                                            ? "bg-emerald-100/50 border-emerald-400 ring-2 ring-emerald-300/30" 
-                                                            : "bg-emerald-50/60 border-emerald-300 animate-[pulse_2s_infinite]";
-                                                    } else if (isSelected) {
-                                                        itemBg = "bg-[#4A6E85]/10 border-[#4A6E85]/50 ring-2 ring-[#4A6E85]/20";
-                                                    }
-
-                                                    return (
-                                                        <div
-                                                            key={k}
-                                                            onClick={() => setSelectedKnowledgeKey(isSelected ? null : k)}
-                                                            className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${itemBg}`}
-                                                        >
-                                                            <div className="flex items-start justify-between gap-1">
-                                                                <span className="font-black text-slate-800 text-[11px] leading-tight flex-1">{item.title}</span>
-                                                                <span className="text-[9px] font-extrabold text-slate-400 font-mono">{k}</span>
-                                                            </div>
-                                                            <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-200/20">
-                                                                {isMatchedInTrace ? (
-                                                                    <span className="text-[9px] font-black text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded flex items-center gap-0.5">🎯 決策命中</span>
-                                                                ) : (
-                                                                    <span className="text-[9px] font-bold text-slate-400">🟢 備用 (Ready)</span>
-                                                                )}
-                                                                <span className="text-[9px] font-bold text-[#4A6E85] hover:underline">{isSelected ? "收起" : "詳情"}</span>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    ));
-                                })()}
-                            </div>
-
-                            {selectedKnowledgeKey && (() => {
-                                const activeItem = CLINICAL_KNOWLEDGE[selectedKnowledgeKey as keyof typeof CLINICAL_KNOWLEDGE];
-                                if (!activeItem) return null;
-                                return (
-                                    <div className="bg-slate-900 text-slate-100 rounded-2xl p-5 border border-slate-800 space-y-2.5 animate-soft">
-                                        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-base">🔍</span>
-                                                <h5 className="font-black text-sm text-slate-200">實時檢索原文片段 (RAG Preview: {selectedKnowledgeKey})</h5>
-                                            </div>
-                                            <button onClick={() => setSelectedKnowledgeKey(null)} className="text-xs text-slate-400 hover:text-white font-extrabold cursor-pointer">✕ 關閉</button>
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <p className="text-xs font-black text-amber-400">標題：{activeItem.title}</p>
-                                            <p className="text-xs leading-relaxed text-slate-300 font-bold tracking-wide">{activeItem.content}</p>
-                                        </div>
-                                        <div className="bg-slate-850 p-2.5 rounded-lg text-[10px] text-slate-400 font-bold border border-slate-800">
-                                            🛡️ <strong>臨床可信度驗證：</strong> 該資料來自香港衛生署、醫管局或國際糖尿病醫學學會（ADA），系統在 Node 4 通過特徵向量提取對其進行關聯性排序，並完全作為 LLM 提示詞的上文硬編碼，從而確保輸出結論具備 100% 循證可追溯性。
-                                        </div>
-                                    </div>
-                                );
-                            })()}
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    };
-
     const handleSendChatMessage = async (text: string, customImage?: { base64: string, mimeType: string, previewUrl?: string }) => {
         const imgToSend = customImage || (attachedImage ? { base64: attachedImage.base64, mimeType: attachedImage.mimeType, previewUrl: attachedImage.previewUrl } : undefined);
         const trimmedText = text.trim();
@@ -662,9 +260,34 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
         setAttachedImage(null);
         setChatLoading(true);
 
-        const previousTurns: ChatTurn[] = chatMessages
-            .filter(m => !m.isWelcome)
-            .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+        const MAX_CLIENT_HISTORY_ROUNDS = 10;
+        const MAX_CLIENT_HISTORY_MESSAGES = MAX_CLIENT_HISTORY_ROUNDS * 2;
+        const validPreviousTurns: ChatTurn[] = chatMessages
+            .filter(m => {
+                if (m.isWelcome || m.isError) return false;
+                if (m.role !== 'user' && m.role !== 'assistant') return false;
+                const text = typeof m.content === 'string' ? m.content.trim() : '';
+                if (!text) return false;
+                if (m.role === 'assistant' && text.startsWith('⚠️ 唔好意思，系統暫時未能完成回覆')) return false;
+                return true;
+            })
+            .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content.trim() }));
+
+        const recentTurnsReversed: ChatTurn[] = [];
+        let userRoundCount = 0;
+        for (let i = validPreviousTurns.length - 1; i >= 0; i--) {
+            const turn = validPreviousTurns[i];
+            if (recentTurnsReversed.length >= MAX_CLIENT_HISTORY_MESSAGES) break;
+            if (turn.role === 'user') {
+                if (userRoundCount >= MAX_CLIENT_HISTORY_ROUNDS) break;
+                userRoundCount++;
+            }
+            recentTurnsReversed.push(turn);
+        }
+        const previousTurns = recentTurnsReversed.reverse();
+        while (previousTurns.length > 0 && previousTurns[0].role === 'assistant') {
+            previousTurns.shift();
+        }
 
         try {
             const res = await getConversationalChatResponse(
@@ -672,7 +295,8 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                 glucoseRecords,
                 effectiveText,
                 previousTurns,
-                imgToSend ? { data: imgToSend.base64, mimeType: imgToSend.mimeType } : undefined
+                imgToSend ? { data: imgToSend.base64, mimeType: imgToSend.mimeType } : undefined,
+                hba1cRecords
             );
 
             const aiMsg = {
@@ -680,6 +304,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                 role: 'assistant',
                 content: res.reply,
                 optionsComparison: res.optionsComparison,
+                comparisonKind: res.comparisonKind,
                 patientValuesSummary: res.patientValuesSummary,
                 doctorQuestions: res.doctorQuestions,
                 suggestedFollowUps: res.suggestedFollowUps,
@@ -694,10 +319,12 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
             setChatMessages(prev => [...prev, aiMsg]);
         } catch (e) {
             console.error("Chat mode error:", e);
+            const detail = e instanceof Error && e.message ? `\n（${e.message}）` : "";
             setChatMessages(prev => [...prev, {
                 id: (Date.now() + 2).toString(),
                 role: 'assistant',
-                content: "⚠️ 唔好意思，系統暫時連線繁忙，請再試一次或重新拍攝相片。"
+                content: `⚠️ 唔好意思，系統暫時未能完成回覆，請稍等幾秒再試一次。${detail}`,
+                isError: true
             }]);
         } finally {
             setChatLoading(false);
@@ -707,6 +334,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
     const renderChatMode = () => {
         return (
             <div className="space-y-4 animate-soft pb-8">
+                {/* 歡迎與對話歷史 */}
                 <div className="space-y-3">
                     {chatMessages.map((msg, index) => {
                         const isUser = msg.role === 'user';
@@ -724,10 +352,12 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                     )}
                                 </div>
 
+                                {/* 對話氣泡 / 訊息卡片 */}
                                 {isUser ? (
                                     <div className={`px-5 py-3.5 rounded-2xl leading-relaxed shadow-xs transition-all ${
                                         isLargeFont ? 'text-lg md:text-xl px-7 py-5 font-black' : 'text-sm md:text-[15px] font-bold'
                                     } bg-[#4A6E85] text-white rounded-tr-none max-w-[80%]`}>
+                                        {/* 附加圖片呈現 */}
                                         {msg.imageAttachment?.previewUrl && (
                                             <div className="mb-2.5 overflow-hidden rounded-xl border border-white/20 bg-black/10">
                                                 <img
@@ -792,34 +422,120 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                         )}
                                     </div>
                                 ) : (
+                                    /* AI 整合式回應卡片 (Integrated Layout) */
                                     <div className="w-full max-w-[96%] sm:max-w-[90%] bg-white rounded-2xl rounded-tl-none border border-slate-200/90 shadow-sm overflow-hidden transition-all">
                                         
-                                        {msg.safety?.isEmergency && (
-                                            <div className="p-4 sm:p-5 bg-red-50 border-b-2 border-red-500 text-red-900 space-y-3 animate-soft">
-                                                <div className="flex items-center gap-2.5">
-                                                    <span className="text-2xl animate-bounce">🚨</span>
-                                                    <h4 className="font-black text-base md:text-lg">急性危急徵狀警示</h4>
-                                                </div>
-                                                <p className="text-sm font-black leading-relaxed">
-                                                    {msg.safety.message || "偵測到可能危及生命之情況，請立即求醫或尋求協助！"}
-                                                </p>
-                                                <div className="bg-white/90 p-3.5 rounded-xl border border-red-100 text-xs font-bold leading-relaxed space-y-1 text-slate-800">
-                                                    <p className="text-red-700 font-extrabold">⚠️ 臨床安全防護與香港求助指引：</p>
-                                                    <p>1. 請立即撥打 <strong>999</strong> 召喚救護車，或迅速往最近的急症室求醫。</p>
-                                                    <p>2. 對於急性低血糖手震冷汗：若神智清醒，實施「15/15 原則」，立即食用 15g 快速糖（如 3 粒方糖、半罐含糖汽水或一盒果汁），靜待 15 分鐘重新測量。</p>
-                                                    <p>3. 心理健康熱線：撒瑪利亞防止自殺會 2389 2222 / 生命熱線 2382 0000</p>
-                                                </div>
-                                                <div className="flex gap-2.5 pt-1">
-                                                    <a href="tel:999" className="flex-1 bg-red-600 hover:bg-red-700 text-white font-extrabold text-center py-2.5 rounded-xl text-sm transition-all shadow-xs">
-                                                        📞 立即撥打 999
-                                                    </a>
-                                                    <a href="tel:23892222" className="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-center py-2.5 rounded-xl text-xs transition-all shadow-xs">
-                                                        📞 撒瑪利亞熱線
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        )}
+                                        {/* Node 1: 分級分類安全防護卡片（純文字聯絡資訊，不設一鍵撥號避免誤觸） */}
+                                        {(msg.safety?.triggered || msg.safety?.isEmergency) && (() => {
+                                            const safety = msg.safety;
+                                            const isMental = safety.category === 'mental_health';
+                                            const severity = safety.severity || (safety.isEmergency ? 'EMERGENCY' : 'CAUTION');
 
+                                            const theme = isMental
+                                                ? {
+                                                      wrapper: 'bg-indigo-50/90 border-b-2 border-indigo-300 text-indigo-950',
+                                                      box: 'bg-white/95 border-indigo-100',
+                                                      heading: 'text-indigo-900',
+                                                      badge: 'bg-indigo-100 text-indigo-800',
+                                                      contactBg: 'bg-indigo-50/70 border-indigo-200/80 text-indigo-950',
+                                                      icon: '💛',
+                                                      tag: '暖心支援'
+                                                  }
+                                                : severity === 'EMERGENCY'
+                                                ? {
+                                                      wrapper: 'bg-rose-50 border-b-2 border-rose-500 text-rose-950',
+                                                      box: 'bg-white/95 border-rose-200',
+                                                      heading: 'text-rose-800',
+                                                      badge: 'bg-rose-600 text-white',
+                                                      contactBg: 'bg-rose-50 border-rose-200 text-rose-950',
+                                                      icon: '🚨',
+                                                      tag: '緊急安全警示'
+                                                  }
+                                                : severity === 'URGENT'
+                                                ? {
+                                                      wrapper: 'bg-orange-50 border-b-2 border-orange-400 text-orange-950',
+                                                      box: 'bg-white/95 border-orange-200',
+                                                      heading: 'text-orange-800',
+                                                      badge: 'bg-orange-500 text-white',
+                                                      contactBg: 'bg-orange-50 border-orange-200 text-orange-950',
+                                                      icon: '⚠️',
+                                                      tag: '儘快求醫提醒'
+                                                  }
+                                                : {
+                                                      wrapper: 'bg-amber-50/85 border-b-2 border-amber-300 text-amber-950',
+                                                      box: 'bg-white/95 border-amber-200/80',
+                                                      heading: 'text-amber-900',
+                                                      badge: 'bg-amber-200/90 text-amber-950',
+                                                      contactBg: 'bg-amber-50/80 border-amber-200 text-amber-950',
+                                                      icon: '🛡️',
+                                                      tag: '安全處理速查'
+                                                  };
+
+                                            const steps: string[] = Array.isArray(safety.actionSteps) ? safety.actionSteps : [];
+                                            const contacts: { label: string; number: string; note?: string }[] = Array.isArray(safety.contacts) ? safety.contacts : [];
+
+                                            return (
+                                                <div className={`p-4 sm:p-5 space-y-3 animate-soft ${theme.wrapper}`}>
+                                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xl sm:text-2xl">{theme.icon}</span>
+                                                            <h4 className={`font-black ${isLargeFont ? 'text-lg sm:text-xl' : 'text-base md:text-lg'}`}>
+                                                                {safety.title || '安全提醒'}
+                                                            </h4>
+                                                        </div>
+                                                        <span className={`text-[11px] font-black px-2.5 py-1 rounded-full ${theme.badge}`}>
+                                                            {theme.tag}
+                                                        </span>
+                                                    </div>
+
+                                                    {safety.message && (
+                                                        <p className={`font-extrabold leading-relaxed ${isLargeFont ? 'text-[16px] sm:text-[17px]' : 'text-sm'}`}>
+                                                            {safety.message}
+                                                        </p>
+                                                    )}
+
+                                                    {steps.length > 0 && (
+                                                        <div className={`p-3.5 rounded-xl border space-y-1.5 text-slate-800 ${theme.box}`}>
+                                                            <p className={`font-black ${theme.heading} ${isLargeFont ? 'text-sm sm:text-base' : 'text-xs'}`}>
+                                                                建議處理步驟：
+                                                            </p>
+                                                            <ol className={`list-decimal pl-5 space-y-1.5 font-bold leading-relaxed ${isLargeFont ? 'text-[15px] sm:text-[16px]' : 'text-xs sm:text-[13px]'}`}>
+                                                                {steps.map((step, sIdx) => (
+                                                                    <li key={sIdx}>{step}</li>
+                                                                ))}
+                                                            </ol>
+                                                        </div>
+                                                    )}
+
+                                                    {contacts.length > 0 && (
+                                                        <div className="space-y-2">
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                {contacts.map((c, cIdx) => (
+                                                                    <div key={cIdx} className={`p-3 rounded-xl border flex flex-col justify-between gap-0.5 ${theme.contactBg}`}>
+                                                                        <span className={`font-extrabold opacity-90 ${isLargeFont ? 'text-xs sm:text-sm' : 'text-[11px]'}`}>
+                                                                            {c.label}
+                                                                        </span>
+                                                                        <span className={`font-black tracking-wider font-mono ${isLargeFont ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'}`}>
+                                                                            {c.number}
+                                                                        </span>
+                                                                        {c.note && (
+                                                                            <span className="text-[11px] font-bold opacity-75">
+                                                                                {c.note}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                            <p className="text-[11px] font-bold opacity-80 leading-relaxed">
+                                                                ℹ️ 為避免誤觸撥號，以上號碼僅作清晰展示；如情況危急，請立即請身邊家人協助或自行使用電話致電。
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* 1. 溫暖同理開頭與親切點題 (Empathetic Opening) */}
                                         {msg.content && (
                                             <div className={`p-4 sm:p-5 text-slate-800 leading-relaxed ${
                                                 isLargeFont ? 'text-[17px] sm:text-[19px] font-black' : 'text-[14px] sm:text-[15px] font-semibold'
@@ -837,6 +553,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                             </div>
                                         )}
 
+                                        {/* Node 3: 偏好釐清卡片 (Value Preference Cards - 基於文獻與 PDA 標準維度) */}
                                         {msg.activeNode === 3 && msg.preferenceQuestions && msg.preferenceQuestions.length > 0 && (
                                             <div className="p-4 sm:p-5 bg-amber-50/50 border-t border-amber-200/80 space-y-4 animate-soft">
                                                 {msg.preferenceQuestions.map((pq: any) => {
@@ -895,7 +612,10 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                                                                             valueCategory: opt.valueCategory
                                                                                         };
                                                                                     }
-                                                                                    next[msgId] = { ...currentMsg, [pq.id]: currentPq };
+                                                                                    next[msgId] = {
+                                                                                        ...currentMsg,
+                                                                                        [pq.id]: currentPq
+                                                                                    };
                                                                                     return next;
                                                                                 });
                                                                             }}
@@ -929,11 +649,15 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                                                     );
                                                                 })}
 
+                                                                {/* "Other" Card */}
                                                                 <div
                                                                     onClick={() => {
                                                                         setIsOtherSelected(prev => ({
                                                                             ...prev,
-                                                                            [msgId]: { ...(prev[msgId] || {}), [pq.id]: !otherActive }
+                                                                            [msgId]: {
+                                                                                ...(prev[msgId] || {}),
+                                                                                [pq.id]: !otherActive
+                                                                            }
                                                                         }));
                                                                     }}
                                                                     className={`p-3.5 text-left transition-all cursor-pointer flex flex-col justify-between rounded-xl border relative select-none ${
@@ -963,6 +687,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                                                 </div>
                                                             </div>
 
+                                                            {/* Custom text area displayed when "Other" is active */}
                                                             {otherActive && (
                                                                 <div className="mt-3 p-3.5 bg-amber-50/60 border border-amber-200/80 rounded-xl space-y-2 animate-soft">
                                                                     <label className="block text-xs font-black text-amber-900">
@@ -973,7 +698,10 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                                                         onChange={(e) => {
                                                                             setOtherCustomText(prev => ({
                                                                                 ...prev,
-                                                                                [msgId]: { ...(prev[msgId] || {}), [pq.id]: e.target.value }
+                                                                                [msgId]: {
+                                                                                    ...(prev[msgId] || {}),
+                                                                                    [pq.id]: e.target.value
+                                                                                }
                                                                             }));
                                                                         }}
                                                                         rows={2}
@@ -986,7 +714,8 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                                     );
                                                 })}
 
-                                                <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-amber-100/60 mt-3">
+                                                {/* Submit Button Container */}
+                                                <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-amber-200/60 mt-3">
                                                     <p className="text-xs font-bold text-amber-900 leading-normal">
                                                         💡 選擇您最在意的 1～2 項考量後點擊確認，AI 將為您量身盤點方案利弊對比。
                                                     </p>
@@ -1005,11 +734,13 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                                                 const isOther = msgOthers[pq.id];
                                                                 const customTxt = (msgTexts[pq.id] || "").trim();
                                                                 
+                                                                // Add selected standard options
                                                                 Object.values(pqSelections).forEach((sel: any) => {
                                                                     parts.push(`- 針對「${sel.questionText}」，我最看重：【${sel.label}】（價值維度：${sel.valueCategory}）`);
                                                                     submittedCount++;
                                                                 });
 
+                                                                // Add custom "other" option
                                                                 if (isOther && customTxt.length > 0) {
                                                                     parts.push(`- 針對「${pq.questionText}」，我有其他考量：【${customTxt}】（價值維度：其他）`);
                                                                     submittedCount++;
@@ -1033,7 +764,9 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                                                 const isOther = msgOthers[pq.id];
                                                                 const customTxt = (msgTexts[pq.id] || "").trim();
                                                                 validCount += Object.keys(pqSelections).length;
-                                                                if (isOther && customTxt.length > 0) validCount++;
+                                                                if (isOther && customTxt.length > 0) {
+                                                                    validCount++;
+                                                                }
                                                             });
                                                             return validCount === 0;
                                                         })()}
@@ -1061,70 +794,93 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                             </div>
                                         )}
 
-                                        {msg.activeNode !== 3 && msg.briefVersion?.takeHomeMessages && msg.briefVersion.takeHomeMessages.length > 0 && (
-                                            <div className="bg-emerald-50/80 border-t border-b border-emerald-200/70 p-4 sm:p-5 space-y-3 animate-soft">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="flex items-center justify-center w-6 h-6 bg-emerald-600 text-white rounded-lg text-xs shadow-xs font-black">
-                                                            💡
+                                        {/* 2. 結構化重點對比卡片 (直接展示，不隱藏於摺疊區) */}
+                                        {(() => {
+                                            const comparisonItems = msg.detailedVersion?.optionComparison?.length
+                                                ? msg.detailedVersion.optionComparison
+                                                : (msg.optionsComparison || []);
+                                            if (msg.activeNode === 3 || msg.activeNode === 1 || msg.safety?.blockLLM || comparisonItems.length === 0) {
+                                                return null;
+                                            }
+                                            const isKnowledgeComparison = msg.comparisonKind === 'knowledge';
+                                            return (
+                                                <div className="bg-slate-50/80 border-t border-slate-200/70 px-4 py-3 sm:px-5 sm:py-3.5 space-y-2.5 animate-soft">
+                                                    <p className={`font-black text-[#4A6E85] tracking-tight flex items-center gap-1.5 ${isLargeFont ? 'text-sm sm:text-base' : 'text-xs'}`}>
+                                                        <span>⚖️</span>
+                                                        <span>
+                                                            {isKnowledgeComparison
+                                                                ? '重點對比一覽'
+                                                                : '治療方案利弊考量（供覆診與醫生商討）'}
                                                         </span>
-                                                        <h4 className={`font-black text-emerald-950 tracking-tight ${isLargeFont ? 'text-base sm:text-lg' : 'text-xs sm:text-[13px]'}`}>
-                                                            重點速覽
-                                                        </h4>
-                                                    </div>
-                                                    <span className="text-[10px] sm:text-[11px] font-bold text-emerald-700/90 hidden xs:inline">
-                                                        點擊 🔖 可存入問診備忘
-                                                    </span>
-                                                </div>
-                                                
-                                                <ul className="space-y-2.5 pt-0.5">
-                                                    {msg.briefVersion.takeHomeMessages.map((item: string, iIdx: number) => {
-                                                        const takeawayKey = (msg.id || index.toString()) + "-tw-" + iIdx;
-                                                        const isSaved = chatSavedTakeaways[takeawayKey] || false;
-                                                        return (
-                                                            <li key={iIdx} className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5 bg-white/95 p-3 sm:p-3.5 rounded-xl border border-emerald-150/70 shadow-xs hover:border-emerald-300/80 transition-all">
-                                                                <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                                                                    <span className="flex-shrink-0 w-5 h-5 bg-emerald-600 text-white text-[11px] font-black rounded-full flex items-center justify-center mt-0.5 shadow-2xs">
-                                                                        {iIdx + 1}
+                                                    </p>
+                                                    <div className="space-y-2">
+                                                        {comparisonItems.map((opt: any, optIdx: number) => (
+                                                            <div key={optIdx} className="bg-white border border-slate-200/80 p-3 rounded-xl shadow-2xs space-y-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="w-5 h-5 bg-[#4A6E85] text-white text-[11px] font-black flex items-center justify-center rounded-full shrink-0">
+                                                                        {optIdx + 1}
                                                                     </span>
-                                                                    <span className={`text-slate-800 leading-relaxed ${isLargeFont ? 'text-[17px] sm:text-[18px] font-extrabold' : 'text-[13px] sm:text-[14px] font-bold'}`}>
-                                                                        {item.split(/\*\*(.*?)\*\*/g).map((part: string, pIdx: number) => {
-                                                                            if (pIdx % 2 === 1) {
-                                                                                return (
-                                                                                    <strong key={pIdx} className="font-black text-emerald-950 bg-emerald-100/60 px-1 py-0.5 rounded-sm mx-0.5">
-                                                                                        {part}
-                                                                                    </strong>
-                                                                                );
-                                                                            }
-                                                                            return part;
-                                                                        })}
+                                                                    <span className={`font-extrabold text-slate-900 ${isLargeFont ? 'text-base sm:text-lg' : 'text-sm'}`}>
+                                                                        {opt.option}
                                                                     </span>
                                                                 </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        if (isSaved) return;
-                                                                        const cleanText = item.replace(/\*\*/g, '').trim();
-                                                                        saveDoctorQuestions([cleanText]);
-                                                                        setChatSavedTakeaways(prev => ({ ...prev, [takeawayKey]: true }));
-                                                                        showToast("已存入「問題紀錄」清單 🔖");
-                                                                    }}
-                                                                    className={`self-end sm:self-start text-[11px] font-black px-2.5 py-1 rounded-lg transition-all whitespace-nowrap shrink-0 cursor-pointer ${
-                                                                        isSaved
-                                                                            ? "bg-emerald-100 text-emerald-800 pointer-events-none"
-                                                                            : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 active:scale-95 shadow-2xs"
-                                                                    }`}
-                                                                >
-                                                                    {isSaved ? "✓ 已存入備忘" : "🔖 存為問診備忘"}
-                                                                </button>
-                                                            </li>
-                                                        );
-                                                    })}
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                    <div className="bg-emerald-50/60 p-2.5 rounded-lg border border-emerald-100">
+                                                                        <p className={`font-black text-emerald-800 mb-1 ${isLargeFont ? 'text-xs' : 'text-[11px]'}`}>
+                                                                            {isKnowledgeComparison ? '👍 主要優勢／特點' : '👍 優勢效益 (Pros)'}
+                                                                        </p>
+                                                                        {renderBulletPoints(opt.pros, true, "text-xs", "font-semibold")}
+                                                                    </div>
+                                                                    <div className="bg-amber-50/60 p-2.5 rounded-lg border border-amber-100">
+                                                                        <p className={`font-black text-amber-800 mb-1 ${isLargeFont ? 'text-xs' : 'text-[11px]'}`}>
+                                                                            {isKnowledgeComparison ? '⚠️ 注意事項／限制' : '⚠️ 顧慮隱憂 (Cons)'}
+                                                                        </p>
+                                                                        {renderBulletPoints(opt.cons, false, "text-xs", "font-semibold")}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* 3. 重點速覽 (Key Takeaways / Brief Version) - 簡潔緊湊的綠色重點列表 */}
+                                        {msg.activeNode !== 3 && msg.activeNode !== 1 && !msg.safety?.blockLLM && msg.briefVersion?.takeHomeMessages && msg.briefVersion.takeHomeMessages.length > 0 && (
+                                            <div className="bg-emerald-50/70 border-t border-b border-emerald-200/60 px-4 py-2.5 sm:px-5 sm:py-3 space-y-1.5 animate-soft">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-xs leading-none" aria-hidden="true">💡</span>
+                                                    <h4 className={`font-black text-emerald-900 tracking-tight ${isLargeFont ? 'text-sm sm:text-base' : 'text-xs'}`}>
+                                                        重點速覽
+                                                    </h4>
+                                                </div>
+
+                                                <ul className="space-y-1.5">
+                                                    {msg.briefVersion.takeHomeMessages.map((item: string, iIdx: number) => (
+                                                        <li key={iIdx} className="flex items-start gap-2">
+                                                            <span className={`flex-shrink-0 bg-emerald-600 text-white font-black rounded-full flex items-center justify-center ${isLargeFont ? 'w-5 h-5 text-[11px] mt-1' : 'w-4 h-4 text-[10px] mt-0.5'}`}>
+                                                                {iIdx + 1}
+                                                            </span>
+                                                            <span className={`text-slate-800 leading-snug ${isLargeFont ? 'text-[16px] sm:text-[17px] font-bold' : 'text-[13px] font-semibold'}`}>
+                                                                {item.split(/\*\*(.*?)\*\*/g).map((part: string, pIdx: number) => {
+                                                                    if (pIdx % 2 === 1) {
+                                                                        return (
+                                                                            <strong key={pIdx} className="font-black text-emerald-950">
+                                                                                {part}
+                                                                            </strong>
+                                                                        );
+                                                                    }
+                                                                    return part;
+                                                                })}
+                                                            </span>
+                                                        </li>
+                                                    ))}
                                                 </ul>
                                             </div>
                                         )}
 
-                                        {msg.activeNode !== 3 && msg.detailedVersion && (msg.detailedVersion.generalExplanation || (msg.detailedVersion.optionComparison && msg.detailedVersion.optionComparison.length > 0)) && (
+                                        {/* 4. 詳細說明 (Detailed Version) - 輕量摺疊（僅在非偏好詢問階段且有文字解說時展示） */}
+                                        {msg.activeNode !== 3 && msg.activeNode !== 1 && !msg.safety?.blockLLM && msg.detailedVersion?.generalExplanation && msg.detailedVersion.generalExplanation.trim().length > 0 && (
                                             <div className="border-b border-slate-150/80">
                                                 <button
                                                     onClick={() => {
@@ -1149,55 +905,25 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
 
                                                 {expandedDetailedSections[msg.id || index.toString()] && (
                                                     <div className="p-4 sm:p-5 bg-slate-50/70 border-t border-slate-200/60 space-y-3.5 animate-soft">
-                                                        {msg.detailedVersion.generalExplanation && (
-                                                            <div className="space-y-2">
-                                                                <ReactMarkdown
-                                                                    components={{
-                                                                        p: ({children}) => <p className={`mb-2 last:mb-0 text-slate-700 leading-relaxed whitespace-pre-line ${isLargeFont ? 'text-[16px] font-bold' : 'text-[13px] font-medium'}`}>{children}</p>,
-                                                                        ul: ({children}) => <ul className={`list-disc pl-5 mb-2 space-y-1 text-slate-700 whitespace-pre-line ${isLargeFont ? 'text-[16px] font-bold' : 'text-[13px] font-medium'}`}>{children}</ul>,
-                                                                        ol: ({children}) => <ol className={`list-decimal pl-5 mb-2 space-y-1 text-slate-700 whitespace-pre-line ${isLargeFont ? 'text-[16px] font-bold' : 'text-[13px] font-medium'}`}>{children}</ol>,
-                                                                        li: ({children}) => <li className={`leading-relaxed text-slate-700 whitespace-pre-line ${isLargeFont ? 'text-[16px] font-bold' : 'text-[13px] font-medium'}`}>{children}</li>,
-                                                                        strong: ({children}) => <strong className="font-bold text-slate-950 mx-0.5">{children}</strong>,
-                                                                    }}
-                                                                >
-                                                                    {msg.detailedVersion.generalExplanation.replace(/\\n/g, '\n').replace(/<br\s*\/?>/gi, '\n')}
-                                                                </ReactMarkdown>
-                                                            </div>
-                                                        )}
-
-                                                        {msg.detailedVersion.optionComparison && msg.detailedVersion.optionComparison.length > 0 && (
-                                                            <div className="space-y-2.5 pt-2 border-t border-slate-200/70">
-                                                                <p className="text-[11px] font-black text-[#4A6E85] uppercase tracking-wider flex items-center gap-1">
-                                                                    <span>⚖️</span>
-                                                                    <span>治療方案利弊考量（供覆診與醫生商討）：</span>
-                                                                </p>
-                                                                {msg.detailedVersion.optionComparison.map((opt: any, optIdx: number) => (
-                                                                    <div key={optIdx} className="bg-white border border-slate-200/80 p-3.5 rounded-xl shadow-2xs space-y-2">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className="w-4 h-4 bg-[#4A6E85] text-white text-[10px] font-black flex items-center justify-center rounded-full">
-                                                                                {optIdx + 1}
-                                                                            </span>
-                                                                            <span className="font-extrabold text-slate-900 text-sm">{opt.option}</span>
-                                                                        </div>
-                                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                                                                            <div className="bg-emerald-50/60 p-2.5 rounded-lg border border-emerald-100">
-                                                                                <p className="text-[10px] font-black text-emerald-800 mb-1">👍 優勢效益 (Pros)</p>
-                                                                                {renderBulletPoints(opt.pros, true, "text-[11px]", "font-bold")}
-                                                                            </div>
-                                                                            <div className="bg-amber-50/60 p-2.5 rounded-lg border border-amber-100">
-                                                                                <p className="text-[10px] font-black text-amber-800 mb-1">⚠️ 顧慮隱憂 (Cons)</p>
-                                                                                {renderBulletPoints(opt.cons, false, "text-[11px]", "font-bold")}
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
+                                                        <div className="space-y-2">
+                                                            <ReactMarkdown
+                                                                components={{
+                                                                    p: ({children}) => <p className={`mb-2 last:mb-0 text-slate-700 leading-relaxed whitespace-pre-line ${isLargeFont ? 'text-[16px] font-bold' : 'text-[13px] font-medium'}`}>{children}</p>,
+                                                                    ul: ({children}) => <ul className={`list-disc pl-5 mb-2 space-y-1 text-slate-700 whitespace-pre-line ${isLargeFont ? 'text-[16px] font-bold' : 'text-[13px] font-medium'}`}>{children}</ul>,
+                                                                    ol: ({children}) => <ol className={`list-decimal pl-5 mb-2 space-y-1 text-slate-700 whitespace-pre-line ${isLargeFont ? 'text-[16px] font-bold' : 'text-[13px] font-medium'}`}>{children}</ol>,
+                                                                    li: ({children}) => <li className={`leading-relaxed text-slate-700 whitespace-pre-line ${isLargeFont ? 'text-[16px] font-bold' : 'text-[13px] font-medium'}`}>{children}</li>,
+                                                                    strong: ({children}) => <strong className="font-bold text-slate-950 mx-0.5">{children}</strong>,
+                                                                }}
+                                                            >
+                                                                {msg.detailedVersion.generalExplanation.replace(/\\n/g, '\n').replace(/<br\s*\/?>/gi, '\n')}
+                                                            </ReactMarkdown>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
                                         )}
 
+                                        {/* 4. 下次覆診問醫生的問題 (Doctor Questions) - 智能按需展示（僅在非偏好詢問階段展示） */}
                                         {msg.activeNode !== 3 && msg.detailedVersion?.suggestedDiscussionPoints && msg.detailedVersion.suggestedDiscussionPoints.length > 0 && (
                                             <div>
                                                 <button
@@ -1258,12 +984,29 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                                 )}
                                             </div>
                                         )}
+
+                                        {/* Legacy fallback - optionsComparison & doctorQuestions if present on legacy data */}
+                                        {msg.activeNode !== 3 && (!msg.briefVersion && !msg.detailedVersion) && msg.optionsComparison && msg.optionsComparison.length > 0 && (
+                                            <div className="p-4 bg-slate-50 border-t border-slate-200 space-y-2">
+                                                <p className="text-xs font-black text-slate-700">方案利弊對照盤：</p>
+                                                {msg.optionsComparison.map((opt: any, optIdx: number) => (
+                                                    <div key={optIdx} className="bg-white p-3 rounded-xl border border-slate-200 space-y-1">
+                                                        <p className="font-extrabold text-xs text-slate-900">{opt.option}</p>
+                                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                                            <div>{renderBulletPoints(opt.pros, true, "text-[11px]", "font-medium")}</div>
+                                                            <div>{renderBulletPoints(opt.cons, false, "text-[11px]", "font-medium")}</div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
                         );
                     })}
 
+                    {/* AI 正在推理中 */}
                     {chatLoading && (
                         <div className="flex flex-col items-start bg-slate-50/50 p-4 rounded-3xl w-full border border-slate-100">
                             <p className="text-xs font-black text-[#5C8199] mb-2 px-2 flex items-center gap-1.5 animate-pulse">
@@ -1280,9 +1023,10 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                     )}
                 </div>
 
+                {/* 推薦的下一步深入追問（如果當前處於安全攔截或等待長者選擇偏好，則不展示干擾選項） */}
                 {(() => {
                     const lastAssistantMsg = [...chatMessages].reverse().find(msg => msg.role === 'assistant');
-                    if (lastAssistantMsg?.activeNode === 3) return null;
+                    if (lastAssistantMsg?.activeNode === 3 || lastAssistantMsg?.activeNode === 1 || lastAssistantMsg?.safety?.blockLLM) return null;
                     const lastFollowUps = lastAssistantMsg?.suggestedFollowUps || [];
                     if (lastFollowUps.length > 0 && !chatLoading) {
                         return (
@@ -1307,6 +1051,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                     return null;
                 })()}
 
+                {/* 隱藏的檔案/相機輸入 */}
                 <input
                     type="file"
                     ref={fileInputRef}
@@ -1333,6 +1078,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                     }}
                 />
 
+                {/* 已選相片預覽條 */}
                 {attachedImage && (
                     <div className="bg-[#4A6E85]/10 border border-[#4A6E85]/30 rounded-2xl p-2.5 flex items-center justify-between gap-3 animate-soft">
                         <div className="flex items-center gap-3 min-w-0">
@@ -1361,6 +1107,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                     </div>
                 )}
 
+                {/* 對話輸入區域 (OpenAI 簡約對話框風格) */}
                 <div className="bg-white border border-slate-200/80 rounded-2xl p-2 shadow-xs focus-within:ring-2 focus-within:ring-[#4A6E85]/20 focus-within:border-[#4A6E85] transition-all flex flex-col relative group">
                     <textarea
                         id="chat-input-box"
@@ -1377,6 +1124,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                     />
                     <div className="absolute bottom-2.5 right-2.5 flex items-center justify-between left-2.5 pointer-events-none">
                         <div className="flex items-center gap-2 pointer-events-auto">
+                            {/* 📷 相機/相片上傳按鈕 */}
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
@@ -1387,6 +1135,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                 <span className="hidden sm:inline leading-none">拍照/上傳</span>
                             </button>
 
+                            {/* 🎤 語音輸入按鈕 (垂直精準對齊圖標與文字，支援點擊錄音) */}
                             <button
                                 type="button"
                                 onClick={toggleVoiceInput}
@@ -1405,6 +1154,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                                 </span>
                             </button>
 
+                            {/* 💬 開啟新對話快捷按鈕 */}
                             {chatMessages.length > 1 && (
                                 <button
                                     type="button"
@@ -1435,6 +1185,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                     </div>
                 </div>
 
+                {/* 常用話題快捷按鍵 */}
                 {chatMessages.length <= 1 && (
                     <div className="space-y-1.5">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">快捷提問：</p>
@@ -1481,6 +1232,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
     return (
         <div className={`space-y-4 animate-soft relative ${isLargeFont ? 'spacy-container !px-0' : ''}`}>
             
+            {/* 浮動提示 Toast (存入問題清單成功反饋) */}
             {toastMessage && (
                 <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-bounce">
                     <div className="flex items-center gap-2.5 bg-emerald-900/95 text-white px-4 py-2.5 rounded-2xl shadow-xl border border-emerald-500/40 text-xs sm:text-sm font-black backdrop-blur-md">
@@ -1496,7 +1248,8 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                 </div>
             )}
 
-            <div className="flex items-center justify-between gap-2 max-w-xl mx-auto px-1">
+            {/* 頂部操作列：隨手記問診備忘 + 開啟新對話 */}
+            <div className="flex items-center justify-between gap-2 max-w-xl mx-auto px-1 flex-wrap">
                 <button
                     type="button"
                     onClick={() => setIsQuickMemoOpen(true)}
@@ -1525,6 +1278,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
 
             {renderChatMode()}
 
+            {/* 📝 隨手記問診備忘彈窗 Modal */}
             {isQuickMemoOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-soft">
                     <div className="bg-white rounded-3xl p-5 sm:p-6 w-full max-w-lg shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto">
@@ -1550,6 +1304,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                             </button>
                         </div>
 
+                        {/* 常用提問靈感 Chips */}
                         <div className="space-y-1.5">
                             <p className="text-[11px] font-black text-slate-400">💡 常見問診靈感（點擊填入）：</p>
                             <div className="flex flex-wrap gap-1.5">
@@ -1571,6 +1326,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                             </div>
                         </div>
 
+                        {/* 輸入框與語音按鈕 */}
                         <div className="space-y-2">
                             <div className="relative">
                                 <textarea
@@ -1595,6 +1351,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                             </div>
                         </div>
 
+                        {/* 操作按鈕 */}
                         <div className="flex items-center justify-between gap-3 pt-2">
                             <button
                                 type="button"

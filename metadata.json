@@ -1,5 +1,5 @@
 {
-  "name": "tangde01",
+  "name": "Remix 糖友導航_261119",
   "description": "專為香港糖尿病長者設計的決策輔助工具，透過 AI 了解您的生活習慣與顧慮，助您準備與醫生的溝通。",
   "requestFramePermissions": ["microphone", "camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

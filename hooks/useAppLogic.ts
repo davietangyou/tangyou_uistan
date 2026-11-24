@@ -4,14 +4,14 @@
  * 核心业务逻辑 Hook
  *
  * 职责：
- * 1. 整合所有页面视图需要的状态 (Profile, Glucose, Consult等)。
+ * 1. 整合所有页面视图需要的状态 (Profile, Glucose, Consult, Admin等)。
  * 2. 管理数据的持久化 (LocalStorage)。
  * 3. 包含具体的业务处理函数 (如添加血糖、生成报告、文件下载)。
- * 4. 协调数据服务 (DataService) 进行上传。
+ * 4. 协调数据服务 (DataService) 进行上传和获取。
  * 5. 整合语音服务 (useSpeechFocus)。
  */
 
-import {useEffect, useMemo, useState} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import {ClarificationQuestion, DecisionResult, GlucoseRecord, UserProfile, View, HbA1cRecord, ChatTurn} from '../utils/types';
 import {useSpeechFocus} from './useSpeechFocus';
 import * as DataService from '../services/dataService';
@@ -157,17 +157,31 @@ export const useAppLogic = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadLogs, setUploadLogs] = useState<string[]>([]);
 
-    // 7. Accessibility State (老友大字模式 / 護眼大字體色調)
+    // 7. Admin State (管理端数据)
+    const [adminData, setAdminData] = useState<Record<string, Record<string, any>> | null>(null);
+    const [isAdminLoading, setIsAdminLoading] = useState(false);
+    const [playingAdminUrl, setPlayingAdminUrl] = useState<string | null>(null);
+
+    // 7a. Accessibility State (老友大字模式 / 護眼大字體色調)
     const [isLargeFont, setIsLargeFont] = useState<boolean>(() => {
         const saved = localStorage.getItem('dia_large_font');
         return saved ? saved === 'true' : true; // 預設開啟大字護老模式
     });
+
+    // 独立的 Audio Ref 用于播放管理端的加密音频
+    // 注：原代码公用一个 ref，但拆分后管理端和用户端播放器分离，互不干扰，符合 Tab 隔离的场景
+    const adminAudioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
     // 8. URL Params Logic (页面参数检查)
     const showDetailTab = useMemo(() => {
         // const params = new URLSearchParams(window.location.search);
         // return params.get('showdetail') === 'true'; // 不做判定，改为默认展示 (参考原代码注释)
         return true;
+    }, []);
+
+    const showAdminTab = useMemo(() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('admindata') === 'true';
     }, []);
 
     // 9. Persistence Effects (数据持久化)
@@ -422,6 +436,70 @@ ${questionsToPrint.length > 0 ? questionsToPrint.map((q, i) => `${i + 1}. ${q}`)
         }
     }, [consultStep, result]);
 
+    // 管理端: 获取历史数据 (Refactored using DataService)
+    const fetchAdminData = async () => {
+        setIsAdminLoading(true);
+        try {
+            const json = await DataService.fetchAdminJson();
+            setAdminData(json);
+        } catch (e) {
+            alert("獲取歷史數據失敗");
+            console.error(e);
+        } finally {
+            setIsAdminLoading(false);
+        }
+    };
+
+    // 管理端: 播放加密音频 (Refactored using DataService)
+    const playSecureAudio = async (url: string) => {
+        if (playingAdminUrl === url) {
+            adminAudioPlayerRef.current?.pause();
+            setPlayingAdminUrl(null);
+            return;
+        }
+
+        try {
+            if (adminAudioPlayerRef.current) adminAudioPlayerRef.current.pause();
+            // 簡單的加載狀態指示
+            setPlayingAdminUrl(url);
+
+            // 调用 DataService 获取 Blob (处理鉴权 Header)
+            const blob = await DataService.fetchSecureBlob(url);
+            const blobUrl = URL.createObjectURL(blob);
+            const audio = new Audio(blobUrl);
+
+            adminAudioPlayerRef.current = audio;
+            audio.onended = () => setPlayingAdminUrl(null);
+            audio.play();
+        } catch (e) {
+            console.error(e);
+            setPlayingAdminUrl(null);
+            alert("播放失敗");
+        }
+    };
+
+    // 管理端: 下载加密音频 (Refactored using DataService)
+    const downloadSecureAudio = async (url: string, filename?: string) => {
+        try {
+            // 调用 DataService 获取 Blob
+            const blob = await DataService.fetchSecureBlob(url);
+            const blobUrl = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            // 嘗試從 URL 或傳入參數獲取文件名
+            link.download = filename || url.split('/').pop() || 'recording.webm';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+        } catch (e) {
+            console.error(e);
+            alert("下載失敗");
+        }
+    };
+
     return {
         // 状态
         profile, setProfile,
@@ -443,11 +521,13 @@ ${questionsToPrint.length > 0 ? questionsToPrint.map((q, i) => `${i + 1}. ${q}`)
         hba1cRecords, setHba1cRecords,
         newHbA1c, setNewHbA1c,
 
-        // 上传状态
+        // 上传与管理端状态
         isUploading, uploadLogs,
+        adminData, isAdminLoading,
+        playingAdminUrl,
 
         // 配置
-        showDetailTab,
+        showDetailTab, showAdminTab,
         isLargeFont, setIsLargeFont,
 
         // 业务方法
@@ -458,6 +538,9 @@ ${questionsToPrint.length > 0 ? questionsToPrint.map((q, i) => `${i + 1}. ${q}`)
         toggleCondition,
         saveDoctorQuestions,
         handleUploadData,
+        fetchAdminData,
+        playSecureAudio,
+        downloadSecureAudio,
 
         // 语音相关 (透传自 useSpeechFocus，供 UI 组件使用)
         ...speechLogic

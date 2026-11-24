@@ -77,9 +77,9 @@ export const SavedQuestionsView: React.FC<SavedQuestionsViewProps> = ({
         try {
             const res = await analyzeSavedQuestions(savedQuestions);
             setAnalysisResult(res);
-        } catch (e) {
+        } catch (e: any) {
             console.error("AI 總結載入失敗", e);
-            setAnalysisError("唔好意思，暫時未能連接 AI 整理服務，請稍後再按一下重試。");
+            setAnalysisError(e?.message || "AI 總結暫時無法載入，請稍後再試。");
         } finally {
             setAnalysisLoading(false);
         }
@@ -243,20 +243,9 @@ export const SavedQuestionsView: React.FC<SavedQuestionsViewProps> = ({
                         )}
 
                         {analysisError && !analysisLoading && (
-                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                <div className="flex items-start gap-2.5">
-                                    <span className="text-xl shrink-0">⚠️</span>
-                                    <p className={`text-amber-900 font-bold leading-relaxed ${isLargeFont ? 'text-base' : 'text-xs sm:text-sm'}`}>
-                                        {analysisError}
-                                    </p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={handleRefreshAnalysis}
-                                    className="shrink-0 bg-[#4A6E85] hover:bg-[#3d5b6e] text-white font-black px-4 py-2 rounded-xl shadow-xs cursor-pointer active:scale-95 transition-all text-xs sm:text-sm"
-                                >
-                                    🔄 再試一次
-                                </button>
+                            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-bold flex items-center gap-2">
+                                <span>⚠️</span>
+                                <span>{analysisError}</span>
                             </div>
                         )}
 

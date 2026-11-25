@@ -1,8 +1,24 @@
 # tangyou_uistan 仓库纯净性与 AI 迭代成果回灌实践
 
-版本：1.0
+版本：1.1
 适用项目：tangyou_uistan
 适用环境：macOS
+
+---
+
+## 阅读导航
+
+本文档分为三个层次：
+
+- 第 0–2 节：理解这套实践的由来、北极星与仓库边界；
+- 第 3–5 节：按顺序执行出站、入站、验证与合并；
+- 第 6–8 节：回滚、检查清单与附录。
+
+若需要马上执行一次完整回灌，可以直接从第 4 节的变量与目录准备开始，再按第 5 节的顺序推进。最小执行路径是：
+
+```
+记录 base → 生成干净快照 → 解压导出物 → 建立候选 worktree → 排除叠加 → 分类评审 → 验证 → squash 合并 → 人工推送
+```
 
 ---
 
@@ -28,14 +44,14 @@
 
 这套实践追求的不是“消灭所有噪音”，而是让仓库始终停留在健康的张力区域：足够纯净，但不因流程过重而无法持续；足够开放，但不因工具而失去人的最终主权。
 
-### 0.3 七颗方向性北极星
+### 0.3 北极星群矩阵：七颗方向性北极星
 
 北极星不是验收项，也不是可以一次性达成的状态。它是持续看向、不断逼近、但永远无法完全抵达的方向。七颗北极星共同构成一个张力空间；实践的目标不是最大化某一颗，而是让系统始终停留在“没有哪一颗塌陷”的区域。
 
 | 北极星方向 | 磐石理由 | 不可达性 | 主要张力 |
 | --- | --- | --- | --- |
 | **走向语义自足** | 仓库是语义载体；一个文件若只能由某个工具或某台机器解释，它就不再属于项目本身。 | 新工具、新环境会不断带来新产物，边界需要持续重画。 | 与低摩擦冲突：分类与排除需要注意力。 |
-| **走向人的可接手性** | 项目必须能在任何工具、厂商、智能体消失后，仍由一个人理解、运行、维护、发布。 | 隐性知识与上下文永远存在，文档只能不断逼近完整。 | 与 AI 加速冲突：工具可能带来不透明依赖。 |
+| **走向人的可接手性** | 项目需要能在任何工具、厂商、智能体消失后，仍由一个人理解、运行、维护、发布。 | 隐性知识与上下文永远存在，文档只能不断逼近完整。 | 与 AI 加速冲突：工具可能带来不透明依赖。 |
 | **走向工具可替换性** | AI 工具是临时的，项目是长期的；任何工具假设都会成为未来的负债。 | 工具各有独特能力，完全无锁定不现实。 | 与工具特定优化冲突：便利与可移植之间存在取舍。 |
 | **走向可复现性** | 若不能从仓库加文档重建项目，仓库就不是权威来源。 | 环境漂移、依赖变化、外部服务差异永远存在。 | 与便利性冲突：提交生成物能省事，但破坏复现。 |
 | **走向可逆性** | 不可逆的变更会让实验变成赌博，让 AI 加速失去安全网。 | 上下文会丢失，完美回退不可能。 | 与速度冲突：记录 base、评审 diff 需要时间。 |
@@ -70,11 +86,58 @@
 - 未知文件默认不进入仓库，先进入归档与隔离区；
 - 一次迭代在主分支形成一个提交，细节留在渠道归档。
 
+### 0.5 北极星与实践的对应
+
+| 北极星方向 | 对应实践 |
+| --- | --- |
+| 走向语义自足 | 归属 × 时间性矩阵、四类文件、默认拒绝、工具产物登记表 |
+| 走向人的可接手性 | 受保护基线、干净 clone 测试、人工发布手册 |
+| 走向工具可替换性 | 干净出站快照、渠道归档、工具产物外置 |
+| 走向可复现性 | `npm ci`、lockfile、`.nvmrc`、干净 clone 测试 |
+| 走向可逆性 | base 记录、候选 worktree、squash 提交、回滚表 |
+| 走向人的最终主权 | 人工评审、人工 push、删除候选确认、未知文件隔离 |
+| 走向可持续的低摩擦 | 分级验证、机械清单、按风险加码 |
+
 ---
 
-## 1. 仓库边界与文件分类
+## 1. 前置条件与基本假设
 
-### 1.1 归属 × 时间性矩阵
+### 1.1 环境
+
+本文档以 macOS 为参考环境，命令基于以下工具：
+
+| 工具 | 用途 | 检查方式 |
+| --- | --- | --- |
+| Git（支持 `worktree`） | 版本控制、候选工作区 | `git --version` |
+| rsync | 目录对比与叠加 | `rsync --version` |
+| ditto | 解压 zip | `which ditto` |
+| Node.js 22+ | 运行时；`node --import tsx` 需要 Node 20.6+ | `node -v` |
+| npm | 依赖安装 | `npm -v` |
+| `package-lock.json` | `npm ci` 的依据 | `ls package-lock.json` |
+
+若本机 rsync 不支持 `--itemize-changes`，可以把预览命令改为 `rsync -avn`，或用 `diff -rq` 查看目录差异。
+
+### 1.2 仓库状态
+
+- 主仓库路径默认为 `/Users/davie/Desktop/EffLearn/tangyou_uistan`；
+- 远端名默认为 `origin`；
+- 主分支以 `git branch --show-current` 为准，不硬编码 `main` 或 `master`；
+- 仓库当前没有 submodule；若未来引入 submodule，`git archive` 不包含 submodule 内容，需要额外处理；
+- 主仓库存在 `.env.local`，用于本地运行时验证；它不被 Git 跟踪，也不进入任何快照或提交。
+
+### 1.3 本文档的假设
+
+- AI 工具导出物为 zip；
+- 导出物解压后，项目根目录包含 `package.json`；
+- AI 工具可能导出完整工作区，也可能只导出部分文件；
+- 导出物可能包含 `.git`、`node_modules`、`.idea`、`.env.local`、工具元数据等明显不属于项目的内容；
+- 渠道归档根目录位于 `/Users/davie/Desktop/scrapt/tangyou_uistan/iteration_channels/`。
+
+---
+
+## 2. 仓库边界与文件分类
+
+### 2.1 归属 × 时间性矩阵
 
 | | **项目内在** | **工具 / 环境特有** |
 | --- | --- | --- |
@@ -83,16 +146,16 @@
 
 这张矩阵不依赖某个工具的名字，也不依赖某次迭代的具体文件。新工具带来的新产物，可以先按“归属 × 时间性”判断，再进入工具产物登记表。
 
-### 1.2 四类文件
+### 2.2 四类文件
 
 | 类别 | 例子 | 处置 |
 | --- | --- | --- |
-| **本地专属、永不导入** | `.git`、`node_modules`、`.env`、`.env.local`、`.env.server.local`、`.idea`、`.vscode`、`.DS_Store`、`__MACOSX` | 出站不提供；入站按路径排除；不进入候选区 |
+| **本地专属、永不导入** | `.git`、`node_modules`、`.env`、`.env.local`、`.env.server.local`、`.idea`、`.vscode`、`.npmrc`、`.DS_Store`、`__MACOSX` | 出站不提供；入站按路径排除；不进入候选区 |
 | **项目内在、但受保护** | `package.json`、`package-lock.json`、`.nvmrc`、`.env.example`、`.gitignore`、`vite.config.ts`、`server.ts`、`metadata.json`、`index.html`、`tsconfig.json`、`importantdocsneedkown/` | 入站显示 diff，由人显式决定接受、回绝或部分合并 |
 | **工具产物、默认拒绝** | `bun.lock`、`bun.lockb`、`AGENTS.md`、`.aider*`、`.cursor*`、`.claude/`、`.windsurf/`、`.continue/`、`.github/copilot-instructions.md` | 出站不提供；入站排除或归档到渠道目录 |
 | **未知文件** | 新工具带来的新文件 | 进入渠道目录的 `unknown/`，人工分类后再决定 |
 
-### 1.3 `.git`、`.idea`、`node_modules` 的处置
+### 2.3 `.git`、`.idea`、`node_modules` 的处置
 
 **`.git`**
 
@@ -114,21 +177,23 @@
 - 入站排除清单排除它；候选区通过 `npm ci` 重新安装。
 - `export_full/` 默认不保留 `node_modules`，因为它是可复现目录；原始 zip 作为完整证据保留。
 
-### 1.4 工具产物登记表
+### 2.4 工具产物登记表
 
 | 产物 | 来源示例 | 处置 |
 | --- | --- | --- |
 | `bun.lock`、`bun.lockb` | Google AI Studio | 排除；项目以 npm + `package-lock.json` 为准 |
 | `AGENTS.md`、`.aider*`、`.cursor*`、`.claude/`、`.windsurf/`、`.continue/`、`.github/copilot-instructions.md` | 各类 AI 编程工具 | 排除；需要留存的放入渠道目录的 `tool_artifacts/` |
 | `.idea/`、`.vscode/`、`.DS_Store`、`__MACOSX/` | IDE / macOS | 排除；不进入候选区 |
+| `.npmrc` | npm 本地配置，可能含 token | 本地专属；不进入仓库 |
 | `node_modules/`、`dist/`、`.vite/`、`.next/`、`.turbo/`、`coverage/`、`*.log` | 依赖 / 构建 / 运行 | 排除；可复现目录不入 `export_full/` |
+| `Thumbs.db`、`*.tsbuildinfo`、`.pnp.*` | 其他工具产物 | 排除或进入 `unknown/` |
 | 未知新文件 | 新工具 | 进入渠道目录的 `unknown/`，人工分类 |
 
 ---
 
-## 2. 迭代渠道归档
+## 3. 迭代渠道归档
 
-### 2.1 归档根目录与渠道命名
+### 3.1 归档根目录与渠道命名
 
 归档根目录：
 
@@ -151,15 +216,17 @@ iteration_channels/
 ```
 iteration_channels/
   GoogleStudio171账号/
-    20261125-1530/
+    20261125-153045/
 ```
 
-### 2.2 单次导入的目录结构
+时间戳精确到秒，避免同一分钟内多次导入造成目录重名。
+
+### 3.2 单次导入的目录结构
 
 ```
 <渠道>/<时间戳>/
   export_original.zip     # 工具给的原始 zip，完整证据
-  export_full/            # 解压树；默认排除 .git、node_modules、.idea、构建缓存
+  export_full/            # 解压树；默认排除 .git、node_modules、.idea、.env*、构建缓存
   excluded/               # 可选：被排除文件，保持原树
   tool_artifacts/         # 可选：已识别工具产物，保持原树
   unknown/                # 可选：未知文件，保持原树
@@ -170,11 +237,17 @@ iteration_channels/
   change_summary.txt
 ```
 
-`export_original.zip` 是完整证据。`export_full/` 是方便查看的解压树，默认省略 `.git`、`node_modules`、`.idea` 与可复现构建目录；需要回看这些内容时，可以从原始 zip 中取。
+`excluded/` 是可选视图；不生成也不影响主流程。`export_full/` 与原始 zip 已经保留了完整证据。
 
-### 2.3 base 与 import manifest
+### 3.3 原始 zip、export_full 与分类视图
 
-`base_commit.txt` 记录交给 AI 工具时的仓库 commit。
+- `export_original.zip`：工具给的原始 zip，完整证据；即使其中包含 `.env.local` 或其他敏感文件，也保持原样，因此渠道目录应视为敏感目录。
+- `export_full/`：方便查看的解压树，默认省略 `.git`、`node_modules`、`.idea`、`.env*` 与可复现构建目录。
+- `tool_artifacts/`、`unknown/`：分类视图，保持原始目录树，便于回看与找回。
+
+### 3.4 base 与 import manifest
+
+`base_commit.txt` 记录交给 AI 工具时的仓库 commit。`base` 应与实际交给工具的代码一致；若工具使用的是另一个快照，记录那个快照对应的 commit。
 
 `import_manifest.txt` 记录本次导入的来源与起点：
 
@@ -184,21 +257,27 @@ base_commit: <hash>
 base_branch: main
 clean_snapshot: base_snapshot.zip
 export_zip: export_original.zip
-started_at: 2026-11-25T15:30:00+08:00
+started_at: 2026-11-25T15:30:45+08:00
 notes: 本次迭代的主要意图
 ```
 
-这些是元数据，不是历史叙事。它们让后续可以做三方对比，也让导入有据可查。
+这些是元数据，不是历史叙事。它们让后续可以做三方对比：
+
+- base vs 导出物：工具真正改了什么；
+- base vs 当前仓库：工具工作期间你改了什么；
+- 当前仓库 vs 导出物：如果直接叠加会发生什么。
 
 ---
 
-## 3. 出站：交给 AI 工具之前的干净快照
+## 4. 出站：交给 AI 工具之前的干净快照
 
-### 3.1 为什么需要干净快照
+### 4.1 为什么需要干净快照
 
 如果直接把工作目录打包给 AI 工具，`.env.local`、`node_modules`、`.idea`、IDE 元数据、构建缓存都可能被带进去。工具返回的导出物里就可能出现这些文件，后续需要额外排除。更稳的方式是：交给工具一份只包含项目内在文件的干净快照。
 
-### 3.2 变量与目录准备
+`git archive` 只打包已跟踪文件，天然不带 `.git`、`node_modules`、`.idea` 与本地 env 文件。这是交给 AI 工具的理想起点。
+
+### 4.2 变量与目录准备
 
 ```bash
 REPO="/Users/davie/Desktop/EffLearn/tangyou_uistan"
@@ -208,7 +287,7 @@ EXPORT="$DESK/tangyou_uistan"
 
 ARCHIVE_ROOT="/Users/davie/Desktop/scrapt/tangyou_uistan/iteration_channels"
 CHANNEL="GoogleStudio171账号"
-STAMP="$(date +%Y%m%d-%H%M)"
+STAMP="$(date +%Y%m%d-%H%M%S)"
 CHANNEL_DIR="$ARCHIVE_ROOT/$CHANNEL/$STAMP"
 
 STAGE="/tmp/tangyou_uistan_import"
@@ -217,9 +296,10 @@ CAND_WT="/tmp/tangyou_uistan_candidate_wt"
 CLEAN_CLONE="/tmp/tangyou_uistan_clean_clone"
 
 mkdir -p "$CHANNEL_DIR"
+chmod 700 "$CHANNEL_DIR"
 ```
 
-### 3.3 预检与 base 记录
+### 4.3 预检与 base 记录
 
 ```bash
 cd "$REPO"
@@ -231,17 +311,17 @@ git archive --format=zip \
 
 预期：`git status --porcelain` 无输出；`base_commit.txt` 记录当前 commit；`base_snapshot.zip` 是只包含已跟踪文件的干净快照。
 
-`git archive` 天然排除 `.git`、`node_modules`、`.idea`、`.env.local` 等未跟踪或忽略的文件。这个 zip 是交给 AI 工具的理想起点。
+若工作区不干净，可以先 commit 或 stash，再记录 base；否则 base 与实际交给工具的代码可能不一致。
 
-### 3.4 工具说明文件的放置
+### 4.4 工具说明文件的放置
 
 如果某个 AI 工具需要 `AGENTS.md`、工具指令或配置模板，可以放在渠道目录下的 `tool_artifacts/`，或工具自己的工作区里，不放入主仓库快照。
 
 ---
 
-## 4. 入站：从导出物到候选工作区
+## 5. 入站：从导出物到候选工作区
 
-### 4.1 总体流程
+### 5.1 总体流程
 
 ```
 解压导出物
@@ -261,7 +341,9 @@ git archive --format=zip \
   → 人工推送
 ```
 
-### 4.2 解压与归档
+`git worktree` 会在另一个目录创建一个共享同一 `.git` 的工作区；它不是 clone，不复制 `.git` 目录。候选区失败时删除即可，不影响主工作区。
+
+### 5.2 解压与归档
 
 ```bash
 rm -rf "$STAGE" "$EXPORT"
@@ -285,6 +367,9 @@ rsync -a \
   --exclude='.git' \
   --exclude='node_modules/' \
   --exclude='.idea/' \
+  --exclude='.env' \
+  --exclude='.env.local' \
+  --exclude='.env.server.local' \
   --exclude='dist/' \
   --exclude='.vite/' \
   --exclude='.next/' \
@@ -295,9 +380,13 @@ rsync -a \
 find "$EXPORT" -type f \
   | sed "s|^$EXPORT/||" \
   | sort > "$CHANNEL_DIR/export_manifest.txt"
+
+chmod 700 "$CHANNEL_DIR"
 ```
 
-### 4.3 建立 base worktree
+`export_full/` 默认不保留 `.env*`，避免渠道归档中直接出现密钥；原始 zip 仍保留完整证据，因此渠道目录整体应视为敏感目录。
+
+### 5.3 建立 base worktree
 
 ```bash
 BASE_COMMIT="$(cat "$CHANNEL_DIR/base_commit.txt")"
@@ -309,7 +398,7 @@ git -C "$REPO" log --oneline "$BASE_COMMIT"..HEAD
 
 若 `log` 有输出，说明 base 之后仓库有新提交；导出物可能基于旧基线，后续需要特别留意回退与删除候选。
 
-### 4.4 排除清单
+### 5.4 排除清单
 
 ```bash
 cat > "$STAGE/exclude.txt" <<'EOF'
@@ -320,6 +409,7 @@ node_modules/
 .env.server.local
 .idea/
 .vscode/
+.npmrc
 .DS_Store
 __MACOSX/
 dist/
@@ -328,10 +418,12 @@ dist/
 .turbo/
 coverage/
 *.log
+*.tsbuildinfo
+Thumbs.db
 EOF
 ```
 
-### 4.5 预览导出物相对 base 的变化
+### 5.5 预览导出物相对 base 的变化
 
 ```bash
 rsync -avn --delete --itemize-changes \
@@ -341,13 +433,15 @@ rsync -avn --delete --itemize-changes \
 sed -n '1,200p' "$STAGE/export_vs_base.txt"
 ```
 
+这里的 `--delete` 只在 dry-run 中生效：它演练“如果以导出物为准，base 里哪些文件会被删除”，不会真的删除任何东西。
+
 判读：
 
 - `>f+++++++++`：导出物新增的文件；
 - `>f.st......`：导出物修改的文件；
 - `*deleting`：base 有、导出物没有的文件，属于删除候选，不一定真的要删。
 
-### 4.6 建立候选 worktree 并叠加
+### 5.6 建立候选 worktree 并叠加
 
 ```bash
 rm -rf "$CAND_WT"
@@ -360,7 +454,7 @@ rsync -av --itemize-changes \
   "$EXPORT/" "$CAND_WT/"
 ```
 
-此时所有变更都在候选区，主工作区未被触碰。
+此时所有变更都在候选区，主工作区未被触碰。失败时删除候选区即可，主工作区不受影响。
 
 ```bash
 cd "$CAND_WT"
@@ -368,9 +462,10 @@ git status --short
 git diff --stat
 ```
 
-### 4.7 工具产物清扫
+### 5.7 工具产物清扫
 
 ```bash
+cd "$CAND_WT"
 mkdir -p "$CHANNEL_DIR/tool_artifacts"
 
 for p in \
@@ -384,7 +479,10 @@ for p in \
   ".claude" \
   ".windsurf" \
   ".continue" \
-  ".github/copilot-instructions.md"; do
+  ".github/copilot-instructions.md" \
+  ".mcp.json" \
+  ".roo" \
+  ".cline"; do
   if [ -e "$p" ]; then
     mkdir -p "$CHANNEL_DIR/tool_artifacts/$(dirname "$p")"
     mv "$p" "$CHANNEL_DIR/tool_artifacts/$p"
@@ -394,7 +492,7 @@ done
 
 这些文件被移出候选区，保留在渠道归档中。
 
-### 4.8 未知文件隔离
+### 5.8 未知文件隔离
 
 ```bash
 mkdir -p "$CHANNEL_DIR/unknown"
@@ -410,7 +508,7 @@ git -C "$CAND_WT" ls-files --others --exclude-standard \
 # mv "$CAND_WT/path/to/file" "$CHANNEL_DIR/unknown/path/to/file"
 ```
 
-### 4.9 受保护基线评审
+### 5.9 受保护基线评审
 
 ```bash
 cat > "$STAGE/protected.txt" <<'EOF'
@@ -428,10 +526,14 @@ importantdocsneedkown
 EOF
 
 cd "$CAND_WT"
-git diff --name-only HEAD -- $(cat "$STAGE/protected.txt") \
-  | tee "$STAGE/protected_changed.txt"
-
-git diff HEAD -- $(cat "$STAGE/protected.txt") | less
+: > "$STAGE/protected_changed.txt"
+while IFS= read -r p; do
+  [ -z "$p" ] && continue
+  if git diff --name-only HEAD -- "$p" | grep -q .; then
+    echo "$p" | tee -a "$STAGE/protected_changed.txt"
+    git diff HEAD -- "$p"
+  fi
+done < "$STAGE/protected.txt"
 ```
 
 对每个受保护文件做决定：
@@ -440,7 +542,7 @@ git diff HEAD -- $(cat "$STAGE/protected.txt") | less
 - 回滚到 HEAD：`git checkout HEAD -- package.json`；
 - 部分合并：手动编辑后 `git add`。
 
-### 4.10 删除候选评审
+### 5.10 删除候选评审
 
 ```bash
 grep -E '^\*deleting' "$STAGE/export_vs_base.txt" || true
@@ -454,7 +556,7 @@ grep -E '^\*deleting' "$STAGE/export_vs_base.txt" || true
 
 若导出物明显缺少大量未触碰文件，删除候选多为噪声，不据此删除。
 
-### 4.11 候选区验证
+### 5.11 候选区验证
 
 ```bash
 cd "$CAND_WT"
@@ -463,7 +565,7 @@ npm run lint
 npm run build
 ```
 
-若 `npm ci` 因 lockfile 不同步失败，可以改用 `npm install`，并把 `package-lock.json` 作为受保护文件重新评审。
+`npm ci` 严格按 `package-lock.json` 安装；若 lockfile 与 `package.json` 不同步，`npm ci` 会失败，此时可以改用 `npm install`，并把 `package-lock.json` 作为受保护文件重新评审。
 
 运行时验证（用临时 env，端口 9102，避开线上 9002）：
 
@@ -480,21 +582,26 @@ rm -f .env.local
 
 预期：lint 与 build 通过；health 返回 `ok:true`、`configured:true`。
 
-### 4.12 提交候选
+若 `node --import tsx` 不可用，可以改用 `PORT=9102 npm run dev`。若 9102 已被占用，可以用 `lsof -iTCP:9102 -sTCP:LISTEN` 查看。
+
+### 5.12 提交候选
 
 ```bash
 cd "$CAND_WT"
 git add -A
 git status --short
 git diff --cached --stat
+git diff --cached | grep -nE 'GEMINI_API_KEY|api[_-]?key|token|secret|password' || true
 git commit -m "import(<渠道名>): <一句话描述本次迭代>"
 ```
 
-提交前确认 `git status` 中没有构建产物、工具产物、env 文件。
+提交前的一个检查点是 `git status` 中没有构建产物、工具产物、env 文件；另一个检查点是暂存 diff 中没有硬编码密钥或令牌。
 
-### 4.13 干净 clone 测试（分级）
+### 5.13 干净 clone 测试
 
-干净 clone 测试模拟“另一台机器从零重建”。它不是每次都必须执行，而是一道按风险分级的质量门。
+干净 clone 测试模拟“另一台机器从零重建”。可以把它理解成：把菜谱交给一个从没来过你家的人，让他在空厨房里只按菜谱做一遍。若他能做出来，说明菜谱是完整的；若失败，说明有文件或步骤没有被写进仓库。
+
+它不是每次都必须执行，而是一道按风险分级的质量门。
 
 | 变更类型 | 候选区验证 | 干净 clone 测试 |
 | --- | --- | --- |
@@ -516,9 +623,9 @@ npm run build
 rm -rf "$CLEAN_CLONE"
 ```
 
-它验证的是提交后的仓库是否自足：不依赖候选 worktree 的本地残留，也不依赖你本机的 `.env.local`、`node_modules` 或工具生成物。
+它验证的是提交后的仓库是否自足：不依赖候选 worktree 的本地残留，也不依赖你本机的 `.env.local`、`node_modules` 或工具生成物。若测试失败，先修复或丢弃候选，不进入合并。
 
-### 4.14 squash 合并与人工推送
+### 5.14 squash 合并与人工推送
 
 ```bash
 cd "$REPO"
@@ -526,26 +633,54 @@ MAIN_BRANCH="$(git branch --show-current)"
 
 git diff --stat "$MAIN_BRANCH".."$BRANCH"
 git diff "$MAIN_BRANCH".."$BRANCH" | less
+```
 
+确认 diff 后，先移除候选 worktree，避免分支被占用：
+
+```bash
+rm -rf "$CAND_WT/node_modules" "$CAND_WT/dist" "$CAND_WT/.vite"
+git worktree remove "$CAND_WT" || git worktree remove --force "$CAND_WT"
+```
+
+squash 合并把候选分支的多个提交压成主分支上的一个提交，使一次迭代在主分支上对应一个提交，整批回退更容易；细节留在渠道归档。
+
+```bash
 git merge --squash "$BRANCH"
 git commit -m "import(<渠道名>): <一句话描述本次迭代>"
 
 git show --stat --oneline HEAD > "$CHANNEL_DIR/change_summary.txt"
+git diff --stat "$BASE_COMMIT"..HEAD >> "$CHANNEL_DIR/change_summary.txt"
 ```
 
-效果：主分支上只多出一个提交，包含本次迭代的全部净变更；候选分支的中间细节留在渠道归档。
+若主分支在候选创建后已有新提交，squash 合并可能出现冲突；解决冲突后重新 lint / build，再完成提交。
 
 ```bash
-git worktree remove "$CAND_WT"
 git worktree remove "$BASE_WT"
 git branch -D "$BRANCH"
 
 git push origin "$MAIN_BRANCH"
 ```
 
-推送保持人工，不依赖 AI 工具的自动 push。
+远端名以实际仓库为准；推送保持人工，不依赖 AI 工具的自动 push。若推送被拒，按团队流程先 `git pull --rebase`，不做强制推送。
 
-### 4.15 import manifest
+---
+
+## 6. 回滚与记录
+
+### 6.1 回滚路径
+
+| 阶段 | 回滚方式 |
+| --- | --- |
+| 候选区尚未提交 | 删除候选 worktree 与分支即可 |
+| 候选区已提交、尚未合并 | `git branch -D "$BRANCH"`，删除 worktree |
+| 已 squash 合并、尚未推送 | 确认 import commit 后，`git reset --hard <import-commit>~1` |
+| 已推送 | `git revert <import-commit>` |
+
+### 6.2 导入记录
+
+渠道目录中的 `base_commit.txt`、`import_manifest.txt`、`export_manifest.txt`、`change_summary.txt` 构成一次导入的记录。它们描述的是本次导入的来源、范围与结果，不是历史叙事。
+
+`import_manifest.txt` 可以在合并完成后写入：
 
 ```bash
 cat > "$CHANNEL_DIR/import_manifest.txt" <<EOF
@@ -561,34 +696,17 @@ EOF
 
 ---
 
-## 5. 回滚与记录
+## 7. 检查清单
 
-### 5.1 回滚路径
-
-| 阶段 | 回滚方式 |
-| --- | --- |
-| 候选区尚未提交 | 删除候选 worktree 与分支即可 |
-| 候选区已提交、尚未合并 | `git branch -D "$BRANCH"`，删除 worktree |
-| 已 squash 合并、尚未推送 | `git reset --hard HEAD~1` |
-| 已推送 | `git revert <import-commit>` |
-
-### 5.2 导入记录
-
-渠道目录中的 `base_commit.txt`、`import_manifest.txt`、`export_manifest.txt`、`change_summary.txt` 构成一次导入的记录。它们描述的是本次导入的来源、范围与结果，不是历史叙事。
-
----
-
-## 6. 检查清单
-
-### 6.1 出站前
+### 7.1 出站前
 
 - 工作区干净；
 - base commit 已记录；
 - 干净快照已生成；
-- 渠道目录已建立；
+- 渠道目录已建立，权限为 700；
 - 工具说明文件未混入主仓库快照。
 
-### 6.2 入站后
+### 7.2 入站后
 
 - 导出物已归档到渠道目录；
 - 候选区已建立，主工作区未被触碰；
@@ -596,9 +714,10 @@ EOF
 - 未知文件已隔离；
 - 受保护基线已逐项评审；
 - 删除候选已逐项判断；
-- 候选区 lint / build / health 通过。
+- 候选区 lint / build / health 通过；
+- 暂存 diff 中没有硬编码密钥或令牌。
 
-### 6.3 合并前
+### 7.3 合并前
 
 - 候选分支已提交；
 - 干净 clone 测试按风险等级执行；
@@ -608,14 +727,14 @@ EOF
 
 ---
 
-## 7. 附录
+## 8. 附录
 
-### 7.1 渠道目录树
+### 8.1 渠道目录树
 
 ```
 iteration_channels/
   GoogleStudio171账号/
-    20261125-1530/
+    20261125-153045/
       export_original.zip
       export_full/
       excluded/
@@ -627,11 +746,11 @@ iteration_channels/
       import_manifest.txt
       change_summary.txt
   程序员Tony/
-    20261125-1700/
+    20261125-170012/
       ...
 ```
 
-### 7.2 命令速查
+### 8.2 命令速查
 
 | 目的 | 命令 |
 | --- | --- |
@@ -644,10 +763,11 @@ iteration_channels/
 | 未知文件 | `git -C "$CAND_WT" ls-files --others --exclude-standard` |
 | 候选区验证 | `npm ci --prefer-offline --no-audit --no-fund && npm run lint && npm run build` |
 | 干净 clone 测试 | `git clone -b "$BRANCH" "$REPO" "$CLEAN_CLONE"` |
+| 移除候选 worktree | `git worktree remove "$CAND_WT"` |
 | squash 合并 | `git merge --squash "$BRANCH"` |
 | 人工推送 | `git push origin "$MAIN_BRANCH"` |
 
-### 7.3 术语
+### 8.3 术语
 
 - **base**：把代码交给 AI 工具时的仓库状态，通常以 commit 表示。
 - **导出物**：AI 工具返回的 zip 或目录树，是候选变更集，不是仓库替代品。
@@ -655,3 +775,4 @@ iteration_channels/
 - **受保护基线**：定义项目可维护性与发布口径的文件，工具可以提出修改，但需要人显式决定。
 - **干净 clone 测试**：从候选分支重新 clone 到临时目录，验证提交后的仓库能否从零安装与构建。
 - **渠道归档**：按来源与时间保存导出物、base、工具产物与未知文件的仓库外目录。
+- **squash 合并**：把候选分支的多个提交压成主分支上的一个提交，使一次迭代对应一个提交。

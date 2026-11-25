@@ -1,7 +1,7 @@
-# 动搭建与迭代应用指南
+# 手动搭建与迭代应用指南
 ## macOS 本地 + Linux 线上
 
-版本：1.0
+版本：1.1
 适用项目：tangyou_uistan
 适用模式：dev 模式（`npm run dev`）
 
@@ -43,7 +43,7 @@
 | 项目路径 | `/Users/davie/Desktop/EffLearn/tangyou_uistan` | `/da04/webser/sour/pro/tangyou_uistan_0` |
 | 运行用户 | 当前 macOS 用户 | `webser` |
 | 运行组 | 当前 macOS 用户主组 | `webgp` |
-| 日志目录 | 终端输出 | `/da04/webser/logs/pro` |
+| 日志位置 | 终端输出 | 手动模式为终端输出；`/da04/webser/logs/pro` 为 systemd 长期托管预留 |
 | Node 版本 | 24（按 `.nvmrc`） | 24（系统级） |
 | 端口 | 9002 | 9002 |
 | 运行模式 | dev | dev |
@@ -76,7 +76,7 @@ npm run dev
 进程环境变量 ＞ .env.server.local ＞ .env.local ＞ .env
 ```
 
-- `.env.local` 是本地专属文件，不进入仓库；
+- `.env.local` 是机器专属文件，不进入仓库；
 - `.env.example` 是字段模板，进入仓库。
 
 ### 1.3 dev 模式的边界
@@ -116,7 +116,7 @@ dev 模式下：
 
 已存在的进程环境变量不会被覆盖。对于手动模式，`.env.local` 已经足够；进程环境变量可以用于临时覆盖，例如：
 
-```
+```bash
 PORT=9102 npm run dev
 ```
 
@@ -177,11 +177,13 @@ https://tangyou-app.alphathought.org/
 - 问题总结：在「問題紀錄 → AI 總結」触发一次总结，确认分类与建议问题正常；
 - 语音输入：聚焦输入框，点击全局麦克风录音，确认转写结果填入。
 
+若线上反向代理尚未配置，可以在服务器本机用 `curl` 验证 health；是否对外开放 9002 取决于安全组与防火墙，本文档不展开。
+
 ### 3.3 停止方式
 
 - 本地前台：终端 `Ctrl+C`；
 - 线上前台：终端 `Ctrl+C`；
-- 停止后可以用端口检查确认进程已退出：
+- 若 `Ctrl+C` 后端口仍被占用，可以用端口检查定位进程：
 
 本地：
 
@@ -195,7 +197,7 @@ lsof -iTCP:9002 -sTCP:LISTEN
 sudo ss -ltnp | grep 9002
 ```
 
-无输出表示端口已释放。
+无输出表示端口已释放。若有残留进程，可以按 PID 结束。
 
 ---
 
@@ -207,13 +209,14 @@ sudo ss -ltnp | grep 9002
 
 1. 停止当前手动服务；
 2. 记录当前 commit；
-3. 拉取主分支最新代码；
-4. 查看变更文件；
-5. 判断是否需要更新依赖；
-6. 判断是否需要更新 `.env.local`；
-7. 重新启动；
-8. 健康检查与浏览器冒烟；
-9. 必要时回退。
+3. 确认工作区状态；
+4. 拉取主分支最新代码；
+5. 查看变更文件；
+6. 判断是否需要更新依赖；
+7. 判断是否需要更新 `.env.local`；
+8. 重新启动；
+9. 健康检查与浏览器冒烟；
+10. 必要时回退。
 
 ### 4.2 依赖与环境变化判断
 
@@ -247,27 +250,32 @@ git diff "$OLD_HEAD"..HEAD -- .env.example
 # 2. 进入项目目录
 cd /Users/davie/Desktop/EffLearn/tangyou_uistan
 
-# 3. 记录旧 commit
+# 3. 若新开终端，先确认 Node 版本
+node -v
+
+# 4. 记录旧 commit
 OLD_HEAD="$(git rev-parse HEAD)"
 
-# 4. 确认工作区干净
+# 5. 确认工作区状态
 git status --porcelain
 
-# 5. 拉取
+# 6. 拉取
 git pull --ff-only
 
-# 6. 查看变更文件
+# 7. 查看变更文件
 git diff --name-only "$OLD_HEAD"..HEAD
 
-# 7. 若 package.json / package-lock.json 变化
+# 8. 若 package.json / package-lock.json 变化
 npm ci --prefer-offline --no-audit --no-fund
 
-# 8. 若 .env.example 变化
+# 9. 若 .env.example 变化
 git diff "$OLD_HEAD"..HEAD -- .env.example
 
-# 9. 重新启动
+# 10. 重新启动
 npm run dev
 ```
+
+若 `git status --porcelain` 有输出，可以先提交、stash 或确认这些本地改动是否需要在拉取前处理；`git pull --ff-only` 在分叉时会失败，此时需要先解决分支状态。
 
 ### 4.4 线上命令序列
 
@@ -277,26 +285,29 @@ npm run dev
 # 2. 进入项目目录
 cd /da04/webser/sour/pro/tangyou_uistan_0
 
-# 3. 记录旧 commit
-OLD_HEAD="$(sudo -u webser git rev-parse HEAD)"
+# 3. 确认运行用户看到的 Node 版本
+sudo -H -u webser node -v
 
-# 4. 确认工作区干净
-sudo -u webser git status --porcelain
+# 4. 记录旧 commit
+OLD_HEAD="$(sudo -H -u webser git rev-parse HEAD)"
 
-# 5. 拉取
-sudo -u webser git pull --ff-only
+# 5. 确认工作区状态
+sudo -H -u webser git status --porcelain
 
-# 6. 查看变更文件
-sudo -u webser git diff --name-only "$OLD_HEAD"..HEAD
+# 6. 拉取
+sudo -H -u webser git pull --ff-only
 
-# 7. 若 package.json / package-lock.json 变化
-sudo -u webser npm ci --prefer-offline --no-audit --no-fund
+# 7. 查看变更文件
+sudo -H -u webser git diff --name-only "$OLD_HEAD"..HEAD
 
-# 8. 若 .env.example 变化
-sudo -u webser git diff "$OLD_HEAD"..HEAD -- .env.example
+# 8. 若 package.json / package-lock.json 变化
+sudo -H -u webser npm ci --prefer-offline --no-audit --no-fund
 
-# 9. 重新启动
-sudo -u webser npm run dev
+# 9. 若 .env.example 变化
+sudo -H -u webser git diff "$OLD_HEAD"..HEAD -- .env.example
+
+# 10. 重新启动
+sudo -H -u webser npm run dev
 ```
 
 ### 4.5 回退
@@ -314,12 +325,12 @@ npm run dev
 
 ```bash
 cd /da04/webser/sour/pro/tangyou_uistan_0
-sudo -u webser git reset --hard "$OLD_HEAD"
-sudo -u webser npm ci --prefer-offline --no-audit --no-fund
-sudo -u webser npm run dev
+sudo -H -u webser git reset --hard "$OLD_HEAD"
+sudo -H -u webser npm ci --prefer-offline --no-audit --no-fund
+sudo -H -u webser npm run dev
 ```
 
-回退前确认工作区没有需要保留的本地改动；`git reset --hard` 会丢弃未提交内容。
+回退前先停止当前服务，并确认工作区没有需要保留的本地改动；`git reset --hard` 会丢弃未提交内容。
 
 ---
 
@@ -329,8 +340,6 @@ sudo -u webser npm run dev
 
 ```bash
 git --version
-node -v
-npm -v
 ```
 
 若 `git` 不存在，可以通过 Xcode Command Line Tools 安装：
@@ -374,6 +383,14 @@ npm -v
 
 预期 `node -v` 为 `v24.x`。
 
+若希望新终端默认使用 24，可以设置：
+
+```bash
+nvm alias default 24
+```
+
+否则每次新开终端后，进入项目目录执行一次 `nvm use`，再运行 `npm run dev`。
+
 ### 5.3 获取代码
 
 ```bash
@@ -383,7 +400,7 @@ git clone https://github.com/davietangyou/tangyou_uistan.git tangyou_uistan
 cd /Users/davie/Desktop/EffLearn/tangyou_uistan
 ```
 
-若目录已存在，可以跳过 clone，先确认目录内容与分支。
+若目录已存在，可以跳过 clone，先确认目录内容与分支。若远端为私有仓库，需要先配置 Git 凭据。
 
 检查：
 
@@ -432,10 +449,11 @@ grep -E '^(GEMINI_API_KEY|PORT)=' .env.local | sed 's/=.*/=<set>/'
 
 ```bash
 cd /Users/davie/Desktop/EffLearn/tangyou_uistan
+node -v
 npm run dev
 ```
 
-预期输出：
+预期 `node -v` 为 `v24.x`，启动输出：
 
 ```
 > tangyou_uistan@0.0.0 dev
@@ -472,7 +490,7 @@ http://127.0.0.1:9002/
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y git curl rsync
+sudo apt-get install -y git curl rsync nano iproute2
 ```
 
 ### 6.2 数据盘检查
@@ -484,7 +502,7 @@ findmnt /da04
 df -h /da04
 ```
 
-若 `/da04` 尚未挂载，先完成挂载；本文档后续路径都以 `/da04` 为根。
+若 `/da04` 尚未挂载，先完成挂载；本文档后续路径都以 `/da04` 为根。若新机器没有独立数据盘，也可以在根盘创建 `/da04` 目录，但需要确认磁盘空间。
 
 ### 6.3 用户、组与目录
 
@@ -493,16 +511,26 @@ df -h /da04
 ```bash
 getent group webgp >/dev/null || sudo groupadd webgp
 id webser >/dev/null 2>&1 || sudo useradd -m -d /da04/webser -g webgp -s /bin/bash webser
-sudo usermod -aG sudo webser
+sudo chown -R webser:webgp /da04/webser
 ```
 
-GCE 镜像的管理员组可能是 `google-sudoers`；其他发行版可能是 `sudo` 或 `wheel`。
+管理员组按发行版处理：
+
+```bash
+if getent group sudo >/dev/null; then
+  sudo usermod -aG sudo webser
+elif getent group google-sudoers >/dev/null; then
+  sudo usermod -aG google-sudoers webser
+elif getent group wheel >/dev/null; then
+  sudo usermod -aG wheel webser
+fi
+```
 
 创建项目与日志目录：
 
 ```bash
-sudo -u webser mkdir -p /da04/webser/sour/pro
-sudo -u webser mkdir -p /da04/webser/logs/pro
+sudo -H -u webser mkdir -p /da04/webser/sour/pro
+sudo -H -u webser mkdir -p /da04/webser/logs/pro
 ```
 
 检查：
@@ -525,37 +553,46 @@ npm -v
 
 预期 `node -v` 为 `v24.x`。
 
+确认运行用户也能看到同一版本：
+
+```bash
+sudo -H -u webser node -v
+sudo -H -u webser npm -v
+```
+
 若使用 nvm，需要注意 systemd 默认不读取登录 shell 的 nvm 环境；手动阶段可用，长期托管更适合系统级 Node 或在 unit 中显式设置 PATH。
 
 ### 6.5 获取代码
 
 ```bash
-sudo -u webser git clone https://github.com/davietangyou/tangyou_uistan.git /da04/webser/sour/pro/tangyou_uistan_0
+sudo -H -u webser git clone https://github.com/davietangyou/tangyou_uistan.git /da04/webser/sour/pro/tangyou_uistan_0
 cd /da04/webser/sour/pro/tangyou_uistan_0
 ```
+
+若目标目录已存在，先确认其内容或移开；若远端为私有仓库，需要先配置 Git 凭据。
 
 检查：
 
 ```bash
-sudo -u webser git branch --show-current
-sudo -u webser git rev-parse --short HEAD
+sudo -H -u webser git branch --show-current
+sudo -H -u webser git rev-parse --short HEAD
 ```
 
 ### 6.6 安装依赖
 
 ```bash
 cd /da04/webser/sour/pro/tangyou_uistan_0
-sudo -u webser npm ci --prefer-offline --no-audit --no-fund
+sudo -H -u webser npm ci --prefer-offline --no-audit --no-fund
 ```
 
-若 `npm ci` 失败，可以改用 `sudo -u webser npm install`，并单独评审 `package-lock.json` 变化。
+若 `npm ci` 失败，可以改用 `sudo -H -u webser npm install`，并单独评审 `package-lock.json` 变化。
 
 ### 6.7 配置 `.env.local`
 
 ```bash
 cd /da04/webser/sour/pro/tangyou_uistan_0
-sudo -u webser cp .env.example .env.local
-sudo -u webser vi .env.local
+sudo -H -u webser cp .env.example .env.local
+sudo -H -u webser nano .env.local
 sudo chmod 600 .env.local
 sudo chown webser:webgp .env.local
 ```
@@ -570,14 +607,14 @@ PORT=9002
 检查字段：
 
 ```bash
-sudo -u webser grep -E '^(GEMINI_API_KEY|PORT)=' .env.local | sed 's/=.*/=<set>/'
+sudo -H -u webser grep -E '^(GEMINI_API_KEY|PORT)=' .env.local | sed 's/=.*/=<set>/'
 ```
 
 ### 6.8 前台启动
 
 ```bash
 cd /da04/webser/sour/pro/tangyou_uistan_0
-sudo -u webser npm run dev
+sudo -H -u webser npm run dev
 ```
 
 预期输出：
@@ -619,7 +656,7 @@ https://tangyou-app.alphathought.org/
 sudo ss -ltnp | grep 9002
 ```
 
-无输出表示端口已释放。
+无输出表示端口已释放。若仍有残留进程，可以按 PID 结束。
 
 ---
 
@@ -667,6 +704,7 @@ sudo ss -ltnp | grep 9002
 | 网络超时 | 无法直连 Gemini 域名 | 设置 `GEMINI_BASE_URL` |
 | `npm ci` 失败 | lockfile 与 `package.json` 不同步 | 改用 `npm install`，评审 lockfile |
 | 浏览器 404 | 访问端口与 `PORT` 不一致 | 确认 `.env.local` 的 `PORT` 与 URL |
+| `node -v` 不是 v24 | 新终端未执行 `nvm use` | 进入项目目录执行 `nvm use`，或设置 `nvm alias default 24` |
 
 ### 8.2 线上
 
@@ -675,7 +713,7 @@ sudo ss -ltnp | grep 9002
 | 权限拒绝 | 项目、日志或 `.env.local` 属主不对 | `ls -ld`、`chown -R webser:webgp` |
 | `configured:false` | `.env.local` 缺失或密钥为空 | 检查文件路径与 `GEMINI_API_KEY` |
 | `EADDRINUSE` | 旧手动实例未退出 | `sudo ss -ltnp \| grep 9002` |
-| `node: command not found` | `sudo -u webser` 的 PATH 或 Node 安装问题 | `sudo -u webser which node`、`node -v` |
+| `node: command not found` | `sudo -H -u webser` 的 PATH 或 Node 安装问题 | `sudo -H -u webser which node`、`node -v` |
 | `/da04` 不存在 | 数据盘未挂载 | `findmnt /da04` |
 | 反向代理 502/404 | 上游 9002 未监听或代理配置不对 | 先 `curl 127.0.0.1:9002/api/health` |
 | SSH 断开后服务消失 | 前台进程随会话结束 | 手动阶段用前台验证；长期用 systemd |
@@ -703,6 +741,7 @@ sudo ss -ltnp | grep 9002
 - [ ] `webser` 用户与 `webgp` 组存在
 - [ ] 项目位于 `/da04/webser/sour/pro/tangyou_uistan_0`
 - [ ] `/usr/bin/node` 为 v24.x
+- [ ] `sudo -H -u webser node -v` 为 v24.x
 - [ ] `npm ci` 通过
 - [ ] `.env.local` 权限 600、属主 `webser:webgp`
 - [ ] 前台 `npm run dev` 输出 `Server running on http://0.0.0.0:9002`
@@ -714,7 +753,7 @@ sudo ss -ltnp | grep 9002
 
 - [ ] 服务已停止
 - [ ] 旧 commit 已记录
-- [ ] 工作区干净
+- [ ] 工作区状态已确认
 - [ ] `git pull --ff-only` 成功
 - [ ] 变更文件已查看
 - [ ] 依赖变化时执行了 `npm ci`
@@ -754,14 +793,14 @@ sudo ss -ltnp | grep 9002
 | 目的 | 本地 | 线上 |
 | --- | --- | --- |
 | 进入项目 | `cd /Users/davie/Desktop/EffLearn/tangyou_uistan` | `cd /da04/webser/sour/pro/tangyou_uistan_0` |
-| 安装依赖 | `npm ci --prefer-offline --no-audit --no-fund` | `sudo -u webser npm ci --prefer-offline --no-audit --no-fund` |
-| 启动 | `npm run dev` | `sudo -u webser npm run dev` |
+| 安装依赖 | `npm ci --prefer-offline --no-audit --no-fund` | `sudo -H -u webser npm ci --prefer-offline --no-audit --no-fund` |
+| 启动 | `npm run dev` | `sudo -H -u webser npm run dev` |
 | 健康检查 | `curl -sS http://127.0.0.1:9002/api/health; echo` | 同左 |
 | 端口检查 | `lsof -iTCP:9002 -sTCP:LISTEN` | `sudo ss -ltnp \| grep 9002` |
-| 记录旧 commit | `OLD_HEAD="$(git rev-parse HEAD)"` | `OLD_HEAD="$(sudo -u webser git rev-parse HEAD)"` |
-| 拉取 | `git pull --ff-only` | `sudo -u webser git pull --ff-only` |
-| 变更文件 | `git diff --name-only "$OLD_HEAD"..HEAD` | `sudo -u webser git diff --name-only "$OLD_HEAD"..HEAD` |
-| 回退 | `git reset --hard "$OLD_HEAD"` | `sudo -u webser git reset --hard "$OLD_HEAD"` |
+| 记录旧 commit | `OLD_HEAD="$(git rev-parse HEAD)"` | `OLD_HEAD="$(sudo -H -u webser git rev-parse HEAD)"` |
+| 拉取 | `git pull --ff-only` | `sudo -H -u webser git pull --ff-only` |
+| 变更文件 | `git diff --name-only "$OLD_HEAD"..HEAD` | `sudo -H -u webser git diff --name-only "$OLD_HEAD"..HEAD` |
+| 回退 | `git reset --hard "$OLD_HEAD"` | `sudo -H -u webser git reset --hard "$OLD_HEAD"` |
 
 ### 10.3 目录树
 
@@ -790,7 +829,7 @@ sudo ss -ltnp | grep 9002
 /da04/webser/
 ├── logs/
 │   └── pro/
-│       └── tangyou_uistan_0.log（长期托管后由 systemd 写入）
+│       └── tangyou_uistan_0.log（systemd 长期托管后写入）
 └── sour/
     └── pro/
         └── tangyou_uistan_0/

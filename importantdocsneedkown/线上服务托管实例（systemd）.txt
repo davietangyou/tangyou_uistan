@@ -1,0 +1,425 @@
+# tangyou_uistan 线上服务托管实例（systemd）
+
+版本：1.0
+基于：《systemd 服务托管通用规范》v1.0
+验收记录时间：2026-11-25
+
+---
+
+## 0. 文档定位与范围
+
+本文档是 `tangyou_uistan` 在自托管 VM 上的 systemd 托管实例文档。它记录当前实际生效的 unit、运行身份、工作目录、启动命令、日志去向、验收证据与复现路径，供新机器复现与日常运维使用。
+
+覆盖范围：systemd unit、运行用户与主组、工作目录、启动命令、日志路径、健康端点、验收证据、新机器复现清单、运维手册、已知边界。
+
+不覆盖范围：AI Studio 预览环境、上层反向代理/TLS/DNS、应用业务逻辑、密钥值本身。
+
+与通用规范的关系：通用规范提供判据、模板与验收方法；本文档记录本实例的确定值、精确文件、证据与偏差。本文档不重复通用规范的理论解释，必要处只做章节引用。
+
+本文档不记录历史叙事。版本号、验收时间与当前状态标注属于元数据；事故时间线、试错过程与临时 PID 属于另一类文本。
+
+---
+
+## 1. 服务标识与总览
+
+| 项 | 当前值 |
+| --- | --- |
+| 项目 | tangyou_uistan（糖友導航） |
+| 服务用途 | 面向香港糖尿病长者的 AI 辅助衛教与决策支持 Web 服务 |
+| unit 名 | `tangyou_uistan.service` |
+| 运行用户 | `webser`（uid 1003） |
+| 主组 | `webgp`（gid 1006） |
+| 补充组 | `google-sudoers`（gid 1000） |
+| 用户 home | `/da04/webser` |
+| 登录 shell | `/bin/bash` |
+| 工作目录 | `/da04/webser/sour/pro/tangyou_uistan_0` |
+| 启动命令 | `/usr/bin/npm run dev` |
+| 实际运行时 | `/usr/bin/node` v22.21.0；`tsx server.ts` |
+| 监听地址 | `0.0.0.0:9002`（由 `.env.local` 的 `PORT=9002` 指定） |
+| 健康端点 | `GET http://127.0.0.1:9002/api/health` |
+| 应用日志 | `/da04/webser/logs/pro/tangyou_uistan_0.log` |
+| unit 部署路径 | `/etc/systemd/system/tangyou_uistan.service` |
+| unit 仓库源 | 当前尚未建立（见第 9 节） |
+| 运行模式 | dev（Vite middleware，非生产构建） |
+| 反向代理/域名 | 由上层设施负责，不在本文范围 |
+
+链路概览：
+
+```
+浏览器
+  → https://tangyou-app.alphathought.org/
+  → 上层 nginx / CDN
+  → 127.0.0.1:9002
+  → npm run dev
+  → tsx server.ts
+  → Vite middleware + /api/gemini/*
+```
+
+---
+
+## 2. 前置条件
+
+| 项 | 当前值 | 检查方式 |
+| --- | --- | --- |
+| 操作系统 | Debian GNU/Linux 12（内核 `6.1.0-41-cloud-amd64`） | `cat /etc/os-release`、`uname -r` |
+| systemd | Debian 12 对应 252 系列；精确版本以现场为准 | `systemctl --version` |
+| Node | `/usr/bin/node` v22.21.0 | `node -v` |
+| npm | `/usr/bin/npm`；版本以现场为准 | `npm -v` |
+| 项目目录 | `/da04/webser/sour/pro/tangyou_uistan_0` | `ls -ld` |
+| 日志目录 | `/da04/webser/logs/pro` | `ls -ld` |
+| 数据盘 | `/dev/sdc` 挂载于 `/da04`，约 49G，已用约 2.2G | `findmnt /da04`、`df -h /da04` |
+| 用户 | `webser`，主组 `webgp`，补充组 `google-sudoers` | `getent passwd webser`、`id webser` |
+| 依赖 | `node_modules` 已安装 | `ls node_modules` |
+| 出站网络 | 可访问 Gemini API 目标域名 | 健康端点、应用日志 |
+| 入站 | 9002 由上层代理转发 | `ss -ltnp`、浏览器访问 |
+
+新机器上的 uid/gid 可以与当前不同；组名 `webser`、`webgp` 与用户名 `webser` 需要存在，`User=webser` 才能解析到预期主组。
+
+---
+
+## 3. 配置与密钥
+
+`.env.local` 位于项目根目录：
+
+```
+/da04/webser/sour/pro/tangyou_uistan_0/.env.local
+```
+
+`server.ts` 启动时的环境变量加载顺序为：
+
+```
+进程环境变量 ＞ .env.server.local ＞ .env.local ＞ .env
+```
+
+已存在的进程环境变量不会被覆盖。当前 unit 没有设置 `EnvironmentFile=`，应用自行读取 `.env.local`。
+
+字段清单（不记录值）：
+
+| 字段 | 当前形态 | 说明 |
+| --- | --- | --- |
+| `GEMINI_API_KEY` | 已配置 | 必填；值不写入本文档 |
+| `PORT` | `9002` | 服务监听端口 |
+| `GEMINI_MODEL` | 未设置（注释） | 默认 `gemini-4-hydrogen` |
+| `GEMINI_VISION_MODEL` | 未设置（注释） | 默认回退 `GEMINI_MODEL` |
+| `GEMINI_TRANSCRIBE_MODEL` | 未设置（注释） | 默认 `gemini-3.5-transcribe` |
+| `GEMINI_FAST_MODEL` | 未设置（注释） | 默认 `gemini-3.1-flash-lite` |
+| `GEMINI_BASE_URL` | 未设置（注释） | 默认直连官方域名 |
+
+`.env.local` 的精确权限与属主当前未记录；复现时以 `ls -l .env.local` 确认，权限 600、属主 `webser:webgp` 是一种常见基线。密钥不写入 unit 文件。
+
+新机器上的密钥由部署方提供有效 `GEMINI_API_KEY`，写入 `.env.local` 后重启服务。
+
+---
+
+## 4. 精确 unit 文件
+
+当前部署副本 `/etc/systemd/system/tangyou_uistan.service` 的全文：
+
+```ini
+[Unit]
+Description=tangyou_uistan (npm run dev)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=webser
+WorkingDirectory=/da04/webser/sour/pro/tangyou_uistan_0
+ExecStart=/usr/bin/npm run dev
+Restart=always
+RestartSec=3
+TimeoutStopSec=10
+StandardOutput=append:/da04/webser/logs/pro/tangyou_uistan_0.log
+StandardError=append:/da04/webser/logs/pro/tangyou_uistan_0.log
+
+[Install]
+WantedBy=multi-user.target
+```
+
+字段与取舍说明：
+
+| 字段 | 当前选择 | 说明 |
+| --- | --- | --- |
+| `Description` | `tangyou_uistan (npm run dev)` | 标识服务与运行模式 |
+| `After` / `Wants` | `network-online.target` | 网络就绪后启动；弱依赖 |
+| `StartLimitIntervalSec` | `0` | 关闭启动频率限制，允许持续重启 |
+| `Type` | `simple` | 以 npm 为主进程，启动即视为已启动 |
+| `User` | `webser` | 只写用户；主组由 passwd 决定为 `webgp` |
+| `WorkingDirectory` | 项目根目录 | 决定相对路径与 `.env.local` 读取位置 |
+| `ExecStart` | `/usr/bin/npm run dev` | 绝对路径；无 shell 包裹 |
+| `Restart` | `always` | 正常退出与异常退出都会重启 |
+| `RestartSec` | `3` | 重启间隔 3 秒 |
+| `TimeoutStopSec` | `10` | 停止等待 10 秒，超时升级 SIGKILL |
+| `StandardOutput/Error` | `append:` 同一文件 | 应用日志写入文件；未配置轮转 |
+| `WantedBy` | `multi-user.target` | 开机自启 |
+
+与通用规范模板的差异：
+
+- 没有显式 `Group=`；主组由 passwd 提供。
+- 没有自定义 `Environment=HOME` / `Environment=PATH`；使用 systemd 默认。
+- 没有显式 `RequiresMountsFor`；依赖 systemd 对 `WorkingDirectory` 的自动挂载依赖。
+- 没有资源限制与沙箱选项；当前处于“推荐档”而非“加固档”。
+- 日志使用 `append:` 文件，未使用 journal。
+
+---
+
+## 5. 安装与启用
+
+新机器上的一种落地顺序：
+
+```bash
+# 1. 写入 unit 文件
+sudo tee /etc/systemd/system/tangyou_uistan.service > /dev/null <<'EOF'
+[Unit]
+Description=tangyou_uistan (npm run dev)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=webser
+WorkingDirectory=/da04/webser/sour/pro/tangyou_uistan_0
+ExecStart=/usr/bin/npm run dev
+Restart=always
+RestartSec=3
+TimeoutStopSec=10
+StandardOutput=append:/da04/webser/logs/pro/tangyou_uistan_0.log
+StandardError=append:/da04/webser/logs/pro/tangyou_uistan_0.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# 2. 静态校验
+sudo systemd-analyze verify /etc/systemd/system/tangyou_uistan.service
+
+# 3. 重新加载并启用
+sudo systemctl daemon-reload
+sudo systemctl enable --now tangyou_uistan
+
+# 4. 首次检查
+systemctl status tangyou_uistan --no-pager
+curl -sS -m 5 http://127.0.0.1:9002/api/health; echo
+```
+
+预期形态：
+
+- `Active: active (running)`
+- `Main PID` 为 npm 进程
+- `CGroup: /system.slice/tangyou_uistan.service`
+- `/api/health` 返回 `"ok":true`、`"configured":true`
+
+---
+
+## 6. 验收证据
+
+当前已记录的验收结果：
+
+| 验收项 | 命令 | 预期 | 当前记录 | 结论 |
+| --- | --- | --- | --- | --- |
+| 进程状态 | `systemctl status tangyou_uistan --no-pager` | `active (running)` | `active (running)`，Main PID 78227 | 通过 |
+| cgroup 归属 | 同上 | `/system.slice/tangyou_uistan.service` | 与预期一致 | 通过 |
+| 业务健康 | `curl -sS -m 5 http://127.0.0.1:9002/api/health` | `ok:true`、`configured:true` | 返回 `{"ok":true,"configured":true,...}` | 通过 |
+| 断连存活 | 退出 SSH，等待，重连后再查 | Main PID 不变 | 断开约 3min54s 后 Main PID 仍为 78227，health 正常 | 通过 |
+| 受控重启 | `sudo systemctl restart tangyou_uistan` | PID 变化、health 恢复 | 重启后 PID 78227，health 正常 | 通过 |
+| 开机自启 | `systemctl is-enabled tangyou_uistan` | `enabled` | `enabled` | 通过（未做实际 reboot） |
+| 浏览器冒烟 | 打开域名并发 AI 问答 | 正常回复 | 本次迁移后未记录 | 未记录 |
+
+健康端点返回记录：
+
+```json
+{"ok":true,"configured":true,"model":"gemini-4-hydrogen","fastModel":"gemini-3.1-flash-lite","visionModel":"gemini-4-hydrogen","transcribeModel":"gemini-3.5-transcribe","customBaseUrl":false}
+```
+
+日志启动片段：
+
+```
+> tangyou_uistan@0.0.0 dev
+> tsx server.ts
+
+Server running on http://0.0.0.0:9002
+```
+
+当前证据缺口：实际 reboot 验证、迁移后浏览器端 AI 问答冒烟。两项都属于验收矩阵中“开机自启”与“业务健康”的补充证据，复现时可按第 7 节补齐。
+
+---
+
+## 7. 新机器复现清单
+
+### 7.1 完整复现路径
+
+| 步骤 | 操作 | 预期 | 失败时参考 |
+| --- | --- | --- | --- |
+| 1 | 检查 OS、systemd、Node、npm | Debian 12、systemd 252 系列、Node 22+、npm 可用 | 通用规范 §3.2 |
+| 2 | 确认用户与组 | `webser` 存在，主组 `webgp`，home `/da04/webser` | 通用规范 §2.1 |
+| 3 | 挂载 `/da04` 数据盘 | `findmnt /da04` 有输出，可读写 | 通用规范 §2.2 |
+| 4 | 建立目录 | `/da04/webser/logs/pro`、`/da04/webser/sour/pro/tangyou_uistan_0` 存在 | 通用规范 §2.2 |
+| 5 | 同步项目代码 | 项目根目录包含 `package.json`、`server.ts`、`server/` 等 | 通用规范 §2.3 |
+| 6 | 调整属主 | 项目与日志目录属主为 `webser:webgp` | 通用规范 §2.9 |
+| 7 | 安装依赖 | `npm install` 后 `node_modules` 存在 | 通用规范 §2.3 |
+| 8 | 写入 `.env.local` | 含 `GEMINI_API_KEY`、`PORT=9002`；权限 600、属主 `webser:webgp` | 通用规范 §2.9 |
+| 9 | 写入 unit 文件 | 与第 4 节全文一致 | 通用规范 §5 |
+| 10 | 静态校验并启用 | `systemd-analyze verify` 通过；`enable --now` 后 active | 通用规范 §6 |
+| 11 | 六项验收 | 第 6 节表格全部通过 | 通用规范 §7 |
+| 12 | 补充 reboot 与浏览器冒烟 | 重启后服务自动起；域名下 AI 问答正常 | 通用规范 §7 |
+
+### 7.2 最小复现路径
+
+在用户、组、数据盘、目录均已存在的前提下，最小路径为：
+
+```
+同步代码 → npm install → 写入 .env.local → 写入 unit → daemon-reload → enable --now → 验收
+```
+
+### 7.3 环境漂移检查
+
+| 检查项 | 命令 | 期望 |
+| --- | --- | --- |
+| systemd 版本 | `systemctl --version` | 与当前环境同系列 |
+| Node 版本 | `node -v` | v22.21.0 或项目兼容版本 |
+| 用户/组 | `id webser` | 主组为 `webgp` |
+| 数据盘 | `findmnt /da04` | 已挂载 |
+| 端口 | `ss -ltnp \| grep 9002` | 仅本服务监听 |
+| unit 最终配置 | `systemctl cat tangyou_uistan` | 与第 4 节一致 |
+| 健康端点 | `curl .../api/health` | `configured:true` |
+
+---
+
+## 8. 运维手册
+
+| 操作 | 命令 |
+| --- | --- |
+| 查看状态 | `systemctl status tangyou_uistan --no-pager` |
+| 查看最终配置 | `systemctl cat tangyou_uistan` |
+| 查看关键属性 | `systemctl show tangyou_uistan -p ActiveState -p SubState -p MainPID -p Result -p ExecMainStatus` |
+| 重启 | `sudo systemctl restart tangyou_uistan` |
+| 停止 | `sudo systemctl stop tangyou_uistan` |
+| 启动 | `sudo systemctl start tangyou_uistan` |
+| 开机自启状态 | `systemctl is-enabled tangyou_uistan` |
+| 应用日志 | `tail -f /da04/webser/logs/pro/tangyou_uistan_0.log` |
+| unit 生命周期日志 | `sudo journalctl -u tangyou_uistan -f` |
+| 端口检查 | `ss -ltnp \| grep 9002` |
+
+代码与依赖变更：
+
+- 前端文件改动由 Vite middleware 热更新，通常不需要重启。
+- `server.ts`、`server/*.ts` 等后端改动需要 `sudo systemctl restart tangyou_uistan`。
+- 依赖变更后执行 `npm install`，再重启服务。
+- 回退时恢复代码或 unit 副本，再 `daemon-reload` 与 `restart`，并按第 6 节重新验收。
+
+手工 `nohup` 方式会与 systemd 争用 9002 端口；当前唯一托管入口是 `tangyou_uistan.service`。pid 文件不再作为服务状态依据，服务状态以 `systemctl` 为准。
+
+---
+
+## 9. 已知边界与负面清单
+
+| 项 | 当前形态 | 影响与备注 |
+| --- | --- | --- |
+| 运行模式 | `npm run dev`（Vite middleware） | 常驻 Vite 开发服务器；生产构建未启用 |
+| 日志轮转 | 未配置 | `append:` 文件持续增长，需要关注磁盘 |
+| 挂载依赖 | unit 未显式 `RequiresMountsFor` | 依赖 systemd 对 `WorkingDirectory` 的自动挂载依赖 |
+| unit 仓库源 | 未入仓 | 当前仅 `/etc/systemd/system` 一份；新机器复现依赖本文档 |
+| Node 版本 | `/usr/bin/node` v22.21.0 | `.nvmrc` 为 24；systemd 不读取 `.bash_profile` 的 nvm |
+| 资源限制 | 未配置 | 无 `MemoryMax`、`CPUQuota`、`TasksMax`、`LimitNOFILE` |
+| 沙箱 | 未配置 | 无 `NoNewPrivileges`、`ProtectSystem` 等 |
+| `.env.local` 权限 | 未记录精确值 | 复现时需确认权限与属主 |
+| 实际 reboot 验证 | 未做 | `is-enabled` 已确认；reboot 验证待补 |
+| 迁移后浏览器冒烟 | 未记录 | health 已通过；浏览器端 AI 问答待补 |
+| 反向代理/TLS/DNS | 不在本文范围 | 由上层设施负责 |
+| AI Studio 预览环境 | 不在本文范围 | 平台托管，与本 unit 无关 |
+
+负面清单：
+
+- 不引入 pm2 或其他 supervisor，避免双重托管。
+- 不把 `GEMINI_API_KEY` 写入 unit 文件。
+- 不以 root 运行本服务。
+- 不在未重新验收的情况下一次性开启全部沙箱选项。
+- 不在同一端口上保留第二个手工启动的实例。
+
+---
+
+## 10. 与通用规范的追溯表
+
+| 本实例的决定 | 通用规范章节 | 理由 |
+| --- | --- | --- |
+| unit 名与描述 | §5 标准模板 | 标识服务与运行模式 |
+| 只写 `User=webser` | §2.1、§4 决策表 | 主组由 passwd 提供；避免组名不存在导致 `216/GROUP` |
+| `WorkingDirectory` 指向项目根 | §2.2 | 决定 `.env.local` 与相对路径 |
+| `ExecStart` 使用绝对路径 | §2.3 | 不经过 shell 展开；减少信号转发层 |
+| `Restart=always` + `StartLimitIntervalSec=0` | §2.4 | 长驻服务持续自愈 |
+| `TimeoutStopSec=10` | §2.4 | 控制停止等待 |
+| cgroup 位于 `system.slice` | §2.5 | 脱离 SSH 会话生命周期 |
+| `append:` 日志文件 | §2.6 | 沿用文件日志；轮转待补 |
+| `WantedBy=multi-user.target` | §2.7 | 开机自启 |
+| `After/Wants=network-online.target` | §2.8 | 网络就绪后启动 |
+| 未配置资源限制与沙箱 | §2.9、§5.2 | 当前处于推荐档；加固档待评估 |
+| dev 运行模式 | §4 决策表 | 当前迭代方式；生产构建未切换 |
+| 健康端点作为验收项 | §4.2、§7 | 进程存活与业务可用分层 |
+| 断连存活验收 | §7 | 验证 cgroup 与会话解耦 |
+| 已知边界与负面清单 | §12 | 防止复现时过度工程 |
+
+---
+
+## 11. 附录
+
+### 11.1 目录树（当前相关部分）
+
+```
+/da04/webser/
+├── logs/
+│   └── pro/
+│       └── tangyou_uistan_0.log
+└── sour/
+    └── pro/
+        └── tangyou_uistan_0/
+            ├── package.json
+            ├── server.ts
+            ├── server/
+            ├── services/
+            ├── views/
+            ├── components/
+            ├── hooks/
+            ├── utils/
+            ├── .env.local
+            └── node_modules/
+
+/etc/systemd/system/
+└── tangyou_uistan.service
+```
+
+### 11.2 命令速查
+
+| 目的 | 命令 |
+| --- | --- |
+| 状态 | `systemctl status tangyou_uistan --no-pager` |
+| 最终配置 | `systemctl cat tangyou_uistan` |
+| 关键属性 | `systemctl show tangyou_uistan -p ActiveState -p SubState -p MainPID -p Result -p ExecMainStatus` |
+| 校验 unit | `systemd-analyze verify /etc/systemd/system/tangyou_uistan.service` |
+| 重载 | `sudo systemctl daemon-reload` |
+| 启用并启动 | `sudo systemctl enable --now tangyou_uistan` |
+| 重启 | `sudo systemctl restart tangyou_uistan` |
+| 停止 | `sudo systemctl stop tangyou_uistan` |
+| 开机自启状态 | `systemctl is-enabled tangyou_uistan` |
+| 应用日志 | `tail -f /da04/webser/logs/pro/tangyou_uistan_0.log` |
+| unit 日志 | `sudo journalctl -u tangyou_uistan -f` |
+| 健康 | `curl -sS -m 5 http://127.0.0.1:9002/api/health` |
+| 端口 | `ss -ltnp \| grep 9002` |
+| 用户/组 | `id webser`、`getent group webgp` |
+| 挂载 | `findmnt /da04` |
+
+### 11.3 相关文档
+
+- 《systemd 服务托管通用规范》v1.0
+- `importantdocsneedkown/GoogleAIStudio迭代代码下载后本地重启服务指南.md`
+- `importantdocsneedkown/00_文档总索引与信息治理规范.txt`
+
+### 11.4 版本元数据
+
+| 项 | 值 |
+| --- | --- |
+| 本文档版本 | 1.0 |
+| 基于通用规范 | v1.0 |
+| 验收记录时间 | 2026-11-25 |
+| 当前 unit 版本 | 与第 4 节全文一致 |

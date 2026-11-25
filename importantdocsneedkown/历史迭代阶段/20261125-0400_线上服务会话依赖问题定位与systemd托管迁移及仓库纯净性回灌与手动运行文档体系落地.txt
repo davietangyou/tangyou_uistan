@@ -1,0 +1,400 @@
+================================================================================
+阶段历史归档：线上服务会话依赖问题定位、systemd 托管迁移与仓库纯净性回灌及手动运行文档体系落地
+================================================================================
+
+归档时间：2026-11-25 04:00（UTC）
+归档文件：importantdocsneedkown/历史迭代阶段/20261125-0400_线上服务会话依赖问题定位与systemd托管迁移及仓库纯净性回灌与手动运行文档体系落地.txt
+
+================================================================================
+一、阶段起点与原始处境
+================================================================================
+
+本阶段起始于线上 `tangyou_uistan` 服务的一次运行态异常：服务通过
+`nohup npm run dev` 在 GCE 虚拟机上启动，首次访问与 AI 问答均正常；一段时间后再次
+访问返回 404，检查进程发现服务已经不存在。
+
+阶段开始时的运行与文档形态如下：
+
+1. 运行形态
+   - 线上服务以 `nohup npm run dev \> log 2\>&1 &` 方式启动；
+   - 单进程结构：`npm run dev` → `tsx server.ts` → Express + Vite middleware；
+   - 监听 `0.0.0.0:9002`，端口来自根目录 `.env.local` 的 `PORT=9002`；
+   - 健康端点 `/api/health`，用于确认服务与 `GEMINI_API_KEY` 配置；
+   - 服务进程挂在 SSH 会话的 `session-*.scope` 下，尚未纳入 systemd。
+
+2. 文档形态
+   - `importantdocsneedkown/` 下已有 `00_文档总索引与信息治理规范.txt`、
+     `产品与医学价值北极星.txt`、`任何代码迭代变动者须知.txt`、
+     `本项目剥离UI后用于UI重构的核心业务明细.txt`、`GoogleAIStudio迭代代码下载后本地重启服务指南.md`
+     与 `历史迭代阶段/`；
+   - 旧重启指南主要覆盖“从 AI Studio 下载代码后本地重启”，尚未覆盖线上 systemd 托管、
+     仓库纯净性与 AI 迭代成果回灌、手动搭建与迭代应用；
+   - 本地已存在一套用于同步 AI 工具导出物的脚本与手工动作，但尚未形成文档；
+   - 仓库尚无 systemd unit 的入仓副本，线上 unit 只存在于 `/etc/systemd/system/`。
+
+3. 问题表现
+   - 首次访问与 AI 问答正常，说明应用本身、`.env.local` 与 Gemini 调用链路可用；
+   - 进程在约 02:28:39 后消失，日志停在 `Server running on http://0.0.0.0:9002`，
+     没有任何异常栈或退出记录；
+   - 后续访问返回 404，`ps` 中已看不到本项目的 node 进程。
+
+================================================================================
+二、阶段演进脉络与关键认知转折
+================================================================================
+
+### 2.1 会话依赖问题定位
+
+通过时间线与系统日志，逐步排除了内存、磁盘、原生崩溃与 logind 强杀：
+
+- `session 8999` 于 02:25:01 建立，服务于 02:25:41 写入 pid、02:25:44 启动成功；
+- 02:28:39 `Session 8999 logged out`，同一秒 `session-8999.scope: Deactivated successfully`，
+  进程消失时间与 SSH 会话结束时间精确重合；
+- `KillUserProcesses` 为默认 `no`，`systemd-oomd` 为 `inactive`，内核与 journalctl 中没有
+  OOM、segfault 或 coredump；
+- 磁盘与 inode 充足；
+- `session-9000.scope` 在会话结束后处于 `active (abandoned)`，其中由 `setsid` 启动的
+  进程仍存活，说明 logind 不会主动杀死 scope 内进程；
+- `setsid` 对照实验：退出终端、合上电脑 6 分钟后重连，进程仍在，`/api/health` 正常。
+
+由此形成的认知是：
+
+- 进程死亡不是应用自身报错，而是 SSH 会话结束时的挂断信号作用于旧会话的进程树；
+- `nohup` 的保护范围通常只覆盖直接进程；`npm → sh → tsx → node` 这种多层工具链中，
+  任一环安装信号处理器或重新 exec，都可能打断忽略链；
+- `setsid` 可以让进程脱离控制终端与新会话，避开终端挂断信号，但它不提供重启策略、
+  开机自启、日志归集与退出码观测；
+- 线上长期运行更适合交给 systemd：cgroup 隔离、生命周期管理、日志与开机集成由
+  systemd 统一承接。
+
+### 2.2 systemd 托管迁移
+
+在确认根因后，线上服务从 `nohup` 迁移到 systemd：
+
+- 写入 `/etc/systemd/system/tangyou_uistan.service`；
+- 首次启动失败，`status=216/GROUP`：unit 中写了 `Group=webser`，但系统中不存在名为
+  `webser` 的组；`id webser` 显示主组为 `webgp`；
+- 去掉 `Group=`，让 systemd 使用 passwd 中的主组，服务启动成功；
+- `systemctl enable --now tangyou_uistan` 后，服务处于 `active (running)`，
+  `CGroup` 位于 `/system.slice/tangyou_uistan.service`；
+- 断开 SSH、等待、重连后，`Main PID` 保持不变，`/api/health` 仍返回
+  `ok:true`、`configured:true`。
+
+本次迁移确认的 unit 形态为：
+
+```ini
+[Unit]
+Description=tangyou_uistan (npm run dev)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=webser
+WorkingDirectory=/da04/webser/sour/pro/tangyou_uistan_0
+ExecStart=/usr/bin/npm run dev
+Restart=always
+RestartSec=3
+TimeoutStopSec=10
+StandardOutput=append:/da04/webser/logs/pro/tangyou_uistan_0.log
+StandardError=append:/da04/webser/logs/pro/tangyou_uistan_0.log
+
+[Install]
+WantedBy=multi-user.target
+```
+
+由此形成的认知是：
+
+- systemd 的 cgroup 归属决定了服务是否会随登录会话消失；`system.slice` 与
+  `session-*.scope` 是两种不同的生命周期；
+- `216/GROUP` 是身份面失配，常见原因是 `Group=` 指向不存在的组；省略 `Group=`、
+  让主组由 passwd 提供，是一种更稳的默认；
+- `StartLimitIntervalSec=0` 与 `Restart=always` 让服务在异常退出后持续重试；
+- 日志追加到文件后，需要另行关注轮转；systemd 的 `journalctl` 主要记录 unit 生命周期。
+
+### 2.3 通用规范与项目实例文档的分工
+
+在 systemd 迁移之后，曾尝试将经验抽象为一份通用 systemd 规范与一份项目实例文档。
+后续的认知转折是：
+
+- 项目实例文档应当可以独立用于 `tangyou_uistan` 的搭建、复现与运维，不依赖通用规范；
+- 通用规范适用于“尚无针对性实例文档、需要从委托方意图出发做通用设计”的情境；
+- 最终 `importantdocsneedkown/` 下保留的是项目实例文档
+  `线上服务托管实例（systemd）.txt`，通用规范不进入本目录；
+- 实例文档记录 unit 全文、运行用户与主组、固定路径、日志去向、验收证据、新机器复现
+  清单、日常运维与已知边界。
+
+### 2.4 仓库纯净性与 AI 迭代成果回灌
+
+本阶段同时处理了“AI 工具迭代成果如何进入仓库”的治理问题。
+
+原始脚本的做法是：
+
+- 解压 AI 工具导出物到临时目录；
+- 将 `.git`、`.idea`、`node_modules`、`.env.example`、`.env.server.local`、
+  `.gitignore`、`.nvmrc` 移出仓库；
+- 使用 `rsync -avm` 将导出物叠加到仓库，不带 `--delete`；
+- 再将移出的文件移回；
+- 手动还原误删文件、删除应删文件、清理工具特有文件；
+- 人工提交并推送。
+
+其本意是：仓库只保留与项目本身相关的文件，不包含各 AI 编程工具带来的额外产物；
+仓库应可被人手工维护与迭代，也可被任意 AI 工具临时拿去迭代；迭代完成后，通过一套
+可重复的流程把成果干净地回灌到仓库。
+
+本阶段将该本意整理为：
+
+- 七颗方向性北极星：走向语义自足、走向人的可接手性、走向工具可替换性、走向可复现性、
+  走向可逆性、走向人的最终主权、走向可持续的低摩擦；
+- 一张张力空间：纯净/开放 × 人的判断/机器自动化；
+- 一套文件分类：本地专属、受保护基线、工具产物、未知文件；
+- 一条回灌流程：记录 base → 干净出站快照 → 解压归档 → base worktree → 候选 worktree
+  → 三方对比 → 工具产物清扫 → 未知文件隔离 → 受保护基线评审 → 删除候选评审 →
+  候选区验证 → 提交候选 → 干净 clone 测试 → squash 合并 → 人工推送；
+- 一个渠道归档根目录：`/Users/davie/Desktop/scrapt/tangyou_uistan/iteration_channels/`，
+  每个来源一个渠道目录，每次导入一个时间戳目录，完整保留导出物、base 与清单；
+- 一个关键取舍：主分支一次迭代对应一个 squash 提交，候选分支细节留在渠道归档。
+
+### 2.5 手动运行指南
+
+在 systemd 实例文档之外，本阶段补齐了“从零手动搭建与手动应用新迭代”的教程。
+
+形成的取舍是：
+
+- 只做一份文档，同时覆盖 macOS 本地与 Linux 线上；
+- Node 统一按 `.nvmrc` 的 24；本地用 nvm，线上用系统级 Node 24；
+- 只使用 dev 模式，不包含生产构建；
+- 路径写死：本地 `/Users/davie/Desktop/EffLearn/tangyou_uistan`，
+  线上 `/da04/webser/sour/pro/tangyou_uistan_0`；
+- 线上手动模式只保留前台 `npm run dev` 用于首次快速验证，不引入 tmux/nohup；
+- 手动验证通过后，由 systemd 实例文档接手长期托管；
+- 新迭代应用流程统一为：停止 → 记录旧 commit → 拉取 → 判断依赖与环境变化 →
+  必要时 `npm ci` → 重启 → health 与冒烟 → 必要时回退。
+
+### 2.6 索引校准
+
+随着旧重启指南删除、三份新文档加入，`00_文档总索引与信息治理规范.txt` 同步校准：
+
+- 组成部分从 6 个调整为 8 个；
+- 删除《GoogleAIStudio迭代代码下载后本地重启服务指南.md》；
+- 新增《仓库纯净性与AI迭代成果回灌实践.txt》《手动搭建与迭代应用指南.txt》
+  《线上服务托管实例（systemd）.txt》；
+- 阅读路径第三层改为“仓库回灌实践 + 手动指南 + systemd 实例 + 历史归档”；
+- 信息运动规律中的同步目标改为 `.env.example`、手动指南与 systemd 实例，
+  并在导入实践变化时同步仓库回灌实践；
+- 新增“情境 6：AI 工具完成一轮迭代后，导出物如何进入纯净仓库”；
+- 速览锚点表同步增删；
+- 既有失真 `server/geminiHandler.ts` 校准为 `server/gemini.ts`；
+- 三颗北极星、三份只读基石、历史归档机制与文笔心法保持原样。
+
+================================================================================
+三、核心取舍与设计依据
+================================================================================
+
+1. 为何用 systemd 替代 nohup/setsid
+   - `nohup` 对多层工具链的保护不可靠，且不提供重启、开机自启、日志归集与退出码观测；
+   - `setsid` 能解决会话脱离，但仍缺少生命周期管理；
+   - systemd 将服务放入独立 cgroup，提供重启、开机自启、日志与验收所需的观测面。
+
+2. 为何省略 `Group=`
+   - 首次 systemd 启动失败为 `216/GROUP`，原因是 `Group=webser` 指向不存在的组；
+   - `User=webser` 时，systemd 会使用 passwd 中的主组 `webgp`；
+   - 省略 `Group=` 降低了对组名解析的依赖。
+
+3. 为何项目实例文档独立存在
+   - 项目实例文档需要直接指导 `tangyou_uistan` 的搭建、复现与运维；
+   - 通用规范适合作为“从零设计”的方法论文档，不应成为实例文档的前置依赖；
+   - 最终知识库只保留项目实例文档，避免同一事项在两份文档中漂移。
+
+4. 为何手动指南合并为一份
+   - macOS 本地与 Linux 线上共享运行时形态、`.env.local`、health、冒烟与迭代判断；
+   - 环境差异集中在“从零搭建”与“命令前缀、路径、权限”；
+   - 一份文档减少重复维护，符合“走向可持续的低摩擦”。
+
+5. 为何统一 Node 24
+   - 仓库 `.nvmrc` 为 24；
+   - Node 24 兼容 Node 22，项目已有运行基础；
+   - 本地与线上统一版本，减少环境漂移。
+
+6. 为何手动指南只做 dev 模式
+   - 本阶段目标是先建立可被人执行的手动基线，快速验证；
+   - 生产构建与生产托管属于另一条链路，暂不混入手动教程；
+   - systemd 实例当前也以 `npm run dev` 为运行命令，保持一致。
+
+7. 为何线上手动模式只用前台
+   - 首次线上验证的目标是快速确认服务、环境变量与健康端点；
+   - tmux/nohup 会引入额外进程管理复杂度；
+   - 验证通过后直接交给 systemd，避免形成第二套临时托管习惯。
+
+8. 为何主分支采用 squash 合并
+   - 一次 AI 迭代渠道的改动，最终在主分支形成一个提交；
+   - 整批回退容易，主分支历史清晰；
+   - 候选分支的细节与导入来源留在渠道归档中。
+
+9. 为何保留渠道归档
+   - 被排除的 `.idea`、工具产物与未知文件不会丢失；
+   - base、导出物与清单可用于三方对比与审计；
+   - 需要时可以从归档中按原始目录树找回文件。
+
+10. 为何用 `git worktree` + 干净快照，而不是继续移走文件
+    - 出站快照只包含已跟踪文件，工具从一开始就看不到 `.git`、`node_modules`、`.idea`；
+    - 入站叠加发生在候选 worktree，活仓库不参与中间状态；
+    - 保护从“记得把哪些文件移走”变成“结构上不进入叠加路径”。
+
+11. 为何删除旧重启指南
+    - 其运行态内容已由手动指南承接；
+    - 其 systemd 内容已由 systemd 实例承接；
+    - 其 AI Studio 导出物与锁文件内容已由仓库回灌实践承接；
+    - 保留旧指南会造成同一事项多处分叉。
+
+12. 为何索引只做必要修改
+    - 目录拓扑变化需要校准入口地图；
+    - 三颗北极星、三份只读基石、历史归档机制与文笔心法不属于本次变更面；
+    - 仅替换旧指南引用、增补新文档描述、更新阅读路径、信息流与速览表，
+      并对既有失真文件名做精准校准。
+
+================================================================================
+四、逐文件变动与零改动范围
+================================================================================
+
+【新增文件】
+
+- `importantdocsneedkown/仓库纯净性与AI迭代成果回灌实践.txt`
+  记录仓库纯净性方向的北极星群矩阵、文件分类、渠道归档、干净快照、base 记录、
+  候选 worktree、三方对比、受保护基线、删除候选、未知文件隔离、验证与 squash 合并。
+
+- `importantdocsneedkown/手动搭建与迭代应用指南.txt`
+  记录 macOS 本地与 Linux 线上的从零搭建、Node 24、`.env.local`、`npm run dev`、
+  `/api/health`、浏览器冒烟、停止/拉取/依赖更新/重启/回退，以及转入 systemd 的衔接点。
+
+- `importantdocsneedkown/线上服务托管实例（systemd）.txt`
+  记录 unit 全文、运行用户与主组、固定路径、日志去向、`/api/health` 验收证据、
+  新机器复现清单、日常运维、已知边界与负面清单。
+
+【修改文件】
+
+- `importantdocsneedkown/00_文档总索引与信息治理规范.txt`
+  组成部分由 6 个调整为 8 个；删除旧重启指南条目；新增三份文档的定位与速览；
+  阅读路径第三层、信息运动规律、授权边界同步目标、情境 6 与速览锚点表同步更新；
+  `server/geminiHandler.ts` 校准为 `server/gemini.ts`。
+
+【删除文件】
+
+- `importantdocsneedkown/GoogleAIStudio迭代代码下载后本地重启服务指南.md`
+  其运行态、手动启停、健康检查与排障内容由手动指南承接；systemd 内容由
+  `线上服务托管实例（systemd）.txt` 承接；AI Studio 导出物与锁文件内容由
+  `仓库纯净性与AI迭代成果回灌实践.txt` 承接。
+
+【线上运行配置】
+
+- `/etc/systemd/system/tangyou_uistan.service`
+  将线上服务从 `nohup npm run dev` 迁移为 systemd 托管；运行用户 `webser`，
+  工作目录 `/da04/webser/sour/pro/tangyou_uistan_0`，端口 9002，
+  日志追加到 `/da04/webser/logs/pro/tangyou_uistan_0.log`。
+
+【零改动范围】
+
+- 仓库源码与依赖未改动：`server.ts`、`server/gemini.ts`、`services/geminiService.ts`、
+  `views/`、`components/`、`hooks/`、`utils/`、`package.json`、`package-lock.json`、
+  `.nvmrc`、`vite.config.ts`、`metadata.json`、`index.html`、`tsconfig.json` 等保持原样；
+- 三份只读基石未修订：`产品与医学价值北极星.txt`、`任何代码迭代变动者须知.txt`、
+  `本项目剥离UI后用于UI重构的核心业务明细.txt`；
+- `历史迭代阶段/` 既有归档未改动；
+- 反向代理、TLS、DNS 未改动；
+- 未引入 pm2、容器或其他 supervisor。
+
+================================================================================
+五、运行与构建验证结果
+================================================================================
+
+1. systemd 运行态
+   - `systemctl is-enabled tangyou_uistan` → `enabled`；
+   - `systemctl status tangyou_uistan` → `active (running)`；
+   - `CGroup: /system.slice/tangyou_uistan.service`；
+   - `curl http://127.0.0.1:9002/api/health` →
+     `{"ok":true,"configured":true,"model":"gemini-4-hydrogen","fastModel":"gemini-3.1-flash-lite","visionModel":"gemini-4-hydrogen","transcribeModel":"gemini-3.5-transcribe","customBaseUrl":false}`；
+   - 断开 SSH、等待约 4 分钟后重连，`Main PID` 不变，health 正常；
+   - 受控重启后 health 恢复。
+
+2. 已排除的故障方向
+   - 内存与 OOM：`free -h` 充足，`systemd-oomd` inactive，内核与 journalctl 无 OOM；
+   - 磁盘与 inode：`/da04` 使用率 5%，inode 3%；
+   - 原生崩溃：无 segfault、无 coredump；
+   - logind 强杀：`KillUserProcesses` 为默认 `no`，`session-9000.scope` 在会话结束后
+     仍为 `active (abandoned)` 且进程存活。
+
+3. 文档验证
+   - 三份新文档与索引已完成文本层面修订；
+   - 手动指南与仓库回灌实践尚未在白板新机上做端到端执行验证；
+   - 索引的残留引用检查与结构一致性检查已列入后续核对；
+   - 旧重启指南已删除，其内容归属已按上述方式迁移。
+
+4. 未执行项
+   - 未做实际 reboot 验证；
+   - systemd 迁移后未重新记录浏览器端 AI 问答冒烟；
+   - 未在全新 macOS 与 Linux 机器上执行手动指南；
+   - 未从干净 clone 执行一次完整的仓库回灌流程；
+   - 未执行代码构建、lint 或测试（本阶段未改动源码）。
+
+================================================================================
+六、当前现状边界与留待后续关注的事项
+================================================================================
+
+1. Node 版本记录尚待对齐
+   - 线上 systemd 实例文档当前记录的是 `/usr/bin/node` v22.21.0；
+   - 手动指南按 `.nvmrc` 使用 Node 24；
+   - 若线上后续按手动指南安装 Node 24，systemd 实例文档中的 Node 22 说明需要同步校准。
+
+2. systemd 实例文档的已知边界
+   - unit 当前使用 dev 模式；
+   - 日志使用 `append:` 文件，未配置轮转；
+   - unit 未显式 `RequiresMountsFor`；
+   - unit 文件仅存在于 `/etc/systemd/system/`，尚未入仓；
+   - `.env.local` 精确权限与属主未记录；
+   - 实际 reboot 验证与迁移后浏览器冒烟未记录。
+
+3. 手动指南的验证边界
+   - 文档中的命令按当前服务器与 macOS 环境整理；
+   - 尚未在全新白板机器上逐条执行；
+   - 线上反向代理、TLS、DNS 不在其范围；
+   - 线上手动模式只使用前台 `npm run dev`，长期运行由 systemd 接手。
+
+4. 仓库回灌实践的验证边界
+   - 渠道归档根目录为 `/Users/davie/Desktop/scrapt/tangyou_uistan/iteration_channels/`；
+   - 尚未用一次真实 AI 工具导出物完整走通；
+   - 受保护基线、删除候选与未知文件的判断仍依赖人工评审；
+   - squash 合并后，候选分支细节留在渠道归档，主分支只保留一个提交。
+
+5. 索引校准的验证边界
+   - `00_文档总索引与信息治理规范.txt` 已按 8 个组成部分修订；
+   - 旧指南残留引用、`server/geminiHandler.ts` 残留、组成部分数量与速览表行数
+     仍需在实际落盘后做一次 grep 与结构核对；
+   - 三颗北极星、三份只读基石、历史归档机制与文笔心法未改动。
+
+6. 代码层面
+   - 本阶段未改动仓库源码、依赖与构建配置；
+   - 后续若需要调整运行时、模型路由、健康端点或部署形态，属于新的代码迭代阶段。
+
+================================================================================
+七、阶段结论
+================================================================================
+
+本阶段完成了一条从“运行态异常”到“运行基线、源码治理与文档体系”的完整收口：
+
+- 线上服务的会话依赖问题被定位为 SSH 会话挂断信号作用于旧进程树，`nohup` 对多层
+  工具链保护不可靠；
+- 服务已迁移到 systemd，位于 `system.slice`，具备开机自启、异常重启、日志与退出码
+  观测，并已通过断连存活与健康端点验证；
+- 仓库侧形成了《仓库纯净性与AI迭代成果回灌实践.txt》，把“纯净仓库、工具可替换、
+  人工最终主权”的意图沉淀为北极星群矩阵、文件分类、渠道归档与回灌流程；
+- 运行侧形成了《手动搭建与迭代应用指南.txt》，覆盖 macOS 本地与 Linux 线上的从零
+  搭建、手动启动与新迭代应用；
+- 线上长期托管形成了《线上服务托管实例（systemd）.txt》，记录 unit、路径、用户、
+  日志、验收与已知边界；
+- 旧重启指南已删除，其内容由三份新文档承接；
+- `00_文档总索引与信息治理规范.txt` 已按 8 个组成部分校准，阅读路径、信息运动规律、
+  情境 6 与速览锚点表同步更新。
+
+当前仍待后续阶段处理的，主要是 Node 24 与 systemd 实例文档的版本对齐、全新白板机器
+上的手动指南验证、一次真实 AI 导出物的完整回灌演练，以及 reboot 与浏览器冒烟等
+补充验收项。本阶段未改动仓库源码与依赖，代码层面的迭代留给后续阶段单独讨论。

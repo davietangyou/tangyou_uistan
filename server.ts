@@ -2,25 +2,17 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import { loadLocalEnvFiles } from "./server/env.ts";
-import { registerGeminiRoutes } from "./server/http/geminiRoutes.ts";
+import { createApp } from "./server/app.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 loadLocalEnvFiles();
 
-const app = express();
+// JSON 上限、/api no-store 與 /api/health、/api/gemini/* 路由見 server/app.ts（與 Cloudflare Workers 入口共用）。
+const app = createApp();
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = "0.0.0.0";
-
-app.use(express.json({ limit: "25mb" }));
-
-app.use("/api", (_req, res, next) => {
-    res.setHeader("Cache-Control", "no-store");
-    next();
-});
-
-registerGeminiRoutes(app);
 
 /**
  * AI Studio / production entry. Binds 0.0.0.0:PORT (default 3000).

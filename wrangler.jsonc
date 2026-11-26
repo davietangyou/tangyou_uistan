@@ -1,0 +1,36 @@
+// Cloudflare Workers 部署配置（無伺服器形態）。Node 入口 server.ts 與 AI Studio 流程不讀取本文件。
+// 部署步驟、密鑰與切換域名見 importantdocsneedkown/线上无服务器部署实例（Cloudflare Workers）.txt
+{
+  "name": "tangyou-app",
+  "main": "cloudflare/worker.ts",
+  "compatibility_date": "2026-11-20",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // 前端：`npm run build` 產出的 dist/ 由 Static Assets 直接回應；/api 與上報路徑先進 Worker。
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api", "/api/*", "/chtatain-datacent/*"]
+  },
+
+  // Gemini 出站：單例 Durable Object，首次建立時 locationHint "wnam"（美西），見 cloudflare/worker.ts。
+  "durable_objects": {
+    "bindings": [{ "name": "GEMINI_EGRESS", "class_name": "GeminiEgress" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GeminiEgress"] }],
+
+  // 非機密變量。GEMINI_API_KEY 為機密，使用 `wrangler secret put GEMINI_API_KEY` 設置，不寫在這裡。
+  // 可選模型覆蓋（GEMINI_MODEL / GEMINI_FAST_MODEL / GEMINI_VISION_MODEL / GEMINI_TRANSCRIBE_MODEL / GEMINI_BASE_URL）
+  // 與 .env.example 同名，需要時加到 vars 中即可。
+  "vars": {
+    // 數據上報（/chtatain-datacent/*）留在舊伺服器。Route 模式下同域 fetch 直達 DNS 源站（舊伺服器）。
+    "UPLOAD_ORIGIN": "https://tangyou-app.alphathought.org"
+  },
+
+  "workers_dev": true,
+  "observability": { "enabled": true },
+
+  // 2026-11-26 經項目主人確認後啟用 Route。保留現有橙雲 A 記錄（舊伺服器繼續作為源站，承接上報路徑），刪除該 route 即可回滾。
+  "routes": [{ "pattern": "tangyou-app.alphathought.org/*", "zone_name": "alphathought.org" }]
+}

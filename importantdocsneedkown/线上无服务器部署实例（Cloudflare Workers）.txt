@@ -1,0 +1,435 @@
+# 线上无服务器部署实例（Cloudflare Workers）
+
+版本：1.3
+记录时间：2026-11-26
+当前状态：本渠道已在生产启用。测试地址 `https://tangyou-app.davie12580.workers.dev` 与正式域名 `https://tangyou-app.alphathought.org` 均由 Worker「tangyou-app」承接（Route 已启用）。DNS 橙云 A 记录未改，上报路径仍回源旧伺服器。
+
+---
+
+## 0. 文档使用说明
+
+本文档是 `tangyou_uistan` 通过 Cloudflare Workers 发布到线上的完整依据。它与《线上服务托管实例（systemd）.txt》并列，是同一份代码的另一种线上发布渠道：前者把应用长期跑在自有 Linux 伺服器上，本文档把应用跑在 Cloudflare 边缘，不再依托一台应用伺服器来提供页面与 `/api/gemini/*`。
+
+它可以用于三种场景：
+
+- 尚未接触过本项目的执行者（人或 AI），在已持有本仓库代码的前提下，与资源拥有者沟通所需的账号、域名、套餐与密钥，将应用发布到对方**指定的 Cloudflare 账号**与**指定的域名**；
+- 核对应前生产实例的配置、域名与验收状态；
+- 日常迭代、故障排查与回滚时作为事实来源。
+
+本文档是自足的：渠道定位、必须先向资源拥有者对齐的事项、架构与理由、文件分工、本地验证、参数化发布步骤、当前生产实例的工作样例、回滚、日常迭代与从零复现清单都在本文档内。不要求阅读者事先知道当前生产账号或域名；那些只作为第 9 节的工作样例出现。
+
+Node 单进程入口 `server.ts`、`npm run dev` / `npm start`，以及 Google AI Studio 的 ZIP 下载、回灌、重启流程保持原样，不读取本文档涉及的 Workers 配置。两种渠道共用 `server/app.ts` 组装的 `/api/health` 与 `/api/gemini/*`。
+
+本文档不覆盖：应用业务逻辑、`GEMINI_API_KEY` 或 Cloudflare API token 的实际值、旧伺服器上数据上报服务（8002）本身的搭建、Cloudflare 账号注册与付费套餐的付款操作（这些由资源拥有者在控制台完成）。
+
+未经资源拥有者明确确认，不得改 DNS、不得把 Route 挂到正式域名、不得覆盖已有的生产 Worker、不得把密钥写入仓库或对话。
+
+---
+
+## 1. 渠道定位
+
+| 发布渠道 | 依据文档 | 运行位置 | 适用情况 |
+| --- | --- | --- | --- |
+| 自托管 Linux（systemd） | 《线上服务托管实例（systemd）.txt》 | 资源拥有者的伺服器（当前生产曾用此形态提供页面与 API） | 需要长期跑在已有机器上，或尚未开通 Cloudflare Workers 付费套餐 |
+| Cloudflare Workers（本文档） | 本文档 | Cloudflare 全球网络；Gemini 出站固定从美西 | 希望不再依托应用伺服器提供页面与 `/api/gemini/*`，由拥有者指定的 Cloudflare 账号与域名对外提供服务 |
+
+两条渠道可以同时存在：例如正式域名切到 Workers 后，旧伺服器继续提供 `/chtatain-datacent/*` 数据上报，并作为删除 Route 后的即时回滚后备。它们不是互斥的“只能留一条”，但同一主机名在同一时刻只应有一种方式承接浏览器流量。
+
+选择本渠道的一个硬约束：Gemini API 不支持香港地区。香港用户的请求若在香港机房直接出站，会被拒绝。本仓库因此把所有 `/api/*` 放到一个固定在美西的 Durable Object 里执行。任何新的指定域名，只要面向香港用户，都要保留这一设计，并在香港网络下做真实咨询验收；非香港网络的成功不能代替这一步。
+
+---
+
+## 2. 形态与关键参数
+
+```
+浏览器
+  → https://<资源拥有者指定的域名>/
+  → Cloudflare Worker（cloudflare/worker.ts）
+      ├─ 静态前端：dist/（npm run build 产物）由 Workers Static Assets 直接回应，SPA 导航回落 index.html
+      ├─ /api、/api/*：转交单例 Durable Object「GeminiEgress」（首次建立于美西 wnam）
+      │     └─ DO 内运行与 Node 端相同的 Express app（server/app.ts 的 createApp）
+      │           └─ /api/health、/api/gemini/* → Google Gemini（出站请求从美国发出）
+      └─ /chtatain-datacent/*：按 UPLOAD_ORIGIN 反向代理到数据上报源站（当前生产为旧伺服器）
+```
+
+仓库里的代码与脚本已固定的部分，通常不必改：
+
+| 项 | 值 |
+| --- | --- |
+| 入口 | `cloudflare/worker.ts` |
+| 前端产物 | `dist/`（`cf:deploy` / `cf:dev` 会先执行 `vite build`） |
+| Durable Object | 类 `GeminiEgress`，绑定 `GEMINI_EGRESS`，实例名 `gemini-egress-v1`，`locationHint: "wnam"` |
+| 机密名 | `GEMINI_API_KEY`（Worker Secret，不写进 `wrangler.jsonc`） |
+| 可选 vars | `GEMINI_MODEL`、`GEMINI_FAST_MODEL`、`GEMINI_VISION_MODEL`、`GEMINI_TRANSCRIBE_MODEL`、`GEMINI_BASE_URL`（与 `.env.example` 同名，需要时才加到 `vars`） |
+| 套餐 | Workers 付费套餐（Durable Object 与照片、录音请求所需要；每月约 5 美元起） |
+| wrangler 版本 | `4.168.0`（由 `npx --yes wrangler@4.168.0` 调用，不写入 `package.json` 依赖，以免拖慢 `npm ci` 与 AI Studio 安装） |
+| 健康端点 | `https://<域名>/api/health`，期望 `ok:true` 且 `configured:true` |
+
+每次发布前必须与资源拥有者对齐、并写入配置或部署参数的部分：
+
+| 参数 | 写在何处 | 含义 |
+| --- | --- | --- |
+| Cloudflare 账号 | 部署环境的 `CLOUDFLARE_ACCOUNT_ID`（可用 `wrangler whoami` 读出，不必写入仓库） | 发布目标账号 |
+| Worker 名 | `wrangler.jsonc` 的 `name` | 同一账号下同名 Worker 会被覆盖 |
+| `UPLOAD_ORIGIN` | `wrangler.jsonc` 的 `vars` | `/chtatain-datacent/*` 回源地址 |
+| 正式域名 Route | `wrangler.jsonc` 的 `routes`：`pattern` 为 `<主机名>/*`，`zone_name` 为该主机名所属 zone | 未启用 Route 时只出现在 `*.workers.dev` |
+| 测试地址 | 部署成功后由 wrangler 打印 | `https://<Worker 名>.<账号子域>.workers.dev` |
+
+---
+
+## 3. 与资源拥有者沟通清单
+
+在改配置、写入密钥或调用任何会改变 Cloudflare 资源的命令之前，先把下列事项对齐。缺任何一项就停下来问，不要用猜测填空。密钥与 token 只通过双方约定的机密通道传递（环境变量、加密输入框等），不得写入仓库、不得出现在普通对话或截图里。
+
+1. **目标 Cloudflare 账号**  
+   明确是哪一个账号（控制台登录邮箱即可）。部署前用 `wrangler whoami` 核对，防止发到错误账号。
+
+2. **Workers 付费套餐**  
+   请拥有者在 Cloudflare 控制台自行开通。未开通时，Durable Object 与较大的照片、录音请求会失败。代理人不应代为付款。
+
+3. **鉴权方式**  
+   推荐账号级 API token，放入环境变量 `CLOUDFLARE_API_TOKEN`，不要使用需要交互式浏览器登录的方式（除非拥有者本人在当场完成登录）。权限至少包括：账号级 **Workers Scripts: Edit**、**Account Settings: Read**（足够创建 Worker、写入 Secret、部署到 `*.workers.dev`）。若要把 Route 挂到指定域名，还可能需要该 zone 的 **Workers Routes: Edit** 与 **Zone: Read**；若部署时报权限不足，把原始报错给拥有者，请其补权，不要改用其他绕过方式。
+
+4. **指定的正式域名与 zone**  
+   完整主机名（例如 `tangyou-app.alphathought.org`）以及它所在的 zone（例如 `alphathought.org`）。该主机名必须位于目标账号有权管理的 zone 内。
+
+5. **该主机名当前的 DNS 与源站**  
+   是否已有橙云代理的 A / AAAA / CNAME、是否已有旧源站、是否还有必须保留的路径（本项目中是 `/chtatain-datacent/*`）。有旧源站且需要回源时，默认采用 **Route 模式且不改 DNS**（见第 4.5 节）。主机名尚无 DNS 记录时，请拥有者先添加记录，代理人不得擅自改 DNS。
+
+6. **是新建 Worker 还是覆盖已有 Worker**  
+   `wrangler.jsonc` 里当前的 `name` 默认为 `tangyou-app`。向同一账号再次部署同名 Worker 会覆盖线上版本（Secret 通常保留，但代码、vars 与 routes 以本次配置为准）。若拥有者要的是额外的测试或预发环境，应另取 Worker 名，并单独配置 routes，避免覆盖生产。
+
+7. **`GEMINI_API_KEY`**  
+   由拥有者提供，只写入 Worker Secret。若该密钥曾经出现在对话、截图或其它不安全场合，应先轮换，再写入；若旧伺服器仍在运行同一应用，新密钥需同步到那边的 `.env.local` 并重启服务。代理人不得在日志或对话中打印密钥。
+
+8. **数据上报回源**  
+   确认上报服务是否继续留在旧源站、`UPLOAD_ORIGIN` 应写成哪一个 origin、用哪一条探活 URL 作为切换前后的对照。当前生产的约定见第 9 节；新的指定域名若没有上报服务，也要由拥有者明确“本环境不代理上报”或提供替代 origin，而不是默默删掉代理逻辑。
+
+9. **验收责任**  
+   测试地址与正式域名的香港网络验收（至少一次文字咨询、一次拍照识药、一次语音转写）由谁完成。地区限制只能在香港网络上证实。
+
+10. **回滚后备**  
+    若正式域名原来由旧伺服器承接，确认切换后旧服务是否保持运行，以便删除 Route 后流量立即回去。
+
+对齐完成后，才能进入第 8 节。下面第 4 至第 7 节说明本渠道为什么这样设计、仓库里各文件做什么、以及发布前如何在本地验证。
+
+---
+
+## 4. 设计取舍与理由
+
+### 4.1 为什么 Gemini 调用放进美西 Durable Object
+
+Gemini API 不支持香港地区。Worker 默认在离用户最近的 Cloudflare 机房运行；香港用户的请求通常落在香港机房（HKG），从那里直接调用 Gemini 会被拒绝。
+
+可选做法有三种：Smart Placement / `placement.region` 指定运行地区、美西 Durable Object 出站、或 `GEMINI_BASE_URL` 指向中转。项目主人以“稳定优先”为原则，选择了 Durable Object：
+
+- Durable Object 在第一次建立时可以带 `locationHint`，建立后长期固定在该地区运行；DO 内发起的所有出站请求都从该地区发出，与用户所在地无关；
+- `placement` 属于调度提示，会受流量与可用性影响，确定性不如固定位置的 DO；
+- 中转需要额外维护一台中转服务，与“无需应用伺服器”的目标相反。
+
+代价：每次 `/api/*` 请求多一段“用户就近机房 → 美西 DO”的内部往返，约 150 ms 量级；相较 Gemini 本身数秒的生成时间，影响很小。
+
+### 4.2 为什么由 DO 承载整个 Express app，而不是只代理一次 fetch
+
+DO 内直接运行 `server/app.ts` 的 `createApp()`（借助 Workers 的 `node:http` 兼容层与 `cloudflare:node` 的 `handleAsNodeRequest`）。这样：
+
+- `/api/gemini/*` 的路由、请求/响应 JSON、提示词、模型选择、回退与错误文案全部沿用 Node 端同一份代码，零分叉；
+- 不需要改写 `@google/genai` 的网络层，也不需要拦截全局 `fetch`；
+- Worker 前端只做路径分流，逻辑简单、可读。
+
+`createApp()` 只在 DO 内首次收到请求时启动一次（日志 `[gemini-egress] Express app started inside Durable Object (gemini-egress-v1).`），前端 Worker 不启动 Express。
+
+### 4.3 回退与冷却状态
+
+`server/gemini/errors.ts` 中主模型 503 后 60 秒只用快速模型的冷却状态（`primaryCooldownUntil`）是模块级内存变量。Node 端是每个进程一份；Workers 形态下所有 `/api/*` 都进入同一个 DO 实例，因此这份状态变为全局唯一一份，语义更集中。DO 闲置被回收后状态重置，等价于 Node 进程重启。
+
+单例 DO 的吞吐取决于单实例处理能力。本应用每个请求的 CPU 工作量很小（JSON 解析、拼装提示词），大部分时间在等待 Gemini 返回，期间可并发处理其他请求；按当前用户规模远未触及上限。将来若需要扩展，可以按名称分片（例如多个实例名），此时冷却状态回到“每分片一份”。
+
+### 4.4 数据上报路径的回源
+
+前端 `services/dataService.ts` 把录音与 JSON 上报到写死的 `https://tangyou-app.alphathought.org/chtatain-datacent/client-api/tangserv/newyshwo/vidoquse/...`，该路径一直由旧伺服器上的另一个服务（本地开发时为 `localhost:8002`）处理。当前生产约定：上报服务继续留在旧伺服器。
+
+Worker 对 `/chtatain-datacent/*` 做反向代理：方法、路径、查询串与请求体保持不变，重定向原样返回（`redirect: "manual"`），目标源站由变量 `UPLOAD_ORIGIN` 决定。
+
+请求头按“业务头原样、链路头不带”的原则处理：
+
+- 原样保留：`fixed-pwd`、`check-same-md5`、`content-type`、`content-length`、`authorization`、`user-agent`、`accept*` 及其他业务自定义头；
+- 不转发：`host`（由目标地址决定）、逐跳头（`connection`、`keep-alive`、`proxy-connection`、`proxy-authorization`、`proxy-authenticate`、`transfer-encoding`、`te`、`trailer`、`upgrade`），以及 Cloudflare / 代理链自带的头（所有 `cf-*`、所有 `x-forwarded-*`、`x-real-ip`、`forwarded`、`cdn-loop`）；
+- 新设：`X-Forwarded-For` 为真实客户端 IP（取自 Cloudflare 写入的 `CF-Connecting-IP`），旧上报服务若记录来源 IP 仍可读到；客户端自带的 `X-Forwarded-For` 不会被透传，避免伪造；
+- Workers 运行时会为所有子请求自动附加 `CF-Worker` 头（值为所属 zone），这是平台行为，无法也无需去除。`UPLOAD_ORIGIN` 为空或无效时返回 502 JSON，上游不可达时返回 502 JSON（`{"error":"上報服務暫時無法連接，請稍後再試。"}`）。
+
+若新的指定域名不使用这条上报路径，仍应与拥有者确认，而不是自行删除代理。
+
+### 4.5 正式域名采用 Route 模式而不是 Custom Domain
+
+当指定域名已经由橙云代理指向旧源站、并且还需要把部分路径回源时，使用 Workers Route（`<主机名>/*`），保留现有 DNS 记录：
+
+- Route 模式下，Worker 对同一 zone 主机名的 `fetch` 不会再次进入 Worker，而是直达 DNS 中的源站。因此 `UPLOAD_ORIGIN` 可以写成该正式主机名本身，上报请求就会落到旧源站，旧源站的 nginx 与 Host 规则无需改动，也无需新增 DNS 记录；
+- 回滚只需删除这条 Route，流量立即回到旧源站；
+- Custom Domain 模式会接管 DNS 记录，Worker 自身成为源站，回源旧服务需要另建主机名，切换与回滚动作都更多。
+
+在只部署到 `*.workers.dev`、尚未挂 Route 时，Worker 对正式主机名的请求属于跨 zone（或至少不经过本 Worker 的 Route），会照常到达 DNS 源站，同样可用来回源。
+
+“Route 模式下同 zone 子请求直达源站”是 Cloudflare 文档描述的平台行为，本地 `wrangler dev` 无法模拟。正式切换后，必须实测上报路径确实到达旧源站（而不是回到 Worker 形成循环或报错），才算这条设计在该域名上成立；若实测不成立，按第 10 节删除 Route 即可即时回滚，再改为给旧源站单独建一个回源主机名并更新 `UPLOAD_ORIGIN`。
+
+若指定域名是全新主机名、没有旧源站也不需要回源，仍应先征得拥有者对 DNS 方案的确认（Route 加一条由拥有者添加的橙云记录，或按其要求使用 Custom Domain）。代理人不得自行改 DNS。
+
+---
+
+## 5. 文件分工
+
+| 文件 | 作用 |
+| --- | --- |
+| `server/app.ts` | `createApp()`：25mb JSON 上限、`/api` 的 `Cache-Control: no-store`、`/api/health` 与 `/api/gemini/*`；Node 与 Workers 共用 |
+| `server.ts` | Node 单进程入口，调用 `createApp()` 后挂载 Vite middleware 或 `dist/`，监听 `0.0.0.0:PORT`（行为与引入 Workers 之前一致） |
+| `cloudflare/worker.ts` | Workers 入口：路径分流、`GeminiEgress` DO 类、上报反向代理 |
+| `cloudflare/cloudflare-node.d.ts` | `cloudflare:node` 的最小类型声明，仅供 `npm run lint`，避免新增类型依赖 |
+| `wrangler.jsonc` | Worker 名、入口、兼容日期、Static Assets、DO 绑定与迁移、`UPLOAD_ORIGIN`、正式域名 Route（以文件中的现行内容为准，不要假设它仍是注释） |
+| `package.json` | `cf:dev`、`cf:deploy` 两个脚本；既有脚本与依赖不变 |
+| `.gitignore` | `.dev.vars*`、`.wrangler`（本地密钥与本地状态） |
+
+---
+
+## 6. 与 Node 形态的差异与已知边界
+
+| 项 | Node（server.ts） | Workers |
+| --- | --- | --- |
+| 前端 | 线上 systemd 当前为 dev 模式（Vite middleware）；`npm start` 为 `dist/` | 始终为 `vite build` 产物 `dist/` |
+| SPA 回落 | 任何非 `/api/` 的 GET 回 `index.html` | 导航请求与未命中静态文件的 GET 回 `index.html`（已验证） |
+| 非 `/api` 的 POST 等未知请求 | Express 默认 404 | 交给 Static Assets 处理，状态码可能不同（前端不发出此类请求） |
+| `GET /api`、`GET /api/` | 404 `{"error":"找不到對應的 API 端點。"}`（dev 与 `npm start` 均已实测） | 相同（经 DO 内同一个 Express），无差异 |
+| DO 本身不可达（重置、过载、部署切换瞬间） | 不适用 | Worker 返回 503 `{"error":"AI 服務暫時無法處理請求，請稍後再試。"}`（`Cache-Control: no-store`），与后端既有错误同形；不自动重试，因为请求体可能已被读取 |
+| 冷却状态 | 每进程一份 | 单例 DO 全局一份 |
+| Gemini 出站地区 | 伺服器所在地 | 美西（DO） |
+| 超过 25mb 的请求体 | Express 413 | 相同（DO 内同一个 Express）；Workers 付费套餐请求体上限 100 MB |
+| 环境变量来源 | 进程环境 > `.env.server.local` > `.env.local` > `.env` | 部署：`wrangler.jsonc` 的 `vars` + Worker Secret；本地 `wrangler dev`：自动读取 `.env.local`（存在 `.dev.vars` 时改读 `.dev.vars`） |
+| 本地上报地址 | 前端在 localhost 访问时直连 `localhost:8002` | 同左（前端代码未改）；Worker 代理只在线上域名生效 |
+
+其他边界：
+
+- `*.workers.dev` 测试阶段，浏览器里的上报请求仍直接发往前端写死的正式主机名，属于跨源请求，能否成功取决于旧上报服务的 CORS 设置；正式域名切换后变为同源请求，经 Worker 代理回源。
+- `locationHint` 只在名为 `gemini-egress-v1` 的 DO 第一次建立时生效。若将来要换地区，需要在 `cloudflare/worker.ts` 中同时更换实例名。
+- 本地 `wrangler dev` 不模拟地区，美西出站效果需要部署后从香港网络实测（`/api/gemini/chat` 返回 200 即说明出站地区可用）。
+- `*.workers.dev` 与未另加访问控制的正式域名都是公开可达的，发布前应告知资源拥有者。
+
+---
+
+## 7. 本地验证
+
+前置：`npm ci` 完成；`.env.local` 中有 `GEMINI_API_KEY`（`wrangler dev` 会自动读取，不会上传）。
+
+```bash
+npm run cf:dev
+# 等价于：vite build && npx --yes wrangler@4.168.0 dev
+# 默认地址 http://127.0.0.1:8787；可追加参数，例如：
+# npx --yes wrangler@4.168.0 dev --port 8799 --ip 127.0.0.1 --var UPLOAD_ORIGIN:http://127.0.0.1:8002
+```
+
+冒烟命令（以 8799 为例）：
+
+```bash
+W=http://127.0.0.1:8799
+curl -s $W/api/health                                   # ok:true, configured:true
+curl -s -o /dev/null -w "%{http_code}\n" $W/            # 200
+curl -s -o /dev/null -w "%{http_code}\n" -H "Sec-Fetch-Mode: navigate" $W/any/route   # 200（index.html）
+curl -s -X POST $W/api/nope                             # {"error":"找不到對應的 API 端點。"} 404
+```
+
+验证门（与 Node 端相同的 DOM / 流程 / 截图采集）：
+
+```bash
+VERIFY_BASE_URL=http://127.0.0.1:8799/ npm run verify -- --out verify-results/cf-worker --skip-build --compare verify-results/<node 端基线>
+```
+
+---
+
+## 8. 从零发布到指定账号与指定域名
+
+以下步骤以第 3 节已经对齐为前提。把下文的「指定账号」「指定域名」替换为资源拥有者给出的值。命令在仓库根目录执行。
+
+### 8.1 先确认不会误覆盖生产
+
+阅读现行 `wrangler.jsonc` 的 `name`、`vars.UPLOAD_ORIGIN` 与 `routes`。
+
+- 若拥有者指定的就是第 9 节的当前生产账号与域名，且 Worker 名保持 `tangyou-app`：不要改 `name` / `routes`，按第 11 节做日常部署，或在拥有者明确要求重新发布时直接 `npm run cf:deploy`。
+- 若指定的是**同一账号下的另一个环境**（例如预发域名）：必须先确认另取一个 Worker `name`，再写该环境自己的 `routes` 与 `UPLOAD_ORIGIN`。未经确认，不得覆盖生产用的 `tangyou-app`。
+- 若指定的是**另一个 Cloudflare 账号**：用该账号的 token 与 `CLOUDFLARE_ACCOUNT_ID` 部署；`routes` 的 `zone_name` 必须是该账号下的 zone；不要把生产账号的 token 用到别的账号，也不要把别的账号的 Route 写进尚未隔离的生产配置就直接部署。
+
+### 8.2 鉴权
+
+```bash
+export CLOUDFLARE_API_TOKEN=        # 只放在环境变量里，不要写入文件到仓库
+npx --yes wrangler@4.168.0 whoami   # 核对账号邮箱与 Account ID
+export CLOUDFLARE_ACCOUNT_ID=<whoami 给出的 Account ID>
+```
+
+### 8.3 写入 Secret 并先发布到测试地址
+
+第一次创建该 Worker 时，应让它带着密钥上线，避免中间出现 `configured:false` 的窗口。两种等价做法（密钥均不得进入仓库）：
+
+交互写入（Worker 尚不存在时，wrangler 可能询问是否以配置中的 `name` 新建，回答 yes；会先建一个占位 Worker，下一步完整部署时覆盖代码、保留机密）：
+
+```bash
+npx --yes wrangler@4.168.0 secret put GEMINI_API_KEY
+npm ci
+npm run cf:deploy
+```
+
+或一次性上传（JSON 文件放在仓库外，用完立即删除；使用 JSON 可避免 dotenv 展开读到其它环境变量）：
+
+```bash
+npm ci
+npm run build
+npx --yes wrangler@4.168.0 deploy --secrets-file <仓库外的临时 JSON>
+# 文件内容：{"GEMINI_API_KEY":"..."}
+```
+
+这一步的 `wrangler.jsonc` 不应包含尚未被拥有者批准的正式域名 `routes`。若当前仓库里已经为生产域名启用了 Route（见第 9 节），而这次要发布的是一个尚未批准挂域的新 Worker，应在单独的配置或分支里先去掉（或不写）`routes`，只发布到 `*.workers.dev`。
+
+部署成功时 wrangler 会打印测试地址，形如 `https://<Worker 名>.<账号子域>.workers.dev`。之后的部署不会删除已有 Secret。
+
+### 8.4 测试地址验收
+
+```bash
+W=https://<Worker 名>.<账号子域>.workers.dev
+curl -s $W/api/health          # configured:true
+```
+
+再用浏览器打开 `$W/`，由约定的验收人在**香港网络**下完成一次真实咨询（文字）、一次拍照识药与一次语音转写。控制台 Workers → 该 Worker → Logs 中应能看到 `[gemini-egress] Express app started inside Durable Object` 与各 `/api` 请求。
+
+未通过香港网络验收前，不得进入下一小节。
+
+### 8.5 将指定域名挂到 Worker（默认 Route 模式，不改 DNS）
+
+若该主机名已经在提供服务，先记录切换前的上报探活（或拥有者指定的对照 URL）作为基准：
+
+```bash
+U=https://<指定域名>/chtatain-datacent/client-api/tangserv/newyshwo/vidoquse/fileget/probe/probe.json
+curl -sS -D - -o /tmp/upload-probe.body -w "%{http_code} %{size_download}\n" "$U"
+```
+
+在 `wrangler.jsonc` 写入（主机名与 zone 换成拥有者指定的值）：
+
+```jsonc
+"routes": [{ "pattern": "<指定域名>/*", "zone_name": "<zone>" }]
+```
+
+如需回源，确认 `UPLOAD_ORIGIN` 与拥有者的约定一致。然后：
+
+```bash
+npm run cf:deploy
+```
+
+Route 模式下不要改该主机名已有的橙云 DNS 记录。主机名若还没有 DNS 记录，停下来请拥有者添加，不要代为修改。
+
+### 8.6 正式域名验收
+
+```bash
+curl -s https://<指定域名>/api/health    # configured:true
+```
+
+浏览器打开指定域名，在香港网络下再做一次文字咨询、拍照识药与语音转写。若有上报探活基准，再次请求同一 URL，状态码与响应形态应与切换前一致；有旧源站日志的，应能看到这次回源。前端自动上报目前未接线于对话式问诊画面，若详情页的上报按钮可达，也可以实际触发一次确认。
+
+验收通过后，提交 `wrangler.jsonc`（以及本次为该环境改过的文档），使仓库与线上一致。旧源站若仍承担上报或回滚后备，保持运行。
+
+---
+
+## 9. 当前生产实例（工作样例）
+
+以下是 2026-11-26（香港时间）经项目主人确认后落地的生产实例，供对照，不是唯一允许的账号或域名。
+
+| 项 | 值 |
+| --- | --- |
+| Cloudflare 账号 | 控制台显示为 `davie12580@gmail.com` |
+| Worker 名 | `tangyou-app` |
+| 测试地址 | `https://tangyou-app.davie12580.workers.dev` |
+| 正式域名 | `https://tangyou-app.alphathought.org` |
+| Route | `tangyou-app.alphathought.org/*`，zone `alphathought.org`（已启用） |
+| DNS | 原橙云 A 记录未改，仍指向旧伺服器 |
+| `UPLOAD_ORIGIN` | `https://tangyou-app.alphathought.org` |
+| 上报探活 | `https://tangyou-app.alphathought.org/chtatain-datacent/client-api/tangserv/newyshwo/vidoquse/fileget/probe/probe.json` |
+
+切换前探活基准：HTTP 200、空响应体（`Content-Length: 0`），并可能带 `alphathought_anon_id` cookie。切换后相同，说明上报路径已回源旧伺服器。`/api/health` 为 `configured:true`。正式域名上的真实咨询返回 200（约 2 秒，粤语回复正常）。首页改为正式构建产物（切换前旧伺服器跑的是 `npm run dev`，首页体积约 5386 字节；切换后约 771 字节，含 `index-0b9LbGji.js`）。
+
+测试地址在正式切换后仍然可用。旧伺服器上的 `tangyou_uistan.service` 当时保持运行，作为删除 Route 后的即时承接方。
+
+---
+
+## 10. 回滚
+
+- 正式域名回到旧源站：在 Cloudflare 控制台删除该主机名的 Route（或把 `wrangler.jsonc` 中对应的 `routes` 去掉后再部署，并在控制台确认 Route 已移除）。Route 模式下 DNS 未改动，流量立即回到旧源站。
+- Worker 版本回滚：`npx --yes wrangler@4.168.0 rollback`，或在控制台 Deployments 中选择上一版本。这不会回滚 Durable Object 的存储或已创建的 Route，除非另行处理。
+- 代码层面：Node 形态不受 Workers 文件影响，`git` 回退方式与其他文档一致。
+
+---
+
+## 11. 日常迭代
+
+AI Studio ZIP 按《仓库纯净性与AI迭代成果回灌实践.txt》回灌进仓库并验证后，若只是更新已在本渠道上线的同一 Worker：
+
+```bash
+npm ci
+npm run lint
+npm run cf:deploy
+```
+
+若改动涉及 `wrangler.jsonc`、`cloudflare/**` 或 `server/app.ts`，先按第 7 节在本地 `wrangler dev` 下冒烟。`GEMINI_API_KEY` 存在 Worker Secret 中，普通部署不会覆盖它。不要在日常迭代里顺手改 `name` 或 `routes`。
+
+---
+
+## 12. 从零复现清单
+
+### 12.1 完整复现路径（发布到资源拥有者指定的账号与域名）
+
+| 步骤 | 操作 | 预期 | 失败时参考 |
+| --- | --- | --- | --- |
+| 1 | 与资源拥有者对齐第 3 节全部事项 | 账号、套餐、token 权限、域名与 zone、Worker 名、密钥传递方式、回源与验收责任均已明确 | §3 |
+| 2 | `npm ci`，按第 7 节本地冒烟（可选但推荐） | `/api/health` 为 `configured:true`；首页 200 | §7 |
+| 3 | `wrangler whoami`，设置 `CLOUDFLARE_ACCOUNT_ID` | 显示的账号与拥有者指定的一致 | §8.2 |
+| 4 | 确认 `name` / `routes` 不会覆盖未授权的生产 Worker | 新环境使用独立 Worker 名，或经确认覆盖 | §8.1 |
+| 5 | 写入 `GEMINI_API_KEY` Secret，并部署到 `*.workers.dev`（此时不要带未批准的 Route） | wrangler 打印测试地址；Secret 在绑定中为 hidden | §8.3 |
+| 6 | 测试地址验收，含香港网络下的咨询、识药、语音 | `configured:true`；三项均正常返回 | §8.4 |
+| 7 | 若目标主机名已有服务，记录上报探活基准 | 记下状态码与响应形态 | §8.5 |
+| 8 | 写入指定域名的 `routes`（及约定的 `UPLOAD_ORIGIN`），再次部署，不改 DNS | wrangler 的 triggers 列出该 Route | §8.5 |
+| 9 | 正式域名验收 | health、香港网络三项操作、探活与基准一致 | §8.6 |
+| 10 | 提交与线上一致的 `wrangler.jsonc`；旧源站按约定保留 | 仓库与线上 Route、vars 一致 | §8.6、§9、§11 |
+
+### 12.2 最小路径（目标即当前生产实例）
+
+在第 9 节所述生产账号、Worker 名与域名均已对齐、Secret 已存在的前提下：
+
+```
+npm ci →（涉及 Workers 代码时先 npm run cf:dev 冒烟）→ npm run cf:deploy → 香港网络下在正式域名做一次咨询验收
+```
+
+### 12.3 环境漂移检查
+
+- `npx --yes wrangler@4.168.0 whoami` 仍指向预期账号；
+- `wrangler.jsonc` 的 `name`、`routes`、`UPLOAD_ORIGIN` 与线上一致；
+- `/api/health` 仍为 `configured:true`（若变成 `false`，检查 Secret 是否被误删，而不是再部署一份空配置去覆盖）；
+- 正式域名的上报探活仍与已知基准相符。
+
+---
+
+## 13. 本地与设计验收记录（2026-11-26，香港时间）
+
+环境：Node 24.22.1，wrangler 4.168.0，分支 `feat/cloudflare-workers`，`wrangler dev` 监听 `127.0.0.1:8799`，上报源站指向本地桩服务 `127.0.0.1:8002`。线上切换验收见第 9 节。
+
+| 项 | 结果 |
+| --- | --- |
+| `npm ci` / `npm run lint` / `npm run build` | 通过 |
+| Node 端 `npm run verify`（对比既有基线） | 通过；差异仅为 `package.json` 新增两个脚本与按时段变化的问候表情 |
+| `wrangler deploy --dry-run` | 通过；上传体积 2378.79 KiB（gzip 476.94 KiB）；生产打包中 Express 环境为 `production` |
+| `/api/health` | 200，`configured:true`，`Cache-Control: no-store` |
+| DO 路径 | 日志出现 `[gemini-egress] Express app started inside Durable Object (gemini-egress-v1).` |
+| 真实 `/api/gemini/chat` | 200，约 2.4 s，返回字段结构与 Node 端一致 |
+| 真实 `/api/gemini/analyze-saved-questions` | 200 |
+| 12 MB 请求体（`recognize-medications` 9 MB 图片） | 200；Node 端同样 200 |
+| 28 MB 请求体 | 413；Node 端同样 413 |
+| `/`、`/styles/app.css` | 200，`text/html` / `text/css` |
+| SPA 回落（导航与非导航） | 200，内容与 `index.html` 相同 |
+| `/api/nope`、`/api` | 404 `{"error":"找不到對應的 API 端點。"}` |
+| 上报代理（POST multipart、GET、OPTIONS、302） | 路径、查询串、`fixed-pwd`、`check-same-md5`、请求体均原样到达桩服务；302 原样返回 |
+| DO 故障模拟（临时测试配置，DO 的 fetch 直接抛错） | 503 `{"error":"AI 服務暫時無法處理請求，請稍後再試。"}`，`Cache-Control: no-store`，日志 `[gemini-egress] Durable Object request failed` |
+| 上报代理请求头过滤 | 桩服务收到 `fixed-pwd`、`check-same-md5`、`authorization`、`content-type`、`content-length`、自定义头；未收到任何 `cf-*`（运行时自带的 `cf-worker` 除外）、客户端自带 `x-forwarded-*`、`x-real-ip`、`forwarded`、`connection`、`keep-alive`、`upgrade`；`x-forwarded-for` 为 `CF-Connecting-IP` 的值 |
+| 验证门指向 Worker（`VERIFY_BASE_URL`） | DOM 与 7 条流程全部通过；与 Node 端对比差异仅为 baseUrl、recharts 自增 id 与两处数像素的光标区域 |

@@ -1,0 +1,196 @@
+================================================================================
+阶段历史归档：Cloudflare Workers 无服务器发布渠道落地、美西 Durable Object 出站、正式域名 Route 切换与渠道手册沉淀
+================================================================================
+
+归档时间：2026-11-26 16:44（香港时间，UTC+8）
+归档文件：importantdocsneedkown/历史迭代阶段/20261126-1644_CloudflareWorkers无服务器发布渠道落地美西DurableObject出站正式域名Route切换与渠道手册沉淀.txt
+工作分支：feat/cloudflare-workers（相对 main @ e49c68f）
+本归档对应收口时的代码与文档顶点：4b3c276（本归档文件将另作一次提交）
+线上状态（归档时）：Worker「tangyou-app」已承接正式域名 https://tangyou-app.alphathought.org（Route 已启用），测试地址 https://tangyou-app.davie12580.workers.dev 仍可用；DNS 橙云 A 记录未改；上报路径回源旧伺服器。
+
+================================================================================
+一、阶段起点与原始处境
+================================================================================
+
+本阶段起始于《历史迭代阶段/20261126-1427_UI重构前核心业务无损代码优化三轮文档对齐与独立差分复核确认等效.txt》所记录的那一轮工作已经收口，并且 `refactor/pre-ui-lossless` 已合并进 `main`、推送到远端之后。当时 `main` 的顶点是 e49c68f。仓库仍是单进程融合入口：根目录 `server.ts` 在开发态挂载 Vite middleware，生产态托管 `dist/`；全部 AI 请求收口于 `/api/gemini/*`；问诊界面是 Chat-only；本机习惯端口为 `.env.local` 中的 `PORT=9002`。线上正式域名 `https://tangyou-app.alphathought.org` 由 Cloudflare 橙云代理指向旧伺服器，页面与 `/api/gemini/*` 跑在该机器上的 `tangyou_uistan.service`（dev 模式）；同一主机名下的 `/chtatain-datacent/*` 由旧伺服器上另一个服务（开发时对应本机 8002）处理。
+
+项目主人随后提出一个需要先分析、再由其决策的问题：在已经拥有 Cloudflare 权限的前提下，这份代码是否可以整体发布到 Cloudflare 上，而不再依托一台应用伺服器。本阶段的效果目标可以概括为：
+
+- 弄清可行性、代价与风险，把判断材料交给项目主人决策，而不是先改代码或先上线；
+- 若获授权，则在新分支上做最小必要改动，使同一份代码既能保持原有 Node / AI Studio ZIP → 本地重启流程，又能以 Cloudflare Workers 形态对外提供服务；
+- 客户端核心业务逻辑、文案、提示词效果与 `/api/gemini/*` 契约保持一致；只读基石文档（《产品与医学价值北极星.txt》《本项目剥离UI后用于UI重构的核心业务明细.txt》《任何代码迭代变动者须知.txt》）未经另行授权不改；
+- 过程中陆续形成的后续目标是：验证通过后先发到测试地址，主人在香港网络验收通过后再切换正式域名；并在阶段收口前，把这一发布方式沉淀为可供后来者据之实施的渠道文档。
+
+与之配套、在阶段过程中保持稳定的工作边界包括：
+
+- 代码改动在新分支 `feat/cloudflare-workers` 上进行，不直接改 `main`；本阶段未合并回 `main`；
+- 未获授权前不创建 Cloudflare 资源、不改 DNS、不把 Route 挂到正式域名；
+- 密钥与 token 不进入仓库、不进入文档正文；`.env.local` 的真实值不提交；
+- 本机开发服务尽量保持在 `0.0.0.0:9002`；
+- 本阶段的历史归档本身也须等待显式授权后才落盘。
+
+阶段开始时，仓库里还没有 Workers 入口、没有 `wrangler.jsonc`、也没有无服务器部署文档。`package.json` 的既有脚本与依赖、锁文件、前端与提示词，都仍是 e49c68f 上的样子。
+
+================================================================================
+二、阶段演进脉络与关键认知转折
+================================================================================
+
+### 2.1 授权链
+
+本阶段同样不是一次笼统的“可以开始上 Cloudflare”，而是由项目主人按节点显式授权、每一步收口后再决定是否继续。脉络如下：
+
+- 可行性分析（t17u）：只要求分析能否不依托伺服器、直接发布到 Cloudflare，由主人决策；当时尚未授权改代码、尚未授权部署。
+- 付费与稳定优先（t18u）：主人愿意付费换取各方面稳定。随后在域名、上报服务、是否改代码三件事上做了选择：正式域名最终要直接切到 `tangyou-app`（DNS 方案稍后确定）；上报路径的选项被跳过，实施时按“继续留在旧伺服器、由 Worker 回源”处理；授权在新分支抽出 `createApp`、新增 `worker.ts` 与 `wrangler.jsonc` 并同步文档，验证后再给主人看，先不部署。
+- 实现与只读复核（t20u）：实现推到新分支并完成本地验证后，主人要求先用改动前后的 diff 复核是否产生破坏性改动，复核期间不改代码。
+- 修补与测试地址（t21u）：主人同意按复核建议修改，并要求最终先部署到某个测试域名供其试。随后通过机密通道提供了 Cloudflare API token；Gemini 密钥则明确授权使用现有的那一把做测试（t23u），正式切换前仍建议轮换。
+- 正式域名切换（t24u）：主人在自己这边测试通过后，授权把该方案覆盖部署到 `tangyou-app` 子域名下。
+- 渠道文档（t25u）：确认 Cloudflare 部署是与自托管伺服器并列的一种发布渠道，要求沉淀为文档，使任何白板高阶执行者（人或 AI）都能拿着代码，与资源拥有者沟通后发布到指定的 Cloudflare 账号与指定域名。
+- 复核追问（t26u）：主人确认此前那次 diff 复核的结论，并询问自那之后除文档外是否还有新的代码变更。
+- 本归档（t27u）：主人宣布本阶段结束，授权撰写本份历史迭代阶段文档。
+
+### 2.2 可行性分析
+
+分析在仓库外的临时目录中进行，没有改仓库，也没有在 Cloudflare 上创建资源。本地用 wrangler 把现有 Express 与 `/api/gemini/*` 原样挂进 Worker 入口后，健康检查、真实 Gemini 对话（粤语回复正常）、约 12 MB 的请求体、首页、样式与 SPA 回落均可用。`@google/genai` 在 Workers 里走 web 版，不依赖文件系统。
+
+当时已经看清的硬约束是：Gemini API 不对香港地区开放，而香港用户的请求默认会在 Cloudflare 的香港机房执行。本地出口不在香港，地区限制在分析阶段无法实测。其他需要预先说明的点包括：免费套餐每次请求只有 10 ms CPU，照片和录音请求很可能不够用；若把整个 `tangyou-app` 域名切到 Worker，同一主机名下的上报路径会受影响，必须单独安排；503 后“60 秒只用快速模型”的冷却在 Node 上是每进程一份。
+
+推荐方案是 Workers + 静态资源，Express 经兼容层原样运行：`dist/` 由 Static Assets 托管，`/api/*` 交给 Worker。为让 Worker 与 `server.ts` 行为一致，需要把共用部分抽成 `createApp()`，这会小改受保护的 `server.ts`。Pages Functions、只把静态页放 Cloudflare、或用另一套框架重写 API，都不作为首选。
+
+### 2.3 稳定优先下的形态选择与分支实现
+
+主人选择开通 Workers 付费套餐，并以稳定优先处理 Gemini 地区限制：不采用“指定东京运行”这类不一定每次生效的调度提示，而把调用 Gemini 的路径放进首次建立于美西（`locationHint: "wnam"`）的 Durable Object。代价是每次 `/api/*` 大约多 150 ms 内部往返。
+
+实现落在 `feat/cloudflare-workers` 上，相对 `main @ e49c68f` 的前三个提交时间约为 2026-11-26 15:28（香港时间）：
+
+- `94056d1` 把 25mb JSON 上限、`/api` 的 `Cache-Control: no-store`、以及 health 与 gemini 路由的注册抽到 `server/app.ts` 的 `createApp()`。`server.ts` 仍先加载本地环境再创建应用，随后的 Vite / `dist/` 处理、端口与启动日志与原先一致。
+- `4f26455` 新增 `cloudflare/worker.ts`、`cloudflare/cloudflare-node.d.ts` 与 `wrangler.jsonc`。Worker 按路径分流：静态资源走 `dist/`；`/api/*` 交给名为 `gemini-egress-v1` 的单例 Durable Object，DO 内用同一份 `createApp()` 处理；`/chtatain-datacent/*` 按 `UPLOAD_ORIGIN` 反向代理到旧源站。`package.json` 只增加 `cf:dev` 与 `cf:deploy`（`vite build && npx --yes wrangler@4.168.0 dev|deploy`），既有脚本与依赖不变，锁文件不变。wrangler 故意不写入 devDependency，以免其约 100 MB 的二进制拖慢每次 `npm ci` 与 AI Studio 安装。`.gitignore` 增加 `.dev.vars*` 与 `.wrangler`。这一提交里，正式域名的 `routes` 仍保持注释，以免尚未批准就把流量切走。
+- `afc7098` 新增《线上无服务器部署实例（Cloudflare Workers）.txt》，并同步 00 索引、手动搭建指南、仓库纯净性文档与 README。北极星、核心业务明细、须知与 systemd 文档未改。
+
+Durable Object 的设计取舍在后来的渠道文档中写清，这里只记录当时已经成立的几点：由 DO 承载整个 Express 应用而不是只转发一次 fetch，是为了让路由、提示词、回退与错误文案与 Node 端零分叉；冷却状态因此从“每进程一份”变成“单例 DO 全局一份”，DO 被回收后重置，等价于进程重启；Route 模式被选为正式域名方案，是因为可以保留指向旧伺服器的橙云 A 记录，使同 zone 子请求直达 DNS 源站，从而让 `UPLOAD_ORIGIN` 仍写正式主机名本身，删除 Route 即可回滚。这一同 zone 行为当时无法在本地模拟，被明确列为必须在正式切换后实测的项。
+
+### 2.4 独立差分复核与两处仅影响 Workers 的修补
+
+主人要求以阅读 `main @ e49c68f` 与当时分支（至 `afc7098`）之 diff 的方式，独立判断是否出现破坏性改动。复核结论是：没有破坏性改动。前端、提示词、业务逻辑与锁文件的 diff 为空；构建出的前端包与 `main` 完全相同，Worker 代码没有混进前端；`createApp()` 抽取后，中间件顺序、请求体上限、缓存头、404 与 SPA 回落与原先一致。复核用 `main` 与新分支各起服务，在 dev 与生产两种模式下对照多类请求，状态码与响应内容一致。`package.json` 只新增两个脚本。提交记录中未发现密钥。
+
+复核列出的建议项只影响 Workers 形态：Durable Object 不可达时，若没有捕获，用户可能看到平台 HTML 500，而不是应用既有的中文错误 JSON；上报代理若原样转发全部请求头，会把 `Host`、`cf-*`、`X-Forwarded-For` 等带给旧源站，旧服务看到的客户端 IP 也会变化。另外，复核初稿曾认为生产模式下 `GET /api` 在 Node 与 Worker 上不一致，后来用 9002 与 `npm start` 实测，两边都是 JSON 404，这一条被更正为无差异。
+
+主人授权修补后，分支上追加：
+
+- `276f243`（约 15:43）：`cloudflare/worker.ts` 在转发到 DO 失败时返回 503 `{"error":"AI 服務暫時無法處理請求，請稍後再試。"}` 且带 `Cache-Control: no-store`（文案沿用既有错误默认值，不重试，以免请求体已被读取）；上报代理改为在新的请求头集合中只保留业务头，去掉逐跳头与 Cloudflare / 代理链头，并把 `X-Forwarded-For` 设为 `CF-Connecting-IP` 的值。
+- `4056586`（同一时段）：部署文档改为先写 Secret 再首次部署，补充请求头策略、正式切换后必须实测 Route 回源、以及 `GET /api` 与 DO 故障行为的说明。
+
+这两处随后在本地 `wrangler dev` 下复测：真实对话仍返回 200；用临时配置模拟 DO 抛错时得到上述 503 JSON；上报桩服务收到业务头与由 `CF-Connecting-IP` 写入的 `X-Forwarded-For`，未收到伪造的链路头（运行时自动附加的 `CF-Worker` 除外）。Node 服务代码、前端、提示词、依赖与锁文件在复核之后仍然没有改动。
+
+### 2.5 测试地址部署与正式域名切换
+
+在主人提供 Cloudflare API token（经机密通道；验证为有效）并授权使用现有 Gemini 密钥做测试之后，首次上线采用“构建后 `wrangler deploy --secrets-file`（仓库外临时 JSON，用后删除）”，使 Worker 第一次出现就带着密钥，避免“先部署、后写 Secret”的空窗。部署目标仅是 `*.workers.dev`，当时尚未启用 Route，也没有改 DNS。
+
+测试地址 `https://tangyou-app.davie12580.workers.dev` 上线后，`/api/health` 为 `configured:true`，首页与 SPA 回落为 200，真实 `/api/gemini/chat` 约 2.7 秒返回 200，粤语回复正常。主人在自己这边（香港网络）测试通过后，授权覆盖到 `tangyou-app` 子域名。
+
+切换前记录了正式域名的基准：首页当时仍是旧伺服器 dev 模式页面（约 5386 字节）；`/api/health` 已是 `configured:true`；上报探活 `.../probe/probe.json` 为 HTTP 200、空响应体（`Content-Length: 0`），并可能带 `alphathought_anon_id` cookie。随后在 `wrangler.jsonc` 启用
+
+```
+"routes": [{ "pattern": "tangyou-app.alphathought.org/*", "zone_name": "alphathought.org" }]
+```
+
+并再次部署，DNS 记录保持不动。wrangler 显示 triggers 已包含该 Route。切换后正式域名首页改为正式构建产物（约 771 字节，含 `index-0b9LbGji.js`）；`/api/health` 仍为 `configured:true`；真实咨询约 2 秒返回 200，粤语回复正常；上报探活仍为 200、空响应体，并仍带同一类 cookie，说明回源旧伺服器在这次切换上成立。相关配置写入 `9604eeb`（约 16:28）。测试地址在切换后仍然可用。旧伺服器上的 `tangyou_uistan.service` 保持运行，作为删除 Route 后的即时承接方。
+
+### 2.6 发布渠道文档沉淀
+
+主人随后要求把“使用 Cloudflare 而非自有应用伺服器”的方案，沉淀为一种发布渠道文档：让尚未接触过本项目的执行者（人或 AI）拿着代码，就能与资源拥有者沟通，发布到指定的 Cloudflare 账号与指定域名。
+
+既有的《线上无服务器部署实例（Cloudflare Workers）.txt》因此在 v1.2 的部署与切换说明之上，重写为 v1.3 渠道手册（`4b3c276`，约 16:35）。文档补上了与资源拥有者的沟通清单、避免误覆盖生产 Worker 的确认步骤、参数化的从零发布路径、从零复现清单，并把当前 `tangyou-app.alphathought.org` 明确写成工作样例而不是唯一目标。00 索引将该文档的定位改为“发布渠道与从零部署手册”；手动搭建指南升至 v1.4，在“不覆盖”清单里写明它是并列渠道；README 去掉了“正式域名 Route 仍为注释”这一过时陈述，并指向该手册。
+
+================================================================================
+三、方案权衡与取舍依据
+================================================================================
+
+- 运行时形态选择 Workers + Static Assets + 原样 Express，而不是 Pages Functions 或另一套 API 框架，是为了让 `/api/gemini/*` 的实现只有一份，避免两套提示词与错误文案逐渐分叉。
+- 抽出 `createApp()` 而不是在 Worker 里复制一份路由，是为了让 Node 入口与 Workers 入口共享同一份中间件顺序和契约；`server.ts` 的启停语义保持不变，AI Studio 流程继续不读取 wrangler 配置。
+- 把 Gemini 出站放进美西 Durable Object，而不是依赖 `placement.region` 或另建中转伺服器，依据是主人“稳定优先”的明确选择，以及香港地区不被 Gemini 支持这一硬约束。
+- 正式域名用 Route、不改 DNS，而不是 Custom Domain，依据是上报路径必须继续到达旧伺服器，并且回滚动作要能立刻把流量交回旧源站。
+- wrangler 不写入依赖、只用带版本号的 `npx` 调用，依据是不拖慢 `npm ci` 与 AI Studio 安装，同时把版本钉在本阶段验证过的 `4.168.0`。
+- 先 `*.workers.dev`、后挂正式域名 Route，依据是地区限制只能在香港网络上证实，以及主人要求先在测试地址试用。
+- 首次上线用 `--secrets-file`（或先 `secret put` 再部署），依据是避免 Worker 在没有密钥的窗口里对外提供 `configured:false`。
+
+================================================================================
+四、逐文件变动与零改动范围
+================================================================================
+
+下列范围以 `main @ e49c68f` 到渠道手册提交 `4b3c276` 为准（尚未计入本归档文件自身）。本阶段在 `feat/cloudflare-workers` 上共 7 个提交，均已推送到远端同名分支；`main` 仍停留在 e49c68f，本阶段未合并、未创建拉取请求。
+
+【新增的主要工程面】
+
+- `server/app.ts`：`createApp()`，供 `server.ts` 与 Durable Object 共用。
+- `cloudflare/worker.ts`：路径分流、`GeminiEgress` DO 类、上报反向代理、DO 不可达时的 503 JSON、上报请求头过滤。
+- `cloudflare/cloudflare-node.d.ts`：`cloudflare:node` 的最小类型声明，避免新增类型依赖。
+- `wrangler.jsonc`：Worker 名 `tangyou-app`、兼容日期、Static Assets、DO 绑定与迁移、`UPLOAD_ORIGIN`、以及后来启用的正式域名 Route。
+- `importantdocsneedkown/线上无服务器部署实例（Cloudflare Workers）.txt`：从无到有，并在本阶段内演进到 v1.3 渠道手册。
+
+【主要修改的工程面】
+
+- `server.ts`：改为调用 `createApp()`；端口、主机、Vite / `dist/` 处理与启动日志保持原语义。
+- `package.json`：在既有脚本之外增加 `cf:dev`、`cf:deploy`；依赖声明未改。
+- `.gitignore`：增加 `.dev.vars*`、`.wrangler`。
+- `.env.example`：增加一条仅供 Worker 使用、默认注释掉的 `UPLOAD_ORIGIN` 说明。
+- `README.md`：增加 Workers 发布渠道说明，并在 Route 启用后去掉“仍为注释”的过时表述。
+- `importantdocsneedkown/00_文档总索引与信息治理规范.txt`：目录从八个组成部分调整为九个，纳入该渠道文档，并在信息流动规则中写明 Workers 渠道变化时的同步对象。
+- `importantdocsneedkown/手动搭建与迭代应用指南.txt`：v1.3 起纳入 Workers 文件与互不干扰说明，v1.4 写明这是并列发布渠道。
+- `importantdocsneedkown/仓库纯净性与AI迭代成果回灌实践.txt`：v1.3，将新文件纳入保护 / 排除相关清单。
+
+【零改动保护范围】
+
+- 《产品与医学价值北极星.txt》《本项目剥离UI后用于UI重构的核心业务明细.txt》《任何代码迭代变动者须知.txt》全文未改；
+- 《线上服务托管实例（systemd）.txt》全文未改；
+- `历史迭代阶段/` 中既有五份归档未改（本文件为获授权后新增的第六份）；
+- 前端与业务实现：`components/`、`hooks/`、`domain/`、`views/`、`services/`、`utils/`、`index.html`、`index.tsx`、`App.tsx`、`public/styles/app.css` 在本阶段的 diff 为空；
+- 提示词、安全门、分类与 Gemini 路由实现：`server/gemini/`、`server/http/`、`server/env.ts`、`server/taxonomy/` 的 diff 为空；
+- `package-lock.json`、`vite.config.ts`、`tsconfig.json` 未改；
+- 数据上报的前端写死主机名、本机 `8002` 与硬编码鉴权头未改；Worker 只在线上域名上代理该路径；
+- DNS 记录未改；未把 Custom Domain 写成生产方案；
+- 未向 `main` 推送本阶段提交，也未创建拉取请求。
+
+================================================================================
+五、运行与构建验证结果
+================================================================================
+
+本地（实现完成后、正式部署前，wrangler 4.168.0，开发服务与 `wrangler dev` 分别验证）：
+
+- `npm ci`、`npm run lint`、`vite build` 通过；干净克隆同样可构建。前端产物与 `main` 一致（`index-0b9LbGji.js`，约 943.26 kB），产物中搜不到 Worker / Durable Object 符号。
+- 指向 Node 服务的既有 `npm run verify` 通过；与既有基线相比，差异仅为新增的两个 npm 脚本与按时段变化的问候表情。
+- `wrangler deploy --dry-run` 通过；上传体积约 2378.79 KiB（gzip 约 476.94 KiB）；生产打包中 Express 环境为 `production`。
+- `wrangler dev` 下：`/api/health` 为 `configured:true`；真实 `/api/gemini/chat` 与 `analyze-saved-questions` 返回 200；12 MB 请求体与 9 MB 识药图片返回 200，28 MB 返回 413；首页、样式、SPA 回落与未知 `/api` 的 404 文案与 Node 端一致；日志出现 Express 在 Durable Object 内启动的记录。
+- 修补后：模拟 DO 故障得到 503 中文 JSON；上报代理的请求头过滤与路径、查询串、业务头透传通过桩服务对照。
+- 验证门指向 Worker URL 时，DOM 与 7 条流程通过。
+
+线上（测试地址与正式域名，2026-11-26 下午，香港时间）：
+
+- `https://tangyou-app.davie12580.workers.dev`：health 为 `configured:true`；真实对话约 2.7 秒返回 200。主人在香港网络下验收通过（含其本地的试用）。
+- `https://tangyou-app.alphathought.org` 在启用 Route 之后：health 为 `configured:true`；真实对话约 2 秒返回 200；首页切换为正式构建产物；上报探活与切换前基准同为 HTTP 200、空响应体。DNS 未改。
+
+================================================================================
+六、当前现状边界与留待后续关注的事项
+================================================================================
+
+已经成立的现状：
+
+- 正式域名的浏览器流量由 Worker 承接；上报路径经 Worker 回源旧伺服器；旧 `tangyou_uistan.service` 仍在运行，作为删除 Route 后的即时后备；
+- 测试地址仍然可用；
+- 工作分支 `feat/cloudflare-workers` 已推送到远端，顶点在写入本归档前为 `4b3c276`；`main` 仍为 e49c68f；
+- 渠道手册 v1.3 已可作为后来者发布到指定账号与指定域名的依据。
+
+本阶段结束时仍未做、需要后续单独决定的事项：
+
+- 本分支尚未合并进 `main`，也尚未开拉取请求；
+- 线上 Worker Secret 使用的仍是阶段开始前那把已存在的 Gemini 密钥。该密钥此前曾在对话中出现过，正式环境建议由资源拥有者轮换，并同步到仍在运行的旧伺服器 `.env.local` 后重启服务；本归档不记录密钥本身；
+- 付费套餐、token 权限与账号账单由资源拥有者在 Cloudflare 控制台侧管理，不在仓库里配置；
+- `locationHint` 只在名为 `gemini-egress-v1` 的 Durable Object 第一次建立时生效；若将来要换出站地区，需要同时更换实例名；
+- 前端自动上报仍未接线于对话式问诊画面，这一情况在 `main` 上本来如此，本阶段未改。
+
+================================================================================
+七、阶段结论
+================================================================================
+
+在项目主人按节点授权的前提下，本阶段把 `tangyou_uistan` 的同一份核心业务代码，增加了一条不依托应用伺服器的线上发布渠道，并已在正式域名 `tangyou-app.alphathought.org` 上切换成功。Node 入口与 AI Studio 回灌重启流程保持可用；核心业务逻辑、文案、提示词与锁文件不在本阶段的改动范围内。独立差分复核确认：复核时点之前的改动没有破坏既有 Node 形态；复核之后仅有 Workers 侧错误处理、上报请求头过滤，以及正式域名 Route 配置三类非文档变更。
+
+对后续阅读者而言，实施或再发布时应直接依据当时仓库中的《线上无服务器部署实例（Cloudflare Workers）.txt》，并以本归档理解这一渠道为何被选中、以及第一次切换时实际验证过哪些事实。是否将本分支合入 `main`、以及是否轮换 Gemini 密钥，不属于本归档收口范围，而属于其后的独立决策。

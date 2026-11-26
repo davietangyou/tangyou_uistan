@@ -145,7 +145,7 @@ npm -v
 /da04/webser/sour/pro/tangyou_uistan_0
 ```
 
-项目根目录应包含 `package.json`、`server.ts`、`server/`、`services/`、`views/`、`components/`、`hooks/`、`utils/` 等。
+项目根目录应包含 `package.json`、`server.ts`、`server/`、`public/styles/app.css`、`services/`、`views/`、`components/`、`hooks/`、`utils/` 等。当前托管形态是 `npm run dev`（Vite middleware），页面皮肤与大字规则依赖仓库内的 `public/styles/app.css`；该文件不在时，Tailwind 工具类仍可用，但自定义样式会丢失。
 
 ### 3.2 调整属主
 
@@ -162,10 +162,10 @@ sudo chown -R webser:webgp /da04/webser/logs/pro
 
 ```bash
 cd /da04/webser/sour/pro/tangyou_uistan_0
-npm install
+sudo -H -u webser npm ci --prefer-offline --no-audit --no-fund
 ```
 
-若存在 `package-lock.json`，也可以使用 `npm ci` 做可重复安装。
+`package-lock.json` 已与 `package.json` 对齐，正常情况直接使用 `npm ci`，并以 `webser` 身份安装，以免 `node_modules` 属主与运行用户不一致。若 `npm ci` 因 lockfile 不同步失败，可以改用 `sudo -H -u webser npm install`，并单独评审 `package-lock.json` 的变化。
 
 检查：
 
@@ -186,7 +186,14 @@ node -e "console.log(require('./package.json').scripts.dev)"
 /da04/webser/sour/pro/tangyou_uistan_0/.env.local
 ```
 
-`server.ts` 启动时按以下顺序读取环境变量，且不覆盖已存在的进程环境变量：
+可以从仓库内的 `.env.example` 复制后再填写真实密钥：
+
+```bash
+sudo -H -u webser cp /da04/webser/sour/pro/tangyou_uistan_0/.env.example \
+  /da04/webser/sour/pro/tangyou_uistan_0/.env.local
+```
+
+`server.ts` 启动时经 `server/env.ts` 按以下顺序读取环境变量，且不覆盖已存在的进程环境变量：
 
 ```
 进程环境变量 ＞ .env.server.local ＞ .env.local ＞ .env
@@ -366,6 +373,7 @@ sudo systemctl enable --now tangyou_uistan
 ```bash
 systemctl status tangyou_uistan --no-pager
 curl -sS -m 5 http://127.0.0.1:9002/api/health; echo
+curl -sS -m 5 -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css
 tail -8 /da04/webser/logs/pro/tangyou_uistan_0.log
 ```
 
@@ -375,6 +383,7 @@ tail -8 /da04/webser/logs/pro/tangyou_uistan_0.log
 - `Main PID` 存在
 - `CGroup: /system.slice/tangyou_uistan.service`
 - 健康端点返回 `"ok":true`、`"configured":true`
+- `/styles/app.css` 返回 HTTP 200
 - 日志出现 `Server running on http://0.0.0.0:9002`
 
 健康端点参考返回：
@@ -412,6 +421,7 @@ tail -8 /da04/webser/logs/pro/tangyou_uistan_0.log
 | 进程 active，但 health 返回 `configured:false` | `.env.local` 缺失或 `GEMINI_API_KEY` 为空 | 检查 `.env.local` 路径、权限与字段；重启服务 |
 | 进程 active，但 health 连接失败 | 端口不是 9002，或应用启动报错 | 看日志末尾；检查 `PORT`；`ss -ltnp` |
 | 日志文件写入失败 | 目录不存在或属主不对 | `ls -ld /da04/webser/logs/pro`；`chown -R webser:webgp` |
+| 页面字体或卡片样式异常，但 Tailwind 仍在 | 工作树缺少 `public/styles/app.css`，或 `index.html` 未引入该样式表 | `ls public/styles/app.css`；`curl -sS -m 5 -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css` 应为 200 |
 | 服务反复重启 | 应用启动错误或配置缺失 | `systemctl status` 看 `Result`/`ExecMainStatus`；`journalctl -u tangyou_uistan`；看应用日志 |
 | SSH 断开后服务消失 | cgroup 仍挂在 `session-*.scope` | `systemctl status` 看 `CGroup`；确认启用的是 system unit |
 | `code=killed, status=9/KILL` | 被 SIGKILL | 查 OOM、外部 kill、cgroup 清理 |
@@ -452,9 +462,9 @@ findmnt /da04
 
 代码与依赖变更：
 
-- 前端文件改动由 Vite middleware 热更新，通常不需要重启。
+- 前端文件改动由 Vite middleware 热更新，通常不需要重启。`public/styles/app.css` 变更后刷新浏览器即可确认；若样式未更新，再重启一次服务。
 - `server.ts`、`server/*.ts` 等后端改动需要 `sudo systemctl restart tangyou_uistan`。
-- 依赖变更后执行 `npm install`，再重启服务。
+- 依赖变更后，在项目目录执行 `sudo -H -u webser npm ci --prefer-offline --no-audit --no-fund`，再重启服务。
 - 回退时恢复代码或 unit 副本，再 `daemon-reload` 与 `restart`，并按第 7 节重新验收。
 
 手工 `nohup` 实例会与 systemd 争用 9002 端口；当前唯一托管入口是 `tangyou_uistan.service`。pid 文件不再作为服务状态依据，服务状态以 `systemctl` 为准。
@@ -505,10 +515,10 @@ ls -lh /da04/webser/logs/pro/tangyou_uistan_0.log
 | 2 | 确认用户与组 | `webser` 存在，主组 `webgp`，home `/da04/webser` | §2.2 |
 | 3 | 挂载 `/da04` 数据盘 | `findmnt /da04` 有输出，可读写 | §2.3 |
 | 4 | 建立目录 | `/da04/webser/logs/pro`、`/da04/webser/sour/pro/tangyou_uistan_0` 存在 | §2.3 |
-| 5 | 同步项目代码 | 项目根目录包含 `package.json`、`server.ts`、`server/` 等 | §3.1 |
+| 5 | 同步项目代码 | 项目根目录包含 `package.json`、`server.ts`、`server/`、`public/styles/app.css` 等 | §3.1 |
 | 6 | 调整属主 | 项目与日志目录属主为 `webser:webgp` | §3.2 |
-| 7 | 安装依赖 | `npm install` 后 `node_modules` 存在 | §3.3 |
-| 8 | 写入 `.env.local` | 含 `GEMINI_API_KEY`、`PORT=9002`；权限 600、属主 `webser:webgp` | §4 |
+| 7 | 安装依赖 | `npm ci` 后 `node_modules` 存在 | §3.3 |
+| 8 | 写入 `.env.local` | 可由 `.env.example` 复制后填写；含 `GEMINI_API_KEY`、`PORT=9002`；权限 600、属主 `webser:webgp` | §4 |
 | 9 | 写入 unit 文件 | 与第 5 节全文一致 | §5 |
 | 10 | 静态校验并启用 | `systemd-analyze verify` 通过；`enable --now` 后 active | §6 |
 | 11 | 六项验收 | 第 7 节表格全部通过 | §7 |
@@ -519,7 +529,7 @@ ls -lh /da04/webser/logs/pro/tangyou_uistan_0.log
 在用户、组、数据盘、目录均已存在的前提下，最小路径为：
 
 ```
-同步代码 → npm install → 写入 .env.local → 写入 unit → daemon-reload → enable --now → 验收
+同步代码 → npm ci → 写入 .env.local → 写入 unit → daemon-reload → enable --now → 验收
 ```
 
 ### 10.3 环境漂移检查
@@ -534,6 +544,7 @@ ls -lh /da04/webser/logs/pro/tangyou_uistan_0.log
 | unit 最终配置 | `systemctl cat tangyou_uistan` | 与第 5 节一致 |
 | 开机自启 | `systemctl is-enabled tangyou_uistan` | `enabled` |
 | 健康端点 | `curl -sS -m 5 http://127.0.0.1:9002/api/health` | `configured:true` |
+| 样式资源 | `curl -sS -m 5 -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css` | HTTP 200 |
 
 ---
 
@@ -550,8 +561,12 @@ ls -lh /da04/webser/logs/pro/tangyou_uistan_0.log
     └── pro/
         └── tangyou_uistan_0/
             ├── package.json
+            ├── package-lock.json
+            ├── .env.example
+            ├── index.html
             ├── server.ts
             ├── server/
+            ├── public/styles/app.css
             ├── services/
             ├── views/
             ├── components/
@@ -580,6 +595,7 @@ ls -lh /da04/webser/logs/pro/tangyou_uistan_0.log
 | 应用日志 | `tail -f /da04/webser/logs/pro/tangyou_uistan_0.log` |
 | unit 日志 | `sudo journalctl -u tangyou_uistan -f` |
 | 健康 | `curl -sS -m 5 http://127.0.0.1:9002/api/health` |
+| 样式资源 | `curl -sS -m 5 -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css` |
 | 端口 | `ss -ltnp \| grep 9002` |
 | 用户/组 | `id webser`、`getent group webgp` |
 | 挂载 | `findmnt /da04` |
@@ -588,6 +604,6 @@ ls -lh /da04/webser/logs/pro/tangyou_uistan_0.log
 
 | 项 | 值 |
 | --- | --- |
-| 本文档版本 | 1.0 |
+| 本文档版本 | 1.1 |
 | 验收记录时间 | 2026-11-25 |
 | 当前 unit 版本 | 与第 5 节全文一致 |

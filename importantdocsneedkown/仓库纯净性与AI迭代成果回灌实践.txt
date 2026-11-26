@@ -1,6 +1,6 @@
 # tangyou_uistan 仓库纯净性与 AI 迭代成果回灌实践
 
-版本：1.2
+版本：1.3
 适用项目：tangyou_uistan
 适用环境：macOS
 
@@ -142,7 +142,7 @@
 | | **项目内在** | **工具 / 环境特有** |
 | --- | --- | --- |
 | **持久** | **主仓库**：源码、文档、配置模板、发布手册、知识库 | **渠道归档中的工具资料**：`AGENTS.md`、工具指令、工具配置模板 |
-| **临时** | **排除**：`dist/`、`.vite/`、`verify-results/`、构建缓存、测试快照 | **排除 / 隔离**：`bun.lock`、`.idea/`、`.vscode/`、`.DS_Store`、工具缓存 |
+| **临时** | **排除**：`dist/`、`.vite/`、`.wrangler/`、`verify-results/`、构建缓存、测试快照 | **排除 / 隔离**：`bun.lock`、`.idea/`、`.vscode/`、`.DS_Store`、工具缓存 |
 
 这张矩阵不依赖某个工具的名字，也不依赖某次迭代的具体文件。新工具带来的新产物，可以先按“归属 × 时间性”判断，再进入工具产物登记表。
 
@@ -150,8 +150,8 @@
 
 | 类别 | 例子 | 处置 |
 | --- | --- | --- |
-| **本地专属、永不导入** | `.git`、`node_modules`、`.env`、`.env.local`、`.env.server.local`、`.idea`、`.vscode`、`.npmrc`、`.DS_Store`、`__MACOSX` | 出站不提供；入站按路径排除；不进入候选区 |
-| **项目内在、但受保护** | `package.json`、`package-lock.json`、`.nvmrc`、`.env.example`、`.gitignore`、`vite.config.ts`、`server.ts`、`metadata.json`、`index.html`、`public/styles/app.css`、`tsconfig.json`、`importantdocsneedkown/` | 入站显示 diff，由人显式决定接受、回绝或部分合并 |
+| **本地专属、永不导入** | `.git`、`node_modules`、`.env`、`.env.local`、`.env.server.local`、`.dev.vars`、`.wrangler/`、`.idea`、`.vscode`、`.npmrc`、`.DS_Store`、`__MACOSX` | 出站不提供；入站按路径排除；不进入候选区 |
+| **项目内在、但受保护** | `package.json`、`package-lock.json`、`.nvmrc`、`.env.example`、`.gitignore`、`vite.config.ts`、`server.ts`、`wrangler.jsonc`、`metadata.json`、`index.html`、`public/styles/app.css`、`tsconfig.json`、`importantdocsneedkown/` | 入站显示 diff，由人显式决定接受、回绝或部分合并 |
 | **工具产物、默认拒绝** | `bun.lock`、`bun.lockb`、`AGENTS.md`、`.aider*`、`.cursor*`、`.claude/`、`.windsurf/`、`.continue/`、`.github/copilot-instructions.md` | 出站不提供；入站排除或归档到渠道目录 |
 | **未知文件** | 新工具带来的新文件 | 进入渠道目录的 `unknown/`，人工分类后再决定 |
 
@@ -370,6 +370,8 @@ rsync -a \
   --exclude='.env' \
   --exclude='.env.local' \
   --exclude='.env.server.local' \
+  --exclude='.dev.vars' \
+  --exclude='.wrangler/' \
   --exclude='dist/' \
   --exclude='.vite/' \
   --exclude='verify-results/' \
@@ -408,6 +410,8 @@ node_modules/
 .env
 .env.local
 .env.server.local
+.dev.vars
+.wrangler/
 .idea/
 .vscode/
 .npmrc
@@ -521,6 +525,7 @@ package-lock.json
 .gitignore
 vite.config.ts
 server.ts
+wrangler.jsonc
 metadata.json
 index.html
 public/styles/app.css
@@ -567,7 +572,7 @@ grep -E '^\*deleting' "$STAGE/export_vs_base.txt" || true
 
 若导出物明显缺少大量未触碰文件，删除候选多为噪声，不据此删除。
 
-当前仓库已跟踪、导出物若给出 `*deleting` 时尤其需要停下来看一眼的路径包括：`public/styles/app.css`、`domain/`（及其既有分文件）、`scripts/verify/`（含 `fixtures/golden/`）、`.env.example`、`server/env.ts`、`server/http/`。对这些路径的删除，默认更接近“工具没看见”，予以保留，除非能说明这是有意删除。
+当前仓库已跟踪、导出物若给出 `*deleting` 时尤其需要停下来看一眼的路径包括：`public/styles/app.css`、`domain/`（及其既有分文件）、`scripts/verify/`（含 `fixtures/golden/`）、`.env.example`、`server/env.ts`、`server/http/`、`server/app.ts`、`cloudflare/`、`wrangler.jsonc`。对这些路径的删除，默认更接近“工具没看见”，予以保留，除非能说明这是有意删除。
 
 ### 5.11 候选区验证
 

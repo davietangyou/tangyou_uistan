@@ -1,0 +1,248 @@
+# 线上无服务器部署实例（Cloudflare Workers）
+
+版本：1.0
+记录时间：2026-11-26
+当前状态：代码与配置已就绪，并已在本地 `wrangler dev` 下验证；尚未部署到 Cloudflare，正式域名尚未切换。
+
+---
+
+## 0. 文档使用说明
+
+本文档描述 `tangyou_uistan` 不依托自有伺服器、部署在 Cloudflare Workers 上的形态：架构与理由、文件分工、本地验证、首次部署、正式域名切换、回滚与日常迭代。
+
+它与《手动搭建与迭代应用指南.txt》《线上服务托管实例（systemd）.txt》并列，是同一份代码的另一种线上形态。Node 单进程入口 `server.ts`、`npm run dev` / `npm start` 与 Google AI Studio 的 ZIP 下载、回灌、重启流程保持原样，不读取本文档涉及的 Workers 配置。
+
+本文档不覆盖：应用业务逻辑、`GEMINI_API_KEY` 的实际值、旧伺服器上数据上报服务（8002）本身的搭建。
+
+---
+
+## 1. 形态概览
+
+```
+浏览器
+  → https://tangyou-app.alphathought.org/（切换后；切换前为 *.workers.dev 测试地址）
+  → Cloudflare Worker「tangyou-app」（cloudflare/worker.ts）
+      ├─ 静态前端：dist/（npm run build 产物）由 Workers Static Assets 直接回应，SPA 导航回落 index.html
+      ├─ /api、/api/*：转交单例 Durable Object「GeminiEgress」（首次建立于美西 wnam）
+      │     └─ DO 内运行与 Node 端相同的 Express app（server/app.ts 的 createApp）
+      │           └─ /api/health、/api/gemini/* → Google Gemini（出站请求从美国发出）
+      └─ /chtatain-datacent/*：按 UPLOAD_ORIGIN 反向代理到旧伺服器上的数据上报服务
+```
+
+关键参数：
+
+| 项 | 值 |
+| --- | --- |
+| Worker 名 | `tangyou-app`（`wrangler.jsonc` 的 `name`） |
+| 入口 | `cloudflare/worker.ts` |
+| 前端产物 | `dist/`（部署脚本先执行 `vite build`） |
+| Durable Object | 类 `GeminiEgress`，绑定 `GEMINI_EGRESS`，实例名 `gemini-egress-v1`，`locationHint: "wnam"` |
+| 机密 | `GEMINI_API_KEY`（Worker Secret，`wrangler secret put` 设置） |
+| 非机密变量 | `UPLOAD_ORIGIN`，默认 `https://tangyou-app.alphathought.org` |
+| 可选变量 | `GEMINI_MODEL`、`GEMINI_FAST_MODEL`、`GEMINI_VISION_MODEL`、`GEMINI_TRANSCRIBE_MODEL`、`GEMINI_BASE_URL`（与 `.env.example` 同名，需要时加到 `wrangler.jsonc` 的 `vars`） |
+| 套餐 | Workers 付费套餐（每月约 5 美元起） |
+| wrangler 版本 | `4.168.0`（脚本经 `npx --yes wrangler@4.168.0` 调用，不写入依赖） |
+| 健康端点 | `https://<域名>/api/health` |
+
+---
+
+## 2. 设计取舍与理由
+
+### 2.1 为什么 Gemini 调用放进美西 Durable Object
+
+Gemini API 不支持香港地区。Worker 默认在离用户最近的 Cloudflare 机房运行；香港用户的请求通常落在香港机房（HKG），从那里直接调用 Gemini 会被拒绝。
+
+可选做法有三种：Smart Placement / `placement.region` 指定运行地区、美西 Durable Object 出站、或 `GEMINI_BASE_URL` 指向中转。项目主人以“稳定优先”为原则，选择了 Durable Object：
+
+- Durable Object 在第一次建立时可以带 `locationHint`，建立后长期固定在该地区运行；DO 内发起的所有出站请求都从该地区发出，与用户所在地无关；
+- `placement` 属于调度提示，会受流量与可用性影响，确定性不如固定位置的 DO；
+- 中转需要额外维护一台中转服务，与“无需伺服器”的目标相反。
+
+代价：每次 `/api/*` 请求多一段“用户就近机房 → 美西 DO”的内部往返，约 150 ms 量级；相较 Gemini 本身数秒的生成时间，影响很小。
+
+### 2.2 为什么由 DO 承载整个 Express app，而不是只代理一次 fetch
+
+DO 内直接运行 `server/app.ts` 的 `createApp()`（借助 Workers 的 `node:http` 兼容层与 `cloudflare:node` 的 `handleAsNodeRequest`）。这样：
+
+- `/api/gemini/*` 的路由、请求/响应 JSON、提示词、模型选择、回退与错误文案全部沿用 Node 端同一份代码，零分叉；
+- 不需要改写 `@google/genai` 的网络层，也不需要拦截全局 `fetch`；
+- Worker 前端只做路径分流，逻辑简单、可读。
+
+`createApp()` 只在 DO 内首次收到请求时启动一次（日志 `[gemini-egress] Express app started inside Durable Object (gemini-egress-v1).`），前端 Worker 不启动 Express。
+
+### 2.3 回退与冷却状态
+
+`server/gemini/errors.ts` 中主模型 503 后 60 秒只用快速模型的冷却状态（`primaryCooldownUntil`）是模块级内存变量。Node 端是每个进程一份；Workers 形态下所有 `/api/*` 都进入同一个 DO 实例，因此这份状态变为全局唯一一份，语义更集中。DO 闲置被回收后状态重置，等价于 Node 进程重启。
+
+单例 DO 的吞吐取决于单实例处理能力。本应用每个请求的 CPU 工作量很小（JSON 解析、拼装提示词），大部分时间在等待 Gemini 返回，期间可并发处理其他请求；按当前用户规模远未触及上限。将来若需要扩展，可以按名称分片（例如多个实例名），此时冷却状态回到“每分片一份”。
+
+### 2.4 数据上报路径留在旧伺服器
+
+前端 `services/dataService.ts` 把录音与 JSON 上报到写死的 `https://tangyou-app.alphathought.org/chtatain-datacent/client-api/tangserv/newyshwo/vidoquse/...`，该路径一直由旧伺服器上的另一个服务（本地开发时为 `localhost:8002`）处理。项目主人决定上报服务继续留在旧伺服器。
+
+Worker 对 `/chtatain-datacent/*` 做原样反向代理：方法、路径、查询串、请求头（含 `fixed-pwd`、`check-same-md5`）与请求体保持不变，重定向原样返回（`redirect: "manual"`），目标源站由变量 `UPLOAD_ORIGIN` 决定。`UPLOAD_ORIGIN` 为空或无效时返回 502 JSON，上游不可达时返回 502 JSON（`{"error":"上報服務暫時無法連接，請稍後再試。"}`）。
+
+### 2.5 正式域名采用 Route 模式而不是 Custom Domain
+
+切换 `tangyou-app.alphathought.org` 时使用 Workers Route（`tangyou-app.alphathought.org/*`），保留现有指向旧伺服器的橙云 A 记录：
+
+- Route 模式下，Worker 对同一 zone 主机名的 `fetch` 不会再次进入 Worker，而是直达 DNS 中的源站。因此 `UPLOAD_ORIGIN` 保持默认值 `https://tangyou-app.alphathought.org`，上报请求就会落到旧伺服器，旧伺服器的 nginx 与 Host 规则无需改动，也无需新增 DNS 记录；
+- 回滚只需删除这条 Route，流量立即回到旧伺服器；
+- Custom Domain 模式会接管 DNS 记录，Worker 自身成为源站，回源旧伺服器需要另建主机名，切换与回滚动作都更多。
+
+切换前（`*.workers.dev` 测试阶段），Worker 对 `https://tangyou-app.alphathought.org` 的请求属于跨 zone 请求，照常经过前门到达旧伺服器，同样可用。
+
+---
+
+## 3. 文件分工
+
+| 文件 | 作用 |
+| --- | --- |
+| `server/app.ts` | `createApp()`：25mb JSON 上限、`/api` 的 `Cache-Control: no-store`、`/api/health` 与 `/api/gemini/*`；Node 与 Workers 共用 |
+| `server.ts` | Node 单进程入口，调用 `createApp()` 后挂载 Vite middleware 或 `dist/`，监听 `0.0.0.0:PORT`（行为与之前一致） |
+| `cloudflare/worker.ts` | Workers 入口：路径分流、`GeminiEgress` DO 类、上报反向代理 |
+| `cloudflare/cloudflare-node.d.ts` | `cloudflare:node` 的最小类型声明，仅供 `npm run lint`，避免新增类型依赖 |
+| `wrangler.jsonc` | Worker 名、入口、兼容日期、Static Assets、DO 绑定与迁移、`UPLOAD_ORIGIN`、注释状态的正式域名 Route |
+| `package.json` | 新增 `cf:dev`、`cf:deploy` 两个脚本；既有脚本与依赖不变 |
+| `.gitignore` | 新增 `.dev.vars*`、`.wrangler`（本地密钥与本地状态） |
+
+---
+
+## 4. 与 Node 形态的差异与已知边界
+
+| 项 | Node（server.ts） | Workers |
+| --- | --- | --- |
+| 前端 | 线上 systemd 当前为 dev 模式（Vite middleware）；`npm start` 为 `dist/` | 始终为 `vite build` 产物 `dist/` |
+| SPA 回落 | 任何非 `/api/` 的 GET 回 `index.html` | 导航请求与未命中静态文件的 GET 回 `index.html`（已验证） |
+| 非 `/api` 的 POST 等未知请求 | Express 默认 404 | 交给 Static Assets 处理，状态码可能不同（前端不发出此类请求） |
+| 冷却状态 | 每进程一份 | 单例 DO 全局一份 |
+| Gemini 出站地区 | 伺服器所在地 | 美西（DO） |
+| 超过 25mb 的请求体 | Express 413 | 相同（DO 内同一个 Express）；Workers 付费套餐请求体上限 100 MB |
+| 环境变量来源 | 进程环境 > `.env.server.local` > `.env.local` > `.env` | 部署：`wrangler.jsonc` 的 `vars` + Worker Secret；本地 `wrangler dev`：自动读取 `.env.local`（存在 `.dev.vars` 时改读 `.dev.vars`） |
+| 本地上报地址 | 前端在 localhost 访问时直连 `localhost:8002` | 同左（前端代码未改）；Worker 代理只在线上域名生效 |
+
+其他边界：
+
+- `*.workers.dev` 测试阶段，浏览器里的上报请求仍直接发往写死的 `https://tangyou-app.alphathought.org`，属于跨源请求，能否成功取决于旧上报服务的 CORS 设置；切换正式域名后变为同源请求，经 Worker 代理回源。
+- `locationHint` 只在名为 `gemini-egress-v1` 的 DO 第一次建立时生效。若将来要换地区，需要在 `cloudflare/worker.ts` 中同时更换实例名。
+- 本地 `wrangler dev` 不模拟地区，美西出站效果需要部署后从香港网络实测（`/api/gemini/chat` 返回 200 即说明出站地区可用）。
+- 旧伺服器在切换后仍承担上报服务；`tangyou_uistan.service` 可以继续运行，作为 Route 回滚后的即时承接方。
+
+---
+
+## 5. 本地验证
+
+前置：`npm ci` 完成；`.env.local` 中有 `GEMINI_API_KEY`（`wrangler dev` 会自动读取，不会上传）。
+
+```bash
+npm run cf:dev
+# 等价于：vite build && npx --yes wrangler@4.168.0 dev
+# 默认地址 http://127.0.0.1:8787；可追加参数，例如：
+# npx --yes wrangler@4.168.0 dev --port 8799 --ip 127.0.0.1 --var UPLOAD_ORIGIN:http://127.0.0.1:8002
+```
+
+冒烟命令（以 8799 为例）：
+
+```bash
+W=http://127.0.0.1:8799
+curl -s $W/api/health                                   # ok:true, configured:true
+curl -s -o /dev/null -w "%{http_code}\n" $W/            # 200
+curl -s -o /dev/null -w "%{http_code}\n" -H "Sec-Fetch-Mode: navigate" $W/any/route   # 200（index.html）
+curl -s -X POST $W/api/nope                             # {"error":"找不到對應的 API 端點。"} 404
+```
+
+验证门（与 Node 端相同的 DOM / 流程 / 截图采集）：
+
+```bash
+VERIFY_BASE_URL=http://127.0.0.1:8799/ npm run verify -- --out verify-results/cf-worker --skip-build --compare verify-results/<node 端基线>
+```
+
+---
+
+## 6. 首次部署步骤（经项目主人确认后执行）
+
+1. 在 Google AI Studio / Google Cloud 轮换 `GEMINI_API_KEY`（旧密钥曾在对话中出现过），新密钥同时更新到旧伺服器 `.env.local` 并重启 `tangyou_uistan.service`。
+2. Cloudflare 账号开通 Workers 付费套餐。
+3. 登录 wrangler（二选一）：`npx --yes wrangler@4.168.0 login`（浏览器授权），或设置具备 Workers Scripts 编辑与 Workers Routes 编辑权限的 `CLOUDFLARE_API_TOKEN` 环境变量。
+4. 部署到 `*.workers.dev` 测试地址（此时 `routes` 仍为注释状态，不影响正式域名）：
+   ```bash
+   npm ci
+   npm run cf:deploy
+   ```
+5. 写入机密（交互输入新密钥，不写入任何文件）：
+   ```bash
+   npx --yes wrangler@4.168.0 secret put GEMINI_API_KEY
+   ```
+6. 在香港网络下验收测试地址：
+   ```bash
+   W=https://tangyou-app.<账号子域>.workers.dev
+   curl -s $W/api/health          # configured:true
+   ```
+   再用浏览器打开 `$W/`，完成一次真实咨询（文字）、一次拍照识药与一次语音转写，确认均正常返回。
+7. 观察：Cloudflare 控制台 → Workers → tangyou-app → Logs，可看到 `[gemini-egress] Express app started inside Durable Object` 与各 `/api` 请求。
+
+---
+
+## 7. 正式切换 tangyou-app.alphathought.org（经项目主人确认后执行）
+
+1. 确认第 6 节验收通过，旧伺服器上报服务（8002 与 nginx 的 `/chtatain-datacent/` 转发）正常，并记录切换前上报路径的基准响应：
+   ```bash
+   U=https://tangyou-app.alphathought.org/chtatain-datacent/client-api/tangserv/newyshwo/vidoquse/fileget/probe/probe.json
+   curl -s -o /dev/null -w "%{http_code}\n" "$U"     # 记下状态码作为基准
+   ```
+2. 编辑 `wrangler.jsonc`，取消末尾 `routes` 一行的注释：
+   ```jsonc
+   ,"routes": [{ "pattern": "tangyou-app.alphathought.org/*", "zone_name": "alphathought.org" }]
+   ```
+3. `npm run cf:deploy`。DNS 记录保持不变（仍为指向旧伺服器的橙云 A 记录）。
+4. 验收：
+   ```bash
+   curl -s https://tangyou-app.alphathought.org/api/health
+   ```
+   浏览器打开正式域名，完成一次咨询；再执行第 1 步的 `curl "$U"`，状态码应与切换前基准一致，且旧伺服器上报服务日志能看到这次请求（说明 Worker 已把上报路径回源旧伺服器）。前端自动上报目前未接线于对话式问诊画面，若详情页的上报按钮可达，也可以实际触发一次上报确认。
+5. 提交 `wrangler.jsonc` 的这一行改动，使仓库与线上一致。
+
+---
+
+## 8. 回滚
+
+- 正式域名回到旧伺服器：在 Cloudflare 控制台删除 `tangyou-app.alphathought.org/*` 这条 Route（或把 `wrangler.jsonc` 中的 `routes` 重新注释后再部署，并在控制台确认 Route 已移除）。DNS 未改动，流量立即回到旧伺服器。
+- Worker 版本回滚：`npx --yes wrangler@4.168.0 rollback`，或在控制台 Deployments 中选择上一版本。
+- 代码层面：Node 形态不受 Workers 文件影响，`git` 回退方式与其他文档一致。
+
+---
+
+## 9. 日常迭代
+
+AI Studio ZIP 按《仓库纯净性与AI迭代成果回灌实践.txt》回灌进仓库并验证后：
+
+```bash
+npm ci
+npm run lint
+npm run cf:deploy
+```
+
+若改动涉及 `wrangler.jsonc`、`cloudflare/**` 或 `server/app.ts`，先按第 5 节在本地 `wrangler dev` 下冒烟。`GEMINI_API_KEY` 存在 Worker Secret 中，部署不会覆盖它。
+
+---
+
+## 10. 本地验收记录（2026-11-26，香港时间）
+
+环境：Node 24.22.1，wrangler 4.168.0，分支 `feat/cloudflare-workers`，`wrangler dev` 监听 `127.0.0.1:8799`，上报源站指向本地桩服务 `127.0.0.1:8002`。
+
+| 项 | 结果 |
+| --- | --- |
+| `npm ci` / `npm run lint` / `npm run build` | 通过 |
+| Node 端 `npm run verify`（对比既有基线） | 通过；差异仅为 `package.json` 新增两个脚本与按时段变化的问候表情 |
+| `wrangler deploy --dry-run` | 通过；上传体积 2377.76 KiB（gzip 476.62 KiB）；生产打包中 Express 环境为 `production` |
+| `/api/health` | 200，`configured:true`，`Cache-Control: no-store` |
+| DO 路径 | 日志出现 `[gemini-egress] Express app started inside Durable Object (gemini-egress-v1).` |
+| 真实 `/api/gemini/chat` | 200，约 2.4 s，返回字段结构与 Node 端一致 |
+| 真实 `/api/gemini/analyze-saved-questions` | 200 |
+| 12 MB 请求体（`recognize-medications` 9 MB 图片） | 200；Node 端同样 200 |
+| 28 MB 请求体 | 413；Node 端同样 413 |
+| `/`、`/styles/app.css` | 200，`text/html` / `text/css` |
+| SPA 回落（导航与非导航） | 200，内容与 `index.html` 相同 |
+| `/api/nope`、`/api` | 404 `{"error":"找不到對應的 API 端點。"}` |
+| 上报代理（POST multipart、GET、OPTIONS、302） | 路径、查询串、`fixed-pwd`、`check-same-md5`、请求体均原样到达桩服务；302 原样返回 |
+| 验证门指向 Worker（`VERIFY_BASE_URL`） | DOM 与 7 条流程全部通过；与 Node 端对比差异仅为 baseUrl、recharts 自增 id 与两处数像素的光标区域 |

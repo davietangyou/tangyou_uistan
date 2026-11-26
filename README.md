@@ -19,3 +19,13 @@ View your app in AI Studio: https://ai.studio/apps/dcd48860-3678-4aae-91b6-e9aaf
 The dev server is a single process (`tsx server.ts`): it serves the page through Vite middleware and hosts `/api/gemini/*` on the same origin. Custom chrome and large-font CSS live in `public/styles/app.css` and must be present; the page loads it as `/styles/app.css` in dev (and as `./styles/app.css` after `npm run build`, copied to `dist/styles/app.css`).
 
 For macOS and Linux setup, iteration, and smoke checks, see `importantdocsneedkown/手动搭建与迭代应用指南.txt`. Long-running Linux hosting is described in `importantdocsneedkown/线上服务托管实例（systemd）.txt`.
+
+## Deploy to Cloudflare Workers (optional, no server)
+
+The same code can also run on Cloudflare Workers without a server. This does not change the Node / AI Studio flow above: `server.ts` and `npm run dev` / `npm start` do not read any Workers config.
+
+- `cloudflare/worker.ts` is the Worker entry. Static assets come from `dist/`, `/api/*` goes to a Durable Object pinned to US West (`wnam`) that runs the same Express app (`server/app.ts`), so Gemini calls leave from the US, and `/chtatain-datacent/*` is proxied to the old upload server (`UPLOAD_ORIGIN`).
+- `wrangler.jsonc` holds the Worker config. The `tangyou-app.alphathought.org` route is commented out until it is approved.
+- Local check: `npm run cf:dev` (reads `GEMINI_API_KEY` from `.env.local`; never uploaded). Deploy: `npm run cf:deploy`, then `npx --yes wrangler@4.168.0 secret put GEMINI_API_KEY`.
+
+Architecture, steps, domain switch, and rollback: `importantdocsneedkown/线上无服务器部署实例（Cloudflare Workers）.txt`.

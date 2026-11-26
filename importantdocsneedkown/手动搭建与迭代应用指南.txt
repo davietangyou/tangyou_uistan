@@ -1,7 +1,7 @@
 # 手动搭建与迭代应用指南
 ## macOS 本地 + Linux 线上
 
-版本：1.2
+版本：1.3
 适用项目：tangyou_uistan
 适用模式：dev 模式（`npm run dev`）
 
@@ -24,6 +24,7 @@
 - 线上 systemd 长期托管：由 systemd 实例文档负责；
 - 反向代理、TLS、DNS：由上层设施负责；
 - 生产构建与生产托管：本文档只使用 dev 模式；
+- Cloudflare Workers 无服务器部署：由《线上无服务器部署实例（Cloudflare Workers）.txt》负责，它与本文档的 dev 模式共用同一套 `/api/gemini/*` 路由代码（`server/app.ts`），互不改变对方的启动方式；
 - AI 辅助发布：属于另一条独立链路。
 
 ### 0.3 阅读路径
@@ -65,7 +66,7 @@ npm run dev
   → 浏览器页面与 /api/gemini/* 同源
 ```
 
-浏览器访问 `http://127.0.0.1:9002/`，前端与后端 API 由同一个进程提供。Vite middleware 负责前端资源与热更新；`server.ts` 负责 `/api/gemini/*` 与 `/api/health`。
+浏览器访问 `http://127.0.0.1:9002/`，前端与后端 API 由同一个进程提供。Vite middleware 负责前端资源与热更新；`server.ts` 负责 `/api/gemini/*` 与 `/api/health`。这些 API 路由（含 25mb JSON 上限与 `/api` 的 `Cache-Control: no-store`）由 `server/app.ts` 的 `createApp()` 组装，`server.ts` 在其后挂载 Vite middleware 或 `dist/` 并监听 `0.0.0.0:PORT`；Cloudflare Workers 入口 `cloudflare/worker.ts` 复用同一个 `createApp()`，dev 模式不读取 `wrangler.jsonc`。
 
 ### 1.2 端口与环境变量
 
@@ -278,6 +279,7 @@ npm run verify -- --out verify-results/phase-N --compare verify-results/baseline
 | `server.ts` / `server/**` | 重启 |
 | `public/styles/app.css` 或 `index.html` 中的样式链接 | 确认文件仍在；刷新或重启后检查大字开/关外观 |
 | `scripts/verify/**` | 通常无需重启；金样变更时再按需跑 `npm run verify` |
+| `wrangler.jsonc` / `cloudflare/**` | dev 模式无需重启；只影响 Cloudflare Workers 部署形态 |
 | 前端源码 | 手动流程下重启（Vite 热更新只在运行中生效） |
 | 仅文档 | 通常无需重启 |
 
@@ -878,6 +880,8 @@ sudo ss -ltnp | grep 9002
 ├── App.tsx
 ├── server.ts
 ├── server/
+├── cloudflare/（仅 Workers 部署形态使用）
+├── wrangler.jsonc（仅 Workers 部署形态使用）
 ├── public/styles/app.css
 ├── domain/
 ├── scripts/verify/
@@ -909,6 +913,8 @@ sudo ss -ltnp | grep 9002
             ├── App.tsx
             ├── server.ts
             ├── server/
+            ├── cloudflare/（仅 Workers 部署形态使用）
+            ├── wrangler.jsonc（仅 Workers 部署形态使用）
             ├── public/styles/app.css
             ├── domain/
             ├── scripts/verify/

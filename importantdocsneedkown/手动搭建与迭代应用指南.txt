@@ -416,7 +416,7 @@ cd /Users/davie/Desktop/EffLearn/tangyou_uistan
 npm ci --prefer-offline --no-audit --no-fund
 ```
 
-若 `npm ci` 因 lockfile 与 `package.json` 不同步失败，可以改用：
+`package-lock.json` 已与 `package.json` 对齐，正常情况应直接使用 `npm ci`。若仍因 lockfile 不同步失败，可以改用：
 
 ```bash
 npm install
@@ -585,7 +585,7 @@ cd /da04/webser/sour/pro/tangyou_uistan_0
 sudo -H -u webser npm ci --prefer-offline --no-audit --no-fund
 ```
 
-若 `npm ci` 失败，可以改用 `sudo -H -u webser npm install`，并单独评审 `package-lock.json` 变化。
+`package-lock.json` 已与 `package.json` 对齐，正常情况应直接使用 `npm ci`。若仍失败，可以改用 `sudo -H -u webser npm install`，并单独评审 `package-lock.json` 变化。
 
 ### 6.7 配置 `.env.local`
 
@@ -702,7 +702,7 @@ sudo ss -ltnp | grep 9002
 | `configured:false` | `.env.local` 缺失或密钥为空 | 检查文件路径与 `GEMINI_API_KEY` |
 | 模型 404 | 当前 Key 或网关不支持默认模型 | 在 `.env.local` 设置可用的 `GEMINI_MODEL` 等 |
 | 网络超时 | 无法直连 Gemini 域名 | 设置 `GEMINI_BASE_URL` |
-| `npm ci` 失败 | lockfile 与 `package.json` 不同步 | 改用 `npm install`，评审 lockfile |
+| `npm ci` 失败 | 依赖安装异常（lockfile 现已对齐，正常应可 npm ci） | 先重试 `npm ci`；仍失败再改用 `npm install` 并评审 lockfile |
 | 浏览器 404 | 访问端口与 `PORT` 不一致 | 确认 `.env.local` 的 `PORT` 与 URL |
 | `node -v` 不是 v24 | 新终端未执行 `nvm use` | 进入项目目录执行 `nvm use`，或设置 `nvm alias default 24` |
 

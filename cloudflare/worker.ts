@@ -65,10 +65,19 @@ export class GeminiEgress {
     }
 }
 
-function forwardToGeminiEgress(request: Request, env: Env): Promise<Response> {
-    const id = env.GEMINI_EGRESS.idFromName(GEMINI_EGRESS_NAME);
-    const stub = env.GEMINI_EGRESS.get(id, { locationHint: GEMINI_EGRESS_LOCATION });
-    return stub.fetch(request);
+/**
+ * DO 本身不可達（重置、過載、部署切換等）時，回應與後端既有錯誤同形的 JSON（{ error }，no-store），
+ * 前端 services/geminiService.ts 按一般 API 錯誤處理。不自動重試：請求體可能已被讀取。
+ */
+async function forwardToGeminiEgress(request: Request, env: Env): Promise<Response> {
+    try {
+        const id = env.GEMINI_EGRESS.idFromName(GEMINI_EGRESS_NAME);
+        const stub = env.GEMINI_EGRESS.get(id, { locationHint: GEMINI_EGRESS_LOCATION });
+        return await stub.fetch(request);
+    } catch (error) {
+        console.error("[gemini-egress] Durable Object request failed:", error);
+        return jsonError(503, "AI 服務暫時無法處理請求，請稍後再試。");
+    }
 }
 
 function jsonError(status: number, error: string): Response {
@@ -76,6 +85,44 @@ function jsonError(status: number, error: string): Response {
         status,
         headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
     });
+}
+
+/**
+ * 不轉發到舊上報服務的請求頭：逐跳（hop-by-hop）頭、Host，以及 Cloudflare / 代理鏈自帶的頭
+ * （cf-*、x-forwarded-*、x-real-ip、forwarded、cdn-loop）。其餘業務頭（fixed-pwd、check-same-md5、
+ * content-type、content-length、authorization 等）原樣保留。
+ */
+const UPLOAD_DROPPED_HEADERS = new Set([
+    "host",
+    "connection",
+    "keep-alive",
+    "proxy-connection",
+    "proxy-authorization",
+    "proxy-authenticate",
+    "transfer-encoding",
+    "te",
+    "trailer",
+    "upgrade",
+    "forwarded",
+    "x-real-ip",
+    "cdn-loop",
+]);
+
+function buildUploadHeaders(incoming: Headers): Headers {
+    const headers = new Headers();
+    incoming.forEach((value, key) => {
+        const name = key.toLowerCase();
+        if (UPLOAD_DROPPED_HEADERS.has(name) || name.startsWith("cf-") || name.startsWith("x-forwarded-")) {
+            return;
+        }
+        headers.set(key, value);
+    });
+    // 讓舊上報服務仍能看到真實客戶端 IP（與一般反向代理慣例一致）。
+    const clientIp = incoming.get("cf-connecting-ip");
+    if (clientIp) {
+        headers.set("X-Forwarded-For", clientIp);
+    }
+    return headers;
 }
 
 async function proxyUpload(request: Request, env: Env, url: URL): Promise<Response> {
@@ -93,7 +140,7 @@ async function proxyUpload(request: Request, env: Env, url: URL): Promise<Respon
     try {
         return await fetch(target.toString(), {
             method: request.method,
-            headers: request.headers,
+            headers: buildUploadHeaders(request.headers),
             body: hasBody ? request.body : undefined,
             redirect: "manual",
         });

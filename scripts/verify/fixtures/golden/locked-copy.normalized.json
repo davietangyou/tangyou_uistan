@@ -1,0 +1,150 @@
+{
+  "items": [
+    {
+      "file": "views/ConsultView/consultText.ts",
+      "foundInSource": true,
+      "id": "welcome_message",
+      "value": "關於糖尿病管理，\n您目前最關心什麼？"
+    },
+    {
+      "file": "views/ConsultView/consultText.ts",
+      "foundInSource": true,
+      "id": "shortcut_data",
+      "value": "📊 我的血糖數據合格嗎？幫我分析指標與健康檔案的關係"
+    },
+    {
+      "file": "views/ConsultView/consultText.ts",
+      "foundInSource": true,
+      "id": "shortcut_emergency",
+      "value": "⚠️ 出現手震、心慌、冒冷汗等症狀，我該如何緊急處理？"
+    },
+    {
+      "file": "views/ConsultView/consultText.ts",
+      "foundInSource": true,
+      "id": "shortcut_diet",
+      "value": "🥗 糖尿病患者一日三餐或外出用餐有什麼飲食控糖建議？"
+    },
+    {
+      "file": "views/ConsultView/consultText.ts",
+      "foundInSource": true,
+      "id": "shortcut_meds",
+      "value": "💊 二甲雙胍(Metformin)等控糖藥物會有什麼常見副作用？"
+    },
+    {
+      "file": "views/ConsultView/consultText.ts",
+      "foundInSource": true,
+      "id": "shortcut_complications",
+      "value": "👁️ 糖尿病會引致哪些常見併發症（如眼底或腎病變）？該如何預防？"
+    },
+    {
+      "file": "views/ConsultView/consultText.ts",
+      "foundInSource": true,
+      "id": "preference_submit_header",
+      "value": "我已選擇我的個人偏好（決策考量維度）："
+    },
+    {
+      "file": "views/ConsultView/consultText.ts",
+      "foundInSource": true,
+      "id": "preference_submit_option_template",
+      "value": "- 針對「${sel.questionText}」，我最看重：【${sel.label}】（價值維度：${sel.valueCategory}）"
+    },
+    {
+      "file": "views/ConsultView/consultText.ts",
+      "foundInSource": true,
+      "id": "preference_submit_other_template",
+      "value": "- 針對「${pq.questionText}」，我有其他考量：【${customTxt}】（價值維度：其他）"
+    },
+    {
+      "file": "components/Layout.tsx",
+      "foundInSource": true,
+      "id": "disclaimer_global",
+      "value": "AI 輔助衛教工具 · 數據加密守護 · 非醫療診斷"
+    },
+    {
+      "file": "views/ConsultView/ChatPanel.tsx",
+      "foundInSource": true,
+      "id": "disclaimer_consult",
+      "value": "專業聲明：資訊來源基於香港醫學臨床指引與 ADA 標準。所有對話僅供共同決策 (SDM) 及覆診前備忘，不作直接個體化臨床診斷。"
+    },
+    {
+      "file": "views/ConsultView/ChatPanel.tsx",
+      "foundInSource": true,
+      "id": "safety_no_misdial",
+      "value": "ℹ️ 為避免誤觸撥號，以上號碼僅作清晰展示；如情況危急，請立即請身邊家人協助或自行使用電話致電。"
+    },
+    {
+      "file": "components/FocusToast.tsx",
+      "foundInSource": true,
+      "id": "focus_toast",
+      "value": "請先點擊一下您想要輸入的空格"
+    },
+    {
+      "file": "views/ConsultView/ChatPanel.tsx",
+      "foundInSource": true,
+      "id": "comparison_decision_title",
+      "value": "治療方案利弊考量（供覆診與醫生商討）"
+    },
+    {
+      "file": "views/ConsultView/ChatPanel.tsx",
+      "foundInSource": true,
+      "id": "comparison_knowledge_title",
+      "value": "重點對比一覽"
+    },
+    {
+      "file": "views/ConsultView/ChatPanel.tsx",
+      "foundInSource": true,
+      "id": "comparison_decision_pros",
+      "value": "👍 優勢效益 (Pros)"
+    },
+    {
+      "file": "views/ConsultView/ChatPanel.tsx",
+      "foundInSource": true,
+      "id": "comparison_decision_cons",
+      "value": "⚠️ 顧慮隱憂 (Cons)"
+    },
+    {
+      "file": "views/ConsultView/ChatPanel.tsx",
+      "foundInSource": true,
+      "id": "comparison_knowledge_pros",
+      "value": "👍 主要優勢／特點"
+    },
+    {
+      "file": "views/ConsultView/ChatPanel.tsx",
+      "foundInSource": true,
+      "id": "comparison_knowledge_cons",
+      "value": "⚠️ 注意事項／限制"
+    },
+    {
+      "file": "domain/greeting.ts",
+      "foundInSource": true,
+      "id": "greeting_fallback_name",
+      "value": "老友記"
+    },
+    {
+      "file": "domain/greeting.ts",
+      "foundInSource": true,
+      "id": "greeting_morning",
+      "value": "早安"
+    },
+    {
+      "file": "domain/greeting.ts",
+      "foundInSource": true,
+      "id": "greeting_afternoon",
+      "value": "午安"
+    },
+    {
+      "file": "domain/greeting.ts",
+      "foundInSource": true,
+      "id": "greeting_evening",
+      "value": "晚安"
+    },
+    {
+      "file": "domain/greeting.ts",
+      "foundInSource": true,
+      "id": "greeting_template",
+      "value": "${userName}，${timeOfDayGreeting(hour)}"
+    }
+  ],
+  "missing": [],
+  "ok": true
+}

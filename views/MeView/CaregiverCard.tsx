@@ -1,68 +1,51 @@
 import type {MeViewModel} from './useMeViewModel';
+import type {GroupProps} from './MeView';
+import {OptionTile, ProfileGroup} from '../ProfileShared/formParts';
 
-export function CaregiverCard({vm}: {vm: MeViewModel}) {
+export function CaregiverCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProps) {
     const {
-        isLargeFont,
         profile,
         setProfile
     } = vm;
 
-    return (
-        <>
-            {/* ========================================================================= */}
-            {/* 4. 家庭照顧支持卡片 */}
-            {/* ========================================================================= */}
-            <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                    <h3 className={`font-black text-[#4A6E85] flex items-center gap-1.5 ${isLargeFont ? 'text-xl' : 'text-sm sm:text-base'}`}>
-                        <span>👨‍👩‍👧</span>
-                        <span>【家庭照顧支持】</span>
-                    </h3>
-                </div>
+    const summary = profile.hasCaregiverSupport
+        ? '有家人或照顧者日常協助'
+        : profile.hasNoCaregiverSupport
+            ? '我獨自一人照顧自己'
+            : '未選擇';
 
-                {/* 家庭照顧支持 */}
-                <div className="space-y-2.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">家庭照顧支持：</label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setProfile({
-                                    ...profile,
-                                    hasCaregiverSupport: true,
-                                    hasNoCaregiverSupport: false
-                                });
-                            }}
-                            className={`p-3 rounded-2xl border font-bold text-xs text-center flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                                profile.hasCaregiverSupport 
-                                    ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-black' 
-                                    : 'bg-slate-50 border-slate-200/70 text-slate-500 hover:bg-slate-100/50'
-                            }`}
-                        >
-                            <span>👨‍👩‍👧</span>
-                            <span>有家人或照顧者日常協助</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setProfile({
-                                    ...profile,
-                                    hasNoCaregiverSupport: true,
-                                    hasCaregiverSupport: false
-                                });
-                            }}
-                            className={`p-3 rounded-2xl border font-bold text-xs text-center flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                                profile.hasNoCaregiverSupport 
-                                    ? 'bg-rose-50 border-rose-300 text-rose-800 font-black' 
-                                    : 'bg-slate-50 border-slate-200/70 text-slate-500 hover:bg-slate-100/50'
-                            }`}
-                        >
-                            <span>🏠</span>
-                            <span>我獨自一人照顧自己</span>
-                        </button>
-                    </div>
+    return (
+        <ProfileGroup id="caregiver" icon="support" tone="butter" title="家庭照顧支持" summary={summary} open={open} onToggle={onToggle}>
+            {/* 4. 家庭照顧支持 */}
+            <div className="ds-pf-field" role="group" aria-labelledby="ds-pf-caregiver-label">
+                <span className="t-label" id="ds-pf-caregiver-label">家庭照顧支持：</span>
+                <div className="ds-pf-options is-two">
+                    <OptionTile
+                        selected={Boolean(profile.hasCaregiverSupport)}
+                        onClick={() => {
+                            setProfile({
+                                ...profile,
+                                hasCaregiverSupport: true,
+                                hasNoCaregiverSupport: false
+                            });
+                        }}
+                    >
+                        有家人或照顧者日常協助
+                    </OptionTile>
+                    <OptionTile
+                        selected={Boolean(profile.hasNoCaregiverSupport)}
+                        onClick={() => {
+                            setProfile({
+                                ...profile,
+                                hasNoCaregiverSupport: true,
+                                hasCaregiverSupport: false
+                            });
+                        }}
+                    >
+                        我獨自一人照顧自己
+                    </OptionTile>
                 </div>
             </div>
-        </>
+        </ProfileGroup>
     );
 }

@@ -46,6 +46,8 @@ const compareRoot = process.argv.includes('--compare') ? path.resolve(repoRoot, 
 const skipBuild = process.argv.includes('--skip-build');
 const skipDom = process.argv.includes('--skip-dom');
 const skipFlows = process.argv.includes('--skip-flows');
+const skipUi = process.argv.includes('--skip-ui');
+const skipGolden = process.argv.includes('--skip-golden');
 fs.mkdirSync(outRoot, { recursive: true });
 
 console.log(`\n=== verify lint ===`);
@@ -70,6 +72,11 @@ console.log(`\n=== verify logic ===`);
 const logicDir = path.join(outRoot, 'logic');
 const logic = await run('node', ['--import', 'tsx', 'scripts/verify/capture-logic.mjs', '--out', logicDir]);
 if (logic.code !== 0) process.exit(logic.code);
+
+console.log(`\n=== verify contracts (source) ===`);
+const contractsDir = path.join(outRoot, 'contracts');
+const contracts = await run('node', ['--import', 'tsx', 'scripts/verify/capture-contracts.mjs', '--out', contractsDir]);
+if (contracts.code !== 0) process.exit(contracts.code);
 
 const healthUrl = (process.env.VERIFY_BASE_URL || 'http://127.0.0.1:9002/').replace(/\/?$/, '/api/health');
 const domDir = path.join(outRoot, 'dom');
@@ -96,14 +103,35 @@ if (!skipFlows && await serverUp(healthUrl)) {
     console.log('Skipping interaction flows (--skip-flows).');
 }
 
+const uiDir = path.join(outRoot, 'ui');
+if (!skipUi && await serverUp(healthUrl)) {
+    console.log(`\n=== verify UI contracts (copy, shapes, audit) ===`);
+    const ui = await run('node', ['scripts/verify/capture-ui.mjs', '--out', uiDir]);
+    if (ui.code !== 0) process.exit(ui.code);
+} else if (!skipUi) {
+    console.warn(`Dev server not reachable at ${healthUrl}; skipping UI contract capture.`);
+    fs.writeFileSync(path.join(outRoot, 'ui-skipped.txt'), `Dev server not reachable at ${healthUrl}\n`);
+} else {
+    console.log('Skipping UI contract capture (--skip-ui).');
+}
+
 const status = {
     lint: lint.code,
     build: skipBuild ? 'skipped' : 0,
     logic: logic.code,
     dom: skipDom ? 'skipped' : (fs.existsSync(path.join(outRoot, 'dom', 'index.json')) ? 0 : 'missing'),
     flows: skipFlows ? 'skipped' : (fs.existsSync(path.join(outRoot, 'flows', 'index.json')) ? 0 : 'missing'),
+    contracts: contracts.code,
+    ui: skipUi ? 'skipped' : (fs.existsSync(path.join(outRoot, 'ui', 'index.json')) ? 0 : 'missing'),
 };
 fs.writeFileSync(path.join(outRoot, 'status.json'), JSON.stringify(status, null, 2) + '\n');
+
+if (!skipGolden) {
+    console.log(`\n=== verify compare vs committed goldens ===`);
+    const golden = await run('node', ['scripts/verify/compare-golden.mjs', outRoot]);
+    fs.writeFileSync(path.join(outRoot, 'golden-compare.json'), golden.stdout || '');
+    if (golden.code !== 0) process.exit(golden.code);
+}
 
 if (compareRoot) {
     console.log(`\n=== verify compare vs ${compareRoot} ===`);

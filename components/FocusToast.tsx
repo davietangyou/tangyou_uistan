@@ -1,9 +1,11 @@
+import {uiIcons} from './ui/icons';
+
 export function FocusToast() {
+    const HintIcon = uiIcons.tapHint;
     return (
-        <div
-            className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl font-bold flex items-center gap-3 animate-in slide-in-from-top-4">
-            <span className="text-2xl">☝️</span>
-            <span>請先點擊一下您想要輸入的空格</span>
+        <div className="ds-root ds-shell-toast" role="status" aria-live="polite">
+            <HintIcon size={24} strokeWidth={2} aria-hidden />
+            <span className="t-label">請先點擊一下您想要輸入的空格</span>
         </div>
     );
 }

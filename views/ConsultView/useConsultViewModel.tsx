@@ -3,6 +3,13 @@ import type {ConsultViewProps} from './types';
 import type { ChatTurn, ChatMessage, ChatImageAttachment } from '../../utils/types';
 import {getConversationalChatResponse} from '../../services/geminiService';
 import {loadChatMessages, persistChatMessages, clearChatMessages} from '../../domain';
+import {
+    createDefaultChatMessages,
+    PREFERENCE_SUBMITTED_MARKER,
+    IMAGE_ONLY_DEFAULT_MESSAGE,
+    CHAT_ERROR_REPLY,
+    CHAT_ERROR_REPLY_PREFIX,
+} from './consultText';
 
 export function useConsultViewModel(props: ConsultViewProps) {
     const {
@@ -13,15 +20,8 @@ export function useConsultViewModel(props: ConsultViewProps) {
         isLargeFont
     } = props;
 
-    // 預設歡迎訊息
-    const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
-        {
-            id: 'welcome',
-            role: 'assistant',
-            content: "關於糖尿病管理，\n您目前最關心什麼？",
-            isWelcome: true
-        }
-    ];
+    // 預設歡迎訊息（文案在 consultText.ts，每次渲染都是新的陣列，與原內聯寫法一致）
+    const DEFAULT_CHAT_MESSAGES: ChatMessage[] = createDefaultChatMessages();
 
     // AI 聊天室狀態 (支援 LocalStorage 自動保存)
     const [chatInput, setChatInput] = useState('');
@@ -189,17 +189,16 @@ export function useConsultViewModel(props: ConsultViewProps) {
 
         let linesToUse = cleanedLines;
 
-        const sizeClass = isLargeFont ? 'text-[19px]' : defaultTextSizeClass;
-        const weightClass = isLargeFont ? 'font-black' : defaultFontWeightClass;
+        // Stage 5: type comes from the design system (.t-body follows the
+        // large-font switch), so the size/weight arguments are no longer used
+        // for styling. Line splitting above is unchanged.
 
         return (
-            <ul className="space-y-2 list-none pl-0">
+            <ul className={`ds-consult-bullets ${isPros ? 'is-pro' : 'is-con'}`}>
                 {linesToUse.map((line, idx) => (
-                    <li key={idx} className={`flex items-start gap-2 text-slate-700 leading-relaxed ${sizeClass} ${weightClass}`}>
-                        <span className={`inline-block mt-1 shrink-0 select-none ${isPros ? 'text-emerald-600' : 'text-amber-600'} ${isLargeFont ? 'text-[22px]' : 'text-base'}`}>
-                            •
-                        </span>
-                        <span className="flex-1">{line}</span>
+                    <li key={idx} className="t-body">
+                        <span className="ds-consult-bullet-dot" aria-hidden="true"></span>
+                        <span className="ds-consult-bullet-text">{line}</span>
                     </li>
                 ))}
             </ul>
@@ -212,7 +211,7 @@ export function useConsultViewModel(props: ConsultViewProps) {
 
         if ((!trimmedText && !imgToSend) || chatLoading) return;
 
-        const effectiveText = trimmedText || (imgToSend ? "請幫我分析這張藥物相片或處方標籤，說明藥物名稱、用法、注意事項及覆診問醫生的問題。" : "");
+        const effectiveText = trimmedText || (imgToSend ? IMAGE_ONLY_DEFAULT_MESSAGE : "");
 
         const userMsg: ChatMessage = {
             id: Date.now().toString(),
@@ -234,7 +233,7 @@ export function useConsultViewModel(props: ConsultViewProps) {
                 if (m.role !== 'user' && m.role !== 'assistant') return false;
                 const text = typeof m.content === 'string' ? m.content.trim() : '';
                 if (!text) return false;
-                if (m.role === 'assistant' && text.startsWith('⚠️ 唔好意思，系統暫時未能完成回覆')) return false;
+                if (m.role === 'assistant' && text.startsWith(CHAT_ERROR_REPLY_PREFIX)) return false;
                 return true;
             })
             .map(m => ({ role: m.role, content: m.content.trim() }));
@@ -258,7 +257,7 @@ export function useConsultViewModel(props: ConsultViewProps) {
         const preferenceAlreadySubmitted = chatMessages.some(m =>
             m.role === 'user' &&
             typeof m.content === 'string' &&
-            m.content.includes('我已選擇我的個人偏好')
+            m.content.includes(PREFERENCE_SUBMITTED_MARKER)
         );
 
         try {
@@ -295,7 +294,7 @@ export function useConsultViewModel(props: ConsultViewProps) {
             const errorMsg: ChatMessage = {
                 id: (Date.now() + 2).toString(),
                 role: 'assistant',
-                content: "⚠️ 唔好意思，系統暫時未能完成回覆，請稍等幾秒再試一次。",
+                content: CHAT_ERROR_REPLY,
                 isError: true
             };
             setChatMessages(prev => [...prev, errorMsg]);

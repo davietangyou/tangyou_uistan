@@ -1,0 +1,283 @@
+/* =============================================================================
+   Home view (Stage 4). Scoped to .ds-home so other business views are untouched.
+   ============================================================================= */
+
+.ds-home {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-section-gap);
+}
+
+.ds-home-greeting {
+    margin: 8px 0 0;
+}
+
+.ds-home-greeting .t-h1 {
+    margin: 0;
+    color: var(--c-ink);
+}
+
+.ds-home-ask {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    min-height: 88px;
+    padding: 20px 20px 20px 16px;
+    border: 0;
+    border-radius: var(--ds-radius-card);
+    background: var(--c-ink);
+    color: var(--c-white);
+    box-shadow: var(--ds-e1);
+    font-family: var(--ds-font);
+    text-align: left;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    --t-font: var(--t-title);
+    --t-weight: 700;
+    --t-lh: var(--t-title-lh);
+}
+
+.large-font .ds-home-ask.ds-control {
+    min-height: 96px !important;
+    font-size: var(--t-title) !important;
+    font-weight: 700;
+}
+
+.ds-home-ask-icon {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--ds-radius-inner);
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--c-white);
+}
+
+.ds-home-ask-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ds-home-ask-title {
+    font-size: var(--t-title);
+    line-height: var(--t-title-lh);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    word-break: keep-all;
+}
+
+.ds-home-ask-chevron {
+    flex: 0 0 auto;
+    opacity: 0.8;
+}
+
+/* Today visit banner: urgent, but no continuous pulse (hard on elders). */
+.ds-home-today {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: var(--ds-card-pad);
+    border-radius: var(--ds-radius-card);
+    background: var(--c-glucose-low);
+    color: var(--c-white);
+}
+
+.ds-home-today-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.ds-home-today-copy {
+    min-width: 0;
+}
+
+.ds-home-today-copy .t-title,
+.ds-home-today-copy .t-body-strong,
+.ds-home-today-copy .t-body,
+.ds-home-today-copy .t-caption {
+    color: var(--c-white);
+    margin: 0;
+    word-break: normal;
+    line-break: auto;
+    overflow-wrap: break-word;
+}
+
+.ds-home-today-copy .t-caption {
+    margin-top: 4px;
+    opacity: 0.95;
+}
+
+.ds-home-today .ds-btn-secondary {
+    background: var(--c-white);
+    color: var(--c-glucose-low);
+}
+
+/* Clinic / 覆診 card uses the lavender category pair. */
+.ds-home-clinic {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: var(--ds-card-pad);
+    border-radius: var(--ds-radius-card);
+    background: var(--c-lavender-100);
+    color: var(--c-lavender);
+    border: var(--ds-e0-border);
+}
+
+.ds-home-clinic-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ds-home-clinic-head .t-h2,
+.ds-home-clinic-head .t-caption {
+    margin: 0;
+    color: var(--c-lavender);
+}
+
+.ds-home-clinic-date {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.ds-home-clinic-date-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.ds-home-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 6px 12px;
+    border-radius: var(--ds-radius-pill);
+    background: var(--c-surface);
+    color: var(--c-ink);
+    font-family: var(--ds-font);
+    font-size: var(--t-caption);
+    line-height: var(--t-caption-lh);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.ds-home-chip-today {
+    background: var(--c-glucose-low);
+    color: var(--c-white);
+}
+
+.ds-home-chip-future {
+    background: var(--c-sage-100);
+    color: var(--c-sage-700);
+}
+
+.ds-home-chip-past {
+    background: var(--c-surface-muted);
+    color: var(--c-ink-2);
+}
+
+.ds-home-chip-none {
+    background: var(--c-surface);
+    color: var(--c-ink-2);
+}
+
+.ds-home-clinic-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.ds-home-q {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-surface);
+    color: var(--c-ink);
+}
+
+.ds-home-q-index {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    margin-top: 2px;
+    border-radius: 8px;
+    background: var(--c-lavender-100);
+    color: var(--c-lavender);
+    font-size: var(--t-caption);
+    font-weight: 700;
+}
+
+.ds-home-q-text {
+    min-width: 0;
+    flex: 1 1 auto;
+    margin: 0;
+}
+
+.ds-home-clinic-empty {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-surface);
+    color: var(--c-ink);
+}
+
+.ds-home-clinic-empty .t-body-strong,
+.ds-home-clinic-empty .t-caption {
+    margin: 0;
+}
+
+.ds-home-clinic-foot {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ds-home-clinic-foot .t-caption {
+    margin: 0;
+    color: var(--c-lavender);
+}
+
+/* Latest glucose: the coloured StatTile is the card; action sits inside it. */
+.ds-home-glucose {
+    gap: 12px;
+}
+
+.ds-home-glucose .ds-btn-secondary {
+    background: var(--c-surface);
+    color: var(--c-ink);
+    border: 1px solid rgba(31, 37, 34, 0.16);
+}
+
+.ds-home-glucose-meta {
+    margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ds-home,
+    .ds-home * {
+        animation: none !important;
+        transition: none !important;
+    }
+}

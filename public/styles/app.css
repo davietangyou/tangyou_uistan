@@ -137,3 +137,683 @@
             padding-right: 2.5rem !important;
         }
     
+
+/* =============================================================================
+   Design system (Stage 2, opt-in only)
+   Direction: 溫潤紙感 · 鼠尾草綠 · 墨色錨點
+
+   This block is additive. It must not rewrite the rules above.
+   Legacy prefix (lines 1–139, sha256 b864594f30dc4a8fcc526161c3b185e40c3cfbb84e0243c824e8ed8e7e2da29e)
+   stays byte-identical: existing :root brand tokens, .premium-card, .nav-blur,
+   body, and the .large-font !important hammer are unchanged.
+
+   New pages and components opt in with .ds-root / .ds-* / .t-* classes.
+   Do not put .ds-root on an unmigrated view — that would restyle form
+   controls by escaping the legacy hammer (see "large-font escape" below).
+   Unused custom properties and unused classes do not change current pixels.
+   ============================================================================= */
+
+:root {
+    /* Colour — brand pair is sage + ink; #4A6E85 is a data/info accent. */
+    --c-canvas: #F5F5EF;
+    --c-surface: #FFFFFF;
+    --c-surface-muted: #EEF1E8;
+    --c-ink: #1F2522;
+    --c-ink-2: #4A524C;
+    --c-ink-3: #636B65;
+    --c-sage-100: #E6EEDD;
+    --c-sage-200: #D2E4C0;
+    --c-sage-700: #2F5A3A;
+    --c-lavender-100: #EEE7F6;
+    --c-lavender: #4A3D66;
+    --c-mist-100: #DDECF1;
+    --c-mist: #1F4E5F;
+    --c-butter-100: #FCF0D6;
+    --c-butter: #7A4A0C;
+    --c-brand-legacy: #4A6E85;
+    --c-glucose-low: #B42318;
+    --c-glucose-target: #2E7D4F;
+    --c-glucose-high: #B54708;
+    --c-focus: var(--c-sage-700);
+    --c-backdrop: rgba(31, 37, 34, 0.4);
+    --c-white: #FFFFFF;
+
+    /* Type scale — standard. .large-font only swaps these variables. */
+    --t-caption: 14px;
+    --t-caption-lh: 1.5;
+    --t-body: 16px;
+    --t-body-lh: 1.65;
+    --t-label: 17px;
+    --t-label-lh: 1.4;
+    --t-title: 20px;
+    --t-title-lh: 1.35;
+    --t-h2: 24px;
+    --t-h2-lh: 1.3;
+    --t-h1: 28px;
+    --t-h1-lh: 1.25;
+    --t-display: 44px;
+    --t-display-lh: 1.1;
+
+    /* Spacing, radius, elevation, motion, touch (standard). */
+    --ds-space: 4px;
+    --ds-page-pad: 20px;
+    --ds-card-pad: 20px;
+    --ds-card-gap: 12px;
+    --ds-section-gap: 24px;
+    --ds-target-gap: 8px;
+    --ds-radius-card: 24px;
+    --ds-radius-inner: 16px;
+    --ds-radius-btn: 16px;
+    --ds-radius-pill: 999px;
+    --ds-radius-sheet: 28px;
+    --ds-e0-border: 1px solid rgba(31, 37, 34, 0.06);
+    --ds-e1: 0 1px 2px rgba(31, 37, 34, 0.06);
+    --ds-e2: 0 8px 24px rgba(31, 37, 34, 0.12);
+    --ds-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --ds-duration-fast: 160ms;
+    --ds-duration: 200ms;
+    --ds-duration-slow: 240ms;
+    --touch-min: 48px;
+    --ds-font: 'Noto Sans HK', 'PingFang HK', 'Microsoft JhengHei', sans-serif;
+}
+
+/* Parallel large-font mechanism: switch tokens only. The !important rules
+   above remain in force for unmigrated Tailwind typography classes. */
+.large-font {
+    --t-caption: 16px;
+    --t-body: 19px;
+    --t-label: 20px;
+    --t-title: 24px;
+    --t-h2: 28px;
+    --t-h1: 32px;
+    --t-display: 52px;
+    --ds-card-pad: 24px;
+    --ds-card-gap: 16px;
+    --ds-section-gap: 32px;
+    --touch-min: 56px;
+}
+
+/* -----------------------------------------------------------------------------
+   Typography utilities. Later stages must use these (not text-sm / text-lg)
+   so type can grow without the legacy weight/size hammer, and so containers
+   that also read --ds-card-pad / --touch-min grow in step.
+   ----------------------------------------------------------------------------- */
+
+.t-caption,
+.t-body,
+.t-body-strong,
+.t-label,
+.t-title,
+.t-h2,
+.t-h1,
+.t-display,
+.t-display-strong {
+    font-family: var(--ds-font);
+    color: inherit;
+}
+
+.t-caption {
+    font-size: var(--t-caption);
+    line-height: var(--t-caption-lh);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    --t-font: var(--t-caption);
+    --t-weight: 400;
+    --t-lh: var(--t-caption-lh);
+}
+
+.t-body {
+    font-size: var(--t-body);
+    line-height: var(--t-body-lh);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    --t-font: var(--t-body);
+    --t-weight: 400;
+    --t-lh: var(--t-body-lh);
+}
+
+.t-body-strong {
+    font-size: var(--t-body);
+    line-height: var(--t-body-lh);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    --t-font: var(--t-body);
+    --t-weight: 700;
+    --t-lh: var(--t-body-lh);
+}
+
+.t-label {
+    font-size: var(--t-label);
+    line-height: var(--t-label-lh);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    --t-font: var(--t-label);
+    --t-weight: 600;
+    --t-lh: var(--t-label-lh);
+}
+
+.t-title,
+.t-h2,
+.t-h1 {
+    word-break: keep-all;
+    line-break: strict;
+    font-weight: 700;
+}
+
+.t-title {
+    font-size: var(--t-title);
+    line-height: var(--t-title-lh);
+    --t-font: var(--t-title);
+    --t-weight: 700;
+    --t-lh: var(--t-title-lh);
+}
+
+.t-h2 {
+    font-size: var(--t-h2);
+    line-height: var(--t-h2-lh);
+    --t-font: var(--t-h2);
+    --t-weight: 700;
+    --t-lh: var(--t-h2-lh);
+}
+
+.t-h1 {
+    font-size: var(--t-h1);
+    line-height: var(--t-h1-lh);
+    --t-font: var(--t-h1);
+    --t-weight: 700;
+    --t-lh: var(--t-h1-lh);
+}
+
+.t-display,
+.t-display-strong {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    word-break: keep-all;
+    line-height: var(--t-display-lh);
+    font-size: var(--t-display);
+    --t-font: var(--t-display);
+    --t-lh: var(--t-display-lh);
+}
+
+.t-display { font-weight: 700; --t-weight: 700; }
+.t-display-strong { font-weight: 900; --t-weight: 900; }
+
+.t-ink { color: var(--c-ink); }
+.t-ink-2 { color: var(--c-ink-2); }
+.t-ink-3 { color: var(--c-ink-3); }
+.t-sage { color: var(--c-sage-700); }
+.t-danger { color: var(--c-glucose-low); }
+
+/* -----------------------------------------------------------------------------
+   Design-system subtree
+   ----------------------------------------------------------------------------- */
+
+.ds-root {
+    font-family: var(--ds-font);
+    color: var(--c-ink);
+    box-sizing: border-box;
+}
+
+.ds-root *,
+.ds-root *::before,
+.ds-root *::after {
+    box-sizing: border-box;
+}
+
+.ds-root :focus-visible,
+.ds-control:focus-visible,
+.ds-btn:focus-visible,
+.ds-icon-btn:focus-visible,
+.ds-chip:focus-visible,
+.ds-seg-btn:focus-visible,
+.ds-list-row:focus-visible {
+    outline: 3px solid var(--c-focus);
+    outline-offset: 2px;
+}
+
+/* Escape the legacy .large-font button/input font-size/min-height hammer
+   inside migrated subtrees only. Specificity + !important is required.
+   Adopt by wrapping a migrated view in .ds-root and using .ds-control
+   on native controls / buttons. */
+.large-font .ds-control {
+    min-height: var(--touch-min) !important;
+    font-size: var(--t-font, var(--t-label)) !important;
+    font-weight: var(--t-weight, 600);
+    line-height: var(--t-lh, 1.4);
+    letter-spacing: 0.02em;
+}
+
+.ds-page {
+    padding-left: var(--ds-page-pad);
+    padding-right: var(--ds-page-pad);
+}
+
+.ds-stack-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-card-gap);
+}
+
+.ds-stack-sections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-section-gap);
+}
+
+.ds-cluster {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ds-target-gap);
+}
+
+.ds-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Card — flat-to-e1, no hover lift */
+.ds-card {
+    background: var(--c-surface);
+    color: var(--c-ink);
+    border-radius: var(--ds-radius-card);
+    border: var(--ds-e0-border);
+    box-shadow: var(--ds-e1);
+    padding: var(--ds-card-pad);
+}
+
+.ds-card-muted {
+    background: var(--c-surface-muted);
+    box-shadow: none;
+}
+
+.ds-card-flush { padding: 0; }
+
+/* Buttons */
+.ds-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: var(--touch-min);
+    padding: 0 1.25rem;
+    border: 0;
+    border-radius: var(--ds-radius-btn);
+    background: var(--c-ink);
+    color: var(--c-white);
+    font-family: var(--ds-font);
+    font-size: var(--t-label);
+    font-weight: 600;
+    line-height: var(--t-label-lh);
+    letter-spacing: 0.02em;
+    --t-font: var(--t-label);
+    --t-weight: 600;
+    --t-lh: var(--t-label-lh);
+    cursor: pointer;
+    text-align: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color var(--ds-duration) var(--ds-ease),
+                color var(--ds-duration) var(--ds-ease),
+                opacity var(--ds-duration) var(--ds-ease);
+}
+
+.ds-btn-primary { background: var(--c-ink); color: var(--c-white); }
+.ds-btn-secondary { background: var(--c-sage-100); color: var(--c-sage-700); }
+.ds-btn-ghost { background: transparent; color: var(--c-ink); }
+.ds-btn-danger { background: var(--c-glucose-low); color: var(--c-white); }
+.ds-btn-block { width: 100%; }
+.ds-btn:disabled,
+.ds-icon-btn:disabled,
+.ds-chip:disabled,
+.ds-seg-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.ds-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--touch-min);
+    height: var(--touch-min);
+    min-width: var(--touch-min);
+    min-height: var(--touch-min);
+    padding: 0;
+    border: 0;
+    border-radius: var(--ds-radius-btn);
+    background: var(--c-surface-muted);
+    color: var(--c-ink);
+    font-family: var(--ds-font);
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    --t-font: var(--t-label);
+    --t-weight: 600;
+    --t-lh: 1;
+    transition: background-color var(--ds-duration) var(--ds-ease);
+}
+
+.ds-icon-btn-plain { background: transparent; }
+.ds-icon-btn-ink { background: var(--c-ink); color: var(--c-white); }
+
+/* Segmented */
+.ds-segmented {
+    display: flex;
+    width: 100%;
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--ds-radius-pill);
+    background: var(--c-surface-muted);
+}
+
+.ds-seg-btn {
+    flex: 1 1 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--touch-min);
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--ds-radius-pill);
+    background: transparent;
+    color: var(--c-ink-2);
+    font-family: var(--ds-font);
+    font-size: var(--t-label);
+    font-weight: 600;
+    line-height: var(--t-label-lh);
+    letter-spacing: 0.02em;
+    --t-font: var(--t-label);
+    --t-weight: 600;
+    --t-lh: var(--t-label-lh);
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color var(--ds-duration) var(--ds-ease),
+                color var(--ds-duration) var(--ds-ease);
+}
+
+.ds-seg-btn[aria-checked="true"] {
+    background: var(--c-ink);
+    color: var(--c-white);
+}
+
+/* List row */
+.ds-list-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: var(--touch-min);
+    padding: 12px 4px;
+    border: 0;
+    border-bottom: var(--ds-e0-border);
+    background: transparent;
+    color: var(--c-ink);
+    font-family: var(--ds-font);
+    text-align: left;
+    cursor: default;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+button.ds-list-row { cursor: pointer; }
+.ds-list-row-body { flex: 1 1 auto; min-width: 0; }
+.ds-list-row-meta {
+    margin: 2px 0 0;
+    color: var(--c-ink-3);
+}
+.ds-list-row-lead,
+.ds-list-row-trail {
+    flex: 0 0 auto;
+    display: inline-flex;
+    color: var(--c-ink-2);
+}
+
+/* Chip */
+.ds-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: var(--touch-min);
+    padding: 0 16px;
+    border: var(--ds-e0-border);
+    border-radius: var(--ds-radius-pill);
+    background: var(--c-surface);
+    color: var(--c-ink-2);
+    font-family: var(--ds-font);
+    font-size: var(--t-label);
+    font-weight: 600;
+    line-height: var(--t-label-lh);
+    letter-spacing: 0.02em;
+    --t-font: var(--t-label);
+    --t-weight: 600;
+    --t-lh: var(--t-label-lh);
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color var(--ds-duration) var(--ds-ease),
+                color var(--ds-duration) var(--ds-ease);
+}
+
+.ds-chip[aria-pressed="true"],
+.ds-chip-selected {
+    background: var(--c-sage-100);
+    color: var(--c-sage-700);
+    border-color: transparent;
+}
+
+/* Section header */
+.ds-section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ds-target-gap);
+    width: 100%;
+}
+
+.ds-section-header .t-h2 {
+    margin: 0;
+}
+
+/* Category / status tiles */
+.ds-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: var(--ds-card-pad);
+    border-radius: var(--ds-radius-card);
+    background: var(--c-surface-muted);
+    border: var(--ds-e0-border);
+}
+
+.ds-stat-unit {
+    margin-left: 4px;
+    font-size: var(--t-caption);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--c-ink-3);
+}
+
+.ds-stat-tone-low { background: #FCECEC; }
+.ds-stat-tone-target { background: var(--c-sage-100); }
+.ds-stat-tone-high { background: var(--c-butter-100); }
+.ds-stat-tone-info { background: var(--c-mist-100); }
+
+.ds-stat-tone-low .ds-stat-value { color: var(--c-glucose-low); }
+.ds-stat-tone-target .ds-stat-value { color: var(--c-glucose-target); }
+.ds-stat-tone-high .ds-stat-value { color: var(--c-glucose-high); }
+.ds-stat-tone-info .ds-stat-value { color: var(--c-mist); }
+
+.ds-cat-sage { background: var(--c-sage-100); color: var(--c-sage-700); }
+.ds-cat-lavender { background: var(--c-lavender-100); color: var(--c-lavender); }
+.ds-cat-mist { background: var(--c-mist-100); color: var(--c-mist); }
+.ds-cat-butter { background: var(--c-butter-100); color: var(--c-butter); }
+
+/* Field — native controls only (speech focus relies on input/textarea). */
+.ds-field {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+}
+
+.ds-field-label {
+    font-family: var(--ds-font);
+    font-size: var(--t-label);
+    font-weight: 600;
+    line-height: var(--t-label-lh);
+    letter-spacing: 0.02em;
+    color: var(--c-ink);
+}
+
+.ds-field-control {
+    width: 100%;
+    min-height: var(--touch-min);
+    padding: 10px 14px;
+    border: 1px solid rgba(31, 37, 34, 0.16);
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-surface);
+    color: var(--c-ink);
+    font-family: var(--ds-font);
+    font-size: var(--t-body);
+    font-weight: 400;
+    line-height: var(--t-body-lh);
+    letter-spacing: 0.02em;
+    --t-font: var(--t-body);
+    --t-weight: 400;
+    --t-lh: var(--t-body-lh);
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+select.ds-field-control {
+    padding-right: 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%234A524C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+}
+
+textarea.ds-field-control {
+    min-height: calc(var(--touch-min) * 2);
+    resize: vertical;
+}
+
+.ds-field-control:disabled {
+    background: var(--c-surface-muted);
+    color: var(--c-ink-3);
+    cursor: not-allowed;
+}
+
+.ds-field-hint,
+.ds-field-error {
+    margin: 0;
+    font-family: var(--ds-font);
+    font-size: var(--t-caption);
+    line-height: var(--t-caption-lh);
+    letter-spacing: 0.02em;
+}
+
+.ds-field-hint { color: var(--c-ink-3); }
+.ds-field-error { color: var(--c-glucose-low); }
+.ds-field-invalid {
+    border-color: var(--c-glucose-low);
+}
+
+/* Overlays */
+.ds-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: var(--c-backdrop);
+    animation: ds-fade-in var(--ds-duration) var(--ds-ease);
+}
+
+.ds-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 81;
+    width: 100%;
+    max-width: 32rem;
+    margin: 0 auto;
+    max-height: 90vh;
+    overflow: auto;
+    background: var(--c-surface);
+    color: var(--c-ink);
+    border-radius: var(--ds-radius-sheet) var(--ds-radius-sheet) 0 0;
+    box-shadow: var(--ds-e2);
+    padding: var(--ds-card-pad);
+    padding-bottom: calc(var(--ds-card-pad) + env(safe-area-inset-bottom, 0px));
+    animation: ds-sheet-up var(--ds-duration-slow) var(--ds-ease);
+}
+
+.ds-dialog {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    z-index: 81;
+    width: calc(100% - 40px);
+    max-width: 24rem;
+    max-height: 90vh;
+    overflow: auto;
+    background: var(--c-surface);
+    color: var(--c-ink);
+    border-radius: var(--ds-radius-card);
+    box-shadow: var(--ds-e2);
+    padding: var(--ds-card-pad);
+    transform: translate(-50%, -50%);
+    animation: ds-dialog-in var(--ds-duration-slow) var(--ds-ease);
+}
+
+.ds-overlay-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--ds-target-gap);
+    margin-bottom: 12px;
+}
+
+.ds-overlay-head .t-h2 { margin: 0; }
+
+@keyframes ds-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes ds-sheet-up {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes ds-dialog-in {
+    from { transform: translate(-50%, calc(-50% + 12px)); opacity: 0; }
+    to { transform: translate(-50%, -50%); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ds-root,
+    .ds-root *,
+    .ds-backdrop,
+    .ds-sheet,
+    .ds-dialog {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* Reserved illustration convention (no assets in Stage 2):
+   public/illustrations/{kebab-name}@2x.png or .svg
+   Sparse, 3D-but-quiet, one illustration per major empty state / greeting.
+   Never replace a safety icon or a status label. */

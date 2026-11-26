@@ -1,0 +1,11 @@
+{
+  "follow_up": {
+    "message": "【夾具】可見追問-decision"
+  },
+  "preference_submit": {
+    "message": "我已選擇我的個人偏好（決策考量維度）：\n- 針對「【夾具】偏好問題：打針時你最在意什麼？」，我最看重：【【夾具】怕痛】（價值維度：pain）"
+  },
+  "shortcut_data_reading": {
+    "message": "📊 我的血糖數據合格嗎？幫我分析指標與健康檔案的關係"
+  }
+}

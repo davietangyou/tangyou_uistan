@@ -1,0 +1,659 @@
+{
+  "glucose": {
+    "periodOptions": [
+      {
+        "icon": "🌅",
+        "id": "fasting",
+        "label": "起床空腹",
+        "mealTag": null,
+        "timeType": "空腹"
+      },
+      {
+        "icon": "🥪",
+        "id": "before_breakfast",
+        "label": "早餐前",
+        "mealTag": "早餐",
+        "timeType": "餐前"
+      },
+      {
+        "icon": "🍞",
+        "id": "after_breakfast",
+        "label": "早餐後 2 小時",
+        "mealTag": "早餐",
+        "timeType": "餐後2小時"
+      },
+      {
+        "icon": "🍱",
+        "id": "before_lunch",
+        "label": "午餐前",
+        "mealTag": "午餐",
+        "timeType": "餐前"
+      },
+      {
+        "icon": "🍲",
+        "id": "after_lunch",
+        "label": "午餐後 2 小時",
+        "mealTag": "午餐",
+        "timeType": "餐後2小時"
+      },
+      {
+        "icon": "🍜",
+        "id": "before_dinner",
+        "label": "晚餐前",
+        "mealTag": "晚餐",
+        "timeType": "餐前"
+      },
+      {
+        "icon": "🥗",
+        "id": "after_dinner",
+        "label": "晚餐後 2 小時",
+        "mealTag": "晚餐",
+        "timeType": "餐後2小時"
+      },
+      {
+        "icon": "🌙",
+        "id": "bedtime",
+        "label": "睡前",
+        "mealTag": null,
+        "timeType": "睡前"
+      },
+      {
+        "icon": "🌌",
+        "id": "night",
+        "label": "夜間",
+        "mealTag": null,
+        "timeType": "日常其他時間"
+      },
+      {
+        "icon": "🧪",
+        "id": "other",
+        "label": "日常隨機",
+        "mealTag": null,
+        "timeType": "日常其他時間"
+      }
+    ],
+    "predefinedSymptoms": [
+      "頭暈",
+      "冒冷汗",
+      "心悸手震",
+      "極度飢餓",
+      "口乾口渴",
+      "頻尿",
+      "極度疲倦",
+      "視力模糊",
+      "噁心不適",
+      "手腳發麻"
+    ],
+    "symptomClinicalCategories": {
+      "冒冷汗": {
+        "category": "LOW_BG",
+        "categoryName": "低血糖警示群"
+      },
+      "口乾口渴": {
+        "category": "HIGH_BG",
+        "categoryName": "高血糖滲透性群"
+      },
+      "噁心不適": {
+        "category": "GENERAL",
+        "categoryName": "消化道/代謝反應"
+      },
+      "心悸手震": {
+        "category": "LOW_BG",
+        "categoryName": "低血糖警示群"
+      },
+      "手腳發麻": {
+        "category": "COMPLICATION",
+        "categoryName": "周圍神經病變警示"
+      },
+      "極度疲倦": {
+        "category": "HIGH_BG",
+        "categoryName": "代謝利用不良"
+      },
+      "極度飢餓": {
+        "category": "LOW_BG",
+        "categoryName": "低血糖警示群"
+      },
+      "視力模糊": {
+        "category": "COMPLICATION",
+        "categoryName": "眼底/滲透壓警示"
+      },
+      "頭暈": {
+        "category": "LOW_BG",
+        "categoryName": "低血糖/腦供血警示"
+      },
+      "頻尿": {
+        "category": "HIGH_BG",
+        "categoryName": "高血糖滲透性群"
+      }
+    },
+    "timeDetails": {
+      "日常其他時間": {
+        "icon": "🧪",
+        "label": "日常其他時間"
+      },
+      "睡前": {
+        "icon": "🌙",
+        "label": "臨睡之前"
+      },
+      "空腹": {
+        "icon": "🌅",
+        "label": "起床空腹"
+      },
+      "餐前": {
+        "icon": "🍽️",
+        "label": "飯前準備"
+      },
+      "餐後2小時": {
+        "icon": "⏰",
+        "label": "飯後2小時"
+      }
+    }
+  },
+  "profile": {
+    "clinicLabelsForAi": {
+      "DHC": "地區康健中心 / 康健站",
+      "GOPC": "醫管局家庭醫學門診/普通科門診",
+      "NONE": "暫無定期覆診習慣",
+      "OTHER": "其他醫療機構",
+      "PRIVATE": "私家診所 / 家庭醫生",
+      "SOPC": "醫管局專科門診"
+    },
+    "clinicTypeIds": [
+      "GOPC",
+      "SOPC",
+      "DHC",
+      "PRIVATE",
+      "NONE",
+      "OTHER"
+    ],
+    "conditions": {
+      "common": [
+        {
+          "id": "HT",
+          "label": "高血壓"
+        },
+        {
+          "id": "DM",
+          "label": "糖尿病"
+        },
+        {
+          "id": "CH",
+          "label": "高膽固醇"
+        },
+        {
+          "id": "CT",
+          "label": "白內障"
+        },
+        {
+          "id": "HD",
+          "label": "心臟病"
+        },
+        {
+          "id": "ST",
+          "label": "中風"
+        }
+      ],
+      "noneId": "NONE",
+      "other": [
+        {
+          "id": "CA",
+          "label": "癌症"
+        },
+        {
+          "id": "RD",
+          "label": "呼吸系統疾病"
+        },
+        {
+          "id": "OA",
+          "label": "退化性關節炎"
+        },
+        {
+          "id": "TD",
+          "label": "甲狀腺疾病"
+        },
+        {
+          "id": "GD",
+          "label": "腸胃疾病"
+        },
+        {
+          "id": "LD",
+          "label": "肝病"
+        },
+        {
+          "id": "OT",
+          "label": "其他"
+        }
+      ]
+    },
+    "diabetesTypes": [
+      {
+        "label": "第 2 型糖尿病 (常見糖尿 / Type 2 DM)",
+        "value": "TYPE_2"
+      },
+      {
+        "label": "第 1 型糖尿病 (胰島素依賴 / Type 1 DM)",
+        "value": "TYPE_1"
+      },
+      {
+        "label": "糖尿病前期 / 血糖警戒線 (Pre-diabetes)",
+        "value": "PRE_DIABETES"
+      },
+      {
+        "label": "妊娠期糖尿病 (Gestational DM)",
+        "value": "GESTATIONAL"
+      },
+      {
+        "label": "其他類型 (Other Types)",
+        "value": "OTHER"
+      }
+    ],
+    "dietHabits": [
+      {
+        "id": "OUTSIDE_EATING",
+        "title": "經常出街食飯 (外食為主)"
+      },
+      {
+        "id": "REFINED_CARB",
+        "title": "主食偏好精製澱粉 (如白飯、麵包、河粉、粥)"
+      },
+      {
+        "id": "SUGARY_DRINK",
+        "title": "習慣飲含糖飲品 (如奶茶、凍檸茶、汽水)"
+      },
+      {
+        "id": "MIDNIGHT_SNACK",
+        "title": "有食宵夜或睡前點心習慣"
+      },
+      {
+        "id": "HOME_COOK",
+        "title": "飲食定時定量，家中自煮為主"
+      }
+    ],
+    "exerciseDaysPerWeek": [
+      {
+        "id": "0",
+        "label": "0 日"
+      },
+      {
+        "id": "1-2",
+        "label": "1-2 日"
+      },
+      {
+        "id": "3-4",
+        "label": "3-4 日"
+      },
+      {
+        "id": "5+",
+        "label": "5 日以上"
+      }
+    ],
+    "exerciseIntensity": [
+      {
+        "id": "LIGHT",
+        "title": "輕度"
+      },
+      {
+        "id": "MODERATE",
+        "title": "中等"
+      },
+      {
+        "id": "VIGOROUS",
+        "title": "高強度"
+      }
+    ],
+    "exerciseMinutesPerSession": [
+      {
+        "id": "15",
+        "label": "< 20 分鐘"
+      },
+      {
+        "id": "30",
+        "label": "約 30 分鐘"
+      },
+      {
+        "id": "45",
+        "label": "約 45 分鐘"
+      },
+      {
+        "id": "60+",
+        "label": "60 分鐘+"
+      }
+    ],
+    "exerciseTypes": [
+      {
+        "id": "WALK",
+        "label": "散步 / 快步走"
+      },
+      {
+        "id": "RESISTANCE",
+        "label": "深蹲 / 俯臥撐 / 阻力訓練"
+      },
+      {
+        "id": "TAICHI",
+        "label": "太極 / 八段錦 / 氣功"
+      },
+      {
+        "id": "SWIM",
+        "label": "游泳 / 水中健體"
+      },
+      {
+        "id": "CYCLE",
+        "label": "健身單車 / 慢跑"
+      },
+      {
+        "id": "STRETCH",
+        "label": "晨運拉筋 / 椅子操"
+      },
+      {
+        "id": "HIKE",
+        "label": "郊遊遠足 / 行山"
+      },
+      {
+        "id": "OTHER",
+        "label": "其他運動 / 暫無特定項目"
+      }
+    ],
+    "genders": [
+      "男",
+      "女",
+      "其他"
+    ],
+    "medications": [
+      {
+        "category": "Biguanides (雙胍類)",
+        "meds": [
+          {
+            "class": "Biguanides",
+            "classZh": "雙胍類",
+            "label": "Metformin / Glucophage (美福明 / 雙胍)",
+            "name": "Metformin (Glucophage)"
+          },
+          {
+            "class": "Biguanides",
+            "classZh": "雙胍類",
+            "label": "Metformin XR / Glucophage XR (美福明緩釋片)",
+            "name": "Metformin XR (Glucophage XR)"
+          }
+        ]
+      },
+      {
+        "category": "Sulfonylureas (磺酰脲類促泌劑)",
+        "meds": [
+          {
+            "class": "Sulfonylureas",
+            "classZh": "磺酰脲類",
+            "label": "Gliclazide / Diamicron (格列齊特 / 達美康)",
+            "name": "Gliclazide (Diamicron)"
+          },
+          {
+            "class": "Sulfonylureas",
+            "classZh": "磺酰脲類",
+            "label": "Gliclazide MR / Diamicron MR (達美康緩釋片)",
+            "name": "Gliclazide MR (Diamicron MR)"
+          },
+          {
+            "class": "Sulfonylureas",
+            "classZh": "磺酰脲類",
+            "label": "Glipizide / Minidiab (格列吡嗪)",
+            "name": "Glipizide (Minidiab)"
+          },
+          {
+            "class": "Sulfonylureas",
+            "classZh": "磺酰脲類",
+            "label": "Glimepiride / Amaryl (格列美脲)",
+            "name": "Glimepiride (Amaryl)"
+          }
+        ]
+      },
+      {
+        "category": "DPP-4 Inhibitors (DPP-4 抑制劑)",
+        "meds": [
+          {
+            "class": "DPP-4 Inhibitors",
+            "classZh": "DPP-4 抑制劑",
+            "label": "Sitagliptin / Januvia (西格列汀 / 捷諾維)",
+            "name": "Sitagliptin (Januvia)"
+          },
+          {
+            "class": "DPP-4 Inhibitors",
+            "classZh": "DPP-4 抑制劑",
+            "label": "Linagliptin / Trajenta (利格列汀 / 糖適平)",
+            "name": "Linagliptin (Trajenta)"
+          },
+          {
+            "class": "DPP-4 Inhibitors",
+            "classZh": "DPP-4 抑制劑",
+            "label": "Vildagliptin / Galvus (維格列汀 / 佳維樂)",
+            "name": "Vildagliptin (Galvus)"
+          },
+          {
+            "class": "DPP-4 Inhibitors",
+            "classZh": "DPP-4 抑制劑",
+            "label": "Alogliptin / Nesina (阿格列汀)",
+            "name": "Alogliptin (Nesina)"
+          },
+          {
+            "class": "DPP-4 Inhibitors",
+            "classZh": "DPP-4 抑制劑",
+            "label": "Saxagliptin / Onglyza (沙格列汀)",
+            "name": "Saxagliptin (Onglyza)"
+          }
+        ]
+      },
+      {
+        "category": "SGLT-2 Inhibitors (SGLT-2 抑制劑 / 排糖藥)",
+        "meds": [
+          {
+            "class": "SGLT-2 Inhibitors",
+            "classZh": "SGLT-2 抑制劑",
+            "label": "Empagliflozin / Jardiance (恩格列淨 / 恩排糖)",
+            "name": "Empagliflozin (Jardiance)"
+          },
+          {
+            "class": "SGLT-2 Inhibitors",
+            "classZh": "SGLT-2 抑制劑",
+            "label": "Dapagliflozin / Forxiga (達格列淨 / 安達糖)",
+            "name": "Dapagliflozin (Forxiga)"
+          },
+          {
+            "class": "SGLT-2 Inhibitors",
+            "classZh": "SGLT-2 抑制劑",
+            "label": "Canagliflozin / Invokana (卡格列淨)",
+            "name": "Canagliflozin (Invokana)"
+          }
+        ]
+      },
+      {
+        "category": "GLP-1 Receptor Agonists (GLP-1 激動劑)",
+        "meds": [
+          {
+            "class": "GLP-1 RA",
+            "classZh": "GLP-1 激動劑",
+            "label": "Semaglutide / Ozempic / Rybelsus (司美格魯肽)",
+            "name": "Semaglutide (Ozempic / Rybelsus)"
+          },
+          {
+            "class": "GLP-1 RA",
+            "classZh": "GLP-1 激動劑",
+            "label": "Dulaglutide / Trulicity (度拉糖肽)",
+            "name": "Dulaglutide (Trulicity)"
+          },
+          {
+            "class": "GLP-1 RA",
+            "classZh": "GLP-1 激動劑",
+            "label": "Liraglutide / Victoza (利拉魯肽 / 諾和力)",
+            "name": "Liraglutide (Victoza)"
+          },
+          {
+            "class": "GLP-1 RA",
+            "classZh": "GLP-1 激動劑",
+            "label": "Tirzepatide / Mounjaro (替爾泊肽 GIP/GLP-1)",
+            "name": "Tirzepatide (Mounjaro)"
+          }
+        ]
+      },
+      {
+        "category": "Oral Combination Drugs (HA 常用口服複方)",
+        "meds": [
+          {
+            "class": "Combinations",
+            "classZh": "口服複方",
+            "label": "Janumet (Metformin + Sitagliptin 捷諾達)",
+            "name": "Janumet (Metformin + Sitagliptin)"
+          },
+          {
+            "class": "Combinations",
+            "classZh": "口服複方",
+            "label": "Janumet XR (Metformin XR + Sitagliptin)",
+            "name": "Janumet XR (Metformin XR + Sitagliptin)"
+          },
+          {
+            "class": "Combinations",
+            "classZh": "口服複方",
+            "label": "Galvus Met (Metformin + Vildagliptin 宜妥達)",
+            "name": "Galvus Met (Metformin + Vildagliptin)"
+          },
+          {
+            "class": "Combinations",
+            "classZh": "口服複方",
+            "label": "Trajenta Duo (Metformin + Linagliptin 歐唐寧)",
+            "name": "Trajenta Duo (Metformin + Linagliptin)"
+          },
+          {
+            "class": "Combinations",
+            "classZh": "口服複方",
+            "label": "Synjardy (Metformin + Empagliflozin 恩排糖複方)",
+            "name": "Synjardy (Metformin + Empagliflozin)"
+          },
+          {
+            "class": "Combinations",
+            "classZh": "口服複方",
+            "label": "Xigduo XR (Metformin XR + Dapagliflozin 安達糖複方)",
+            "name": "Xigduo XR (Metformin XR + Dapagliflozin)"
+          },
+          {
+            "class": "Combinations",
+            "classZh": "口服複方",
+            "label": "Glyxambi (Empagliflozin + Linagliptin)",
+            "name": "Glyxambi (Empagliflozin + Linagliptin)"
+          }
+        ]
+      },
+      {
+        "category": "Thiazolidinediones & Others (增敏劑及其他口服藥)",
+        "meds": [
+          {
+            "class": "TZDs",
+            "classZh": "胰島素增敏劑",
+            "label": "Pioglitazone / Actos (吡格列酮)",
+            "name": "Pioglitazone (Actos)"
+          },
+          {
+            "class": "Alpha-glucosidase",
+            "classZh": "葡萄糖苷酶抑制劑",
+            "label": "Acarbose / Glucobay (阿卡波糖 / 拜糖平)",
+            "name": "Acarbose (Glucobay)"
+          }
+        ]
+      },
+      {
+        "category": "Insulins (香港 HA 常用胰島素針劑)",
+        "meds": [
+          {
+            "class": "Insulins",
+            "classZh": "胰島素",
+            "label": "Insulin Glargine (Lantus / Toujeo 長效基礎)",
+            "name": "Insulin Glargine (Lantus / Toujeo)"
+          },
+          {
+            "class": "Insulins",
+            "classZh": "胰島素",
+            "label": "Insulin Degludec (Tresiba 超長效基礎)",
+            "name": "Insulin Degludec (Tresiba)"
+          },
+          {
+            "class": "Insulins",
+            "classZh": "胰島素",
+            "label": "Insulin Detemir (Levemir 長效基礎)",
+            "name": "Insulin Detemir (Levemir)"
+          },
+          {
+            "class": "Insulins",
+            "classZh": "胰島素",
+            "label": "Insulin NPH / Isophane (Humulin N / Insulatard 中效)",
+            "name": "Insulin NPH / Isophane (Humulin N / Insulatard)"
+          },
+          {
+            "class": "Insulins",
+            "classZh": "胰島素",
+            "label": "Insulin Aspart (NovoRapid 諾和速效)",
+            "name": "Insulin Aspart (NovoRapid)"
+          },
+          {
+            "class": "Insulins",
+            "classZh": "胰島素",
+            "label": "Insulin Lispro (Humalog 優泌樂速效)",
+            "name": "Insulin Lispro (Humalog)"
+          },
+          {
+            "class": "Insulins",
+            "classZh": "胰島素",
+            "label": "Insulin Glulisine (Apidra 艾倍得速效)",
+            "name": "Insulin Glulisine (Apidra)"
+          },
+          {
+            "class": "Insulins",
+            "classZh": "胰島素",
+            "label": "Regular Insulin (Actrapid / Humulin R 短效常規)",
+            "name": "Regular Human Insulin (Actrapid / Humulin R)"
+          },
+          {
+            "class": "Insulins",
+            "classZh": "胰島素",
+            "label": "NovoMix 30 (雙相門冬胰島素 30)",
+            "name": "Biphasic Insulin Aspart 30 (NovoMix 30)"
+          },
+          {
+            "class": "Insulins",
+            "classZh": "胰島素",
+            "label": "Humalog Mix 25/50 (優泌樂預混型)",
+            "name": "Biphasic Insulin Lispro (Humalog Mix 25/50)"
+          },
+          {
+            "class": "Insulins",
+            "classZh": "胰島素",
+            "label": "Mixtard 30 (雙相等糖胰島素 30)",
+            "name": "Biphasic Isophane Insulin (Mixtard 30)"
+          }
+        ]
+      }
+    ],
+    "onboardingDiabetesTypes": [
+      {
+        "label": "第 2 型糖尿病 (常見糖尿 / Type 2 DM)",
+        "value": "TYPE_2"
+      },
+      {
+        "label": "第 1 型糖尿病 (胰島素依賴 / Type 1 DM)",
+        "value": "TYPE_1"
+      },
+      {
+        "label": "糖尿病前期 / 血糖警戒線 (Pre-diabetes)",
+        "value": "PRE_DIABETES"
+      },
+      {
+        "label": "妊娠期糖尿病 (Gestational DM)",
+        "value": "GESTATIONAL"
+      },
+      {
+        "label": "其他類型 / 未確定",
+        "value": "OTHER"
+      }
+    ],
+    "onboardingGenders": [
+      "男",
+      "女",
+      "其他"
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "cases": [
+    {
+      "hideFollowUps": true,
+      "id": "safety-mental",
+      "missing": [],
+      "ok": true,
+      "telHrefs": [],
+      "unexpected": []
+    },
+    {
+      "hideFollowUps": true,
+      "id": "safety-emergency",
+      "missing": [],
+      "ok": true,
+      "telHrefs": [],
+      "unexpected": []
+    },
+    {
+      "hideFollowUps": true,
+      "id": "safety-urgent",
+      "missing": [],
+      "ok": true,
+      "telHrefs": [],
+      "unexpected": []
+    },
+    {
+      "hideFollowUps": true,
+      "id": "safety-caution",
+      "missing": [],
+      "ok": true,
+      "telHrefs": [],
+      "unexpected": []
+    },
+    {
+      "hideFollowUps": true,
+      "id": "preference",
+      "missing": [],
+      "ok": true,
+      "telHrefs": [],
+      "unexpected": []
+    },
+    {
+      "hideFollowUps": false,
+      "id": "comparison-decision",
+      "missing": [],
+      "ok": true,
+      "telHrefs": [],
+      "unexpected": []
+    },
+    {
+      "hideFollowUps": false,
+      "id": "comparison-knowledge",
+      "missing": [],
+      "ok": true,
+      "telHrefs": [],
+      "unexpected": []
+    },
+    {
+      "hideFollowUps": true,
+      "id": "followups-hidden-blockllm",
+      "missing": [],
+      "ok": true,
+      "telHrefs": [],
+      "unexpected": []
+    }
+  ],
+  "ok": true
+}

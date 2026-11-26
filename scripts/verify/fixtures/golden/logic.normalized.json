@@ -129,6 +129,8 @@
     ],
     "npmScripts": {
       "build": "vite build",
+      "cf:deploy": "vite build && npx --yes wrangler@4.168.0 deploy",
+      "cf:dev": "vite build && npx --yes wrangler@4.168.0 dev",
       "dev": "tsx server.ts",
       "lint": "tsc --noEmit",
       "preview": "vite preview",

@@ -10,6 +10,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { launchChrome, attachToBlankPage, evaluate } from './lib/cdp.mjs';
 import { normalizeDom } from './lib/normalize.mjs';
 import { buildSeed } from './lib/seed.mjs';
+import { VERIFY_NOW_MS, VERIFY_EXPECTED } from './lib/clock.mjs';
+import { prepareVerifyCdp } from './lib/prepareCdp.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../..');
@@ -138,12 +140,7 @@ async function main() {
 
     const chrome = await launchChrome({ port: Number(process.env.VERIFY_CDP_PORT || 9223) });
     const cdp = await attachToBlankPage(chrome.port);
-    await cdp.send('Emulation.setDeviceMetricsOverride', {
-        width: 430,
-        height: 900,
-        deviceScaleFactor: 1,
-        mobile: false,
-    });
+    await prepareVerifyCdp(cdp);
     try {
         // --- Onboarding (empty storage) ---
         await navigate(cdp, BASE_URL);
@@ -153,14 +150,21 @@ async function main() {
         // Each seeded view starts from a fresh reload so a prior CDP snapshot
         // cannot leave the page in a half-reloaded Home state.
         async function fromHome() {
-            await writeStorageAndReload(cdp, buildSeed());
+            await writeStorageAndReload(cdp, buildSeed(VERIFY_NOW_MS));
         }
 
         await fromHome();
-        writeSnapshot(outDir, 'home', await snapshotRoot(cdp), await readVisibleText(cdp));
+        const homeText = await readVisibleText(cdp);
+        if (!homeText.includes(VERIFY_EXPECTED.greetingWithName)) {
+            throw new Error('home greeting not frozen as expected: ' + JSON.stringify(VERIFY_EXPECTED.greetingWithName) + ' in ' + homeText.slice(0, 240));
+        }
+        writeSnapshot(outDir, 'home', await snapshotRoot(cdp), homeText);
 
         await fromHome();
         let snap = await activate(cdp, { text: '血糖紀錄', withinNav: true, expectText: '症狀紀錄' });
+        if (!snap.text.includes(VERIFY_EXPECTED.periodLabel)) {
+            throw new Error('glucose default period not frozen as expected: ' + JSON.stringify(VERIFY_EXPECTED.periodLabel) + ' in ' + snap.text.slice(0, 240));
+        }
         writeSnapshot(outDir, 'glucose-bg', snap.html, snap.text);
 
         await fromHome();

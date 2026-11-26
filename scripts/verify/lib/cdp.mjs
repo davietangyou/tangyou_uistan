@@ -43,7 +43,7 @@ export async function connectCdp(wsUrl, timeoutMs = 10000) {
     return new CdpClient(ws);
 }
 
-export async function launchChrome({ port = 9223, width = 430, height = 900 } = {}) {
+export async function launchChrome({ port = 9223, width = 430, height = 900, timezone = 'Asia/Hong_Kong' } = {}) {
     const chrome = process.env.CHROME_BIN || 'google-chrome';
     const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ty-chrome-'));
     const args = [
@@ -64,7 +64,7 @@ export async function launchChrome({ port = 9223, width = 430, height = 900 } = 
         `--user-data-dir=${userDataDir}`,
         'about:blank',
     ];
-    const child = spawn(chrome, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+    const child = spawn(chrome, args, { stdio: ['ignore', 'ignore', 'pipe'], env: { ...process.env, TZ: timezone } });
     let stderr = '';
     child.stderr.on('data', (buf) => { stderr += buf.toString(); });
     const deadline = Date.now() + 20000;

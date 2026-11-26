@@ -8,8 +8,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { launchChrome, attachToBlankPage, evaluate } from './lib/cdp.mjs';
-import { normalizeText, stableStringify } from './lib/normalize.mjs';
+import { normalizeText, stableStringify, stableStringifyRaw } from './lib/normalize.mjs';
 import { buildSeed } from './lib/seed.mjs';
+import { VERIFY_NOW_MS } from './lib/clock.mjs';
+import { prepareVerifyCdp } from './lib/prepareCdp.mjs';
+import { SHORTCUT_TEXTS } from './lib/lockedCopy.mjs';
+import { SHAPE_CASES } from './fixtures/shapes/messages.mjs';
 import {
     click,
     disableAnimations,
@@ -88,7 +92,7 @@ async function flowOnboarding(cdp, shotsDir) {
 }
 
 async function flowLargeFont(cdp, shotsDir) {
-    await writeStorageAndReload(cdp, buildSeed());
+    await writeStorageAndReload(cdp, buildSeed(VERIFY_NOW_MS));
     await disableAnimations(cdp);
     await waitForText(cdp, '標準字');
     const before = {
@@ -129,7 +133,7 @@ async function flowLargeFont(cdp, shotsDir) {
 }
 
 async function flowGlucoseAddDelete(cdp, shotsDir) {
-    await writeStorageAndReload(cdp, buildSeed());
+    await writeStorageAndReload(cdp, buildSeed(VERIFY_NOW_MS));
     await disableAnimations(cdp);
     const beforeCount = glucoseFromStorage(await readStorage(cdp)).length;
     await click(cdp, { text: '血糖紀錄', withinNav: true });
@@ -175,7 +179,7 @@ async function flowGlucoseAddDelete(cdp, shotsDir) {
 }
 
 async function flowSavedQuestions(cdp, shotsDir) {
-    await writeStorageAndReload(cdp, buildSeed());
+    await writeStorageAndReload(cdp, buildSeed(VERIFY_NOW_MS));
     await disableAnimations(cdp);
     await click(cdp, { text: '問題紀錄', withinNav: true });
     await waitForText(cdp, '手動新增問題');
@@ -205,7 +209,7 @@ async function flowSavedQuestions(cdp, shotsDir) {
 }
 
 async function flowMeProfile(cdp, shotsDir) {
-    await writeStorageAndReload(cdp, buildSeed());
+    await writeStorageAndReload(cdp, buildSeed(VERIFY_NOW_MS));
     await disableAnimations(cdp);
     await click(cdp, { text: '個人檔案', withinNav: true });
     await waitForText(cdp, '保存修改');
@@ -251,7 +255,7 @@ async function flowMeProfile(cdp, shotsDir) {
 
 async function flowConsultMocked(cdp, shotsDir) {
     const reply = '【驗證用模擬回覆】呢個係測試訊息，唔係真正嘅 Gemini 答案。';
-    await writeStorageAndReload(cdp, buildSeed());
+    await writeStorageAndReload(cdp, buildSeed(VERIFY_NOW_MS));
     await disableAnimations(cdp);
     await installGeminiMocks(cdp, reply);
     await click(cdp, { selector: '#btn-home-ask-ai' });
@@ -280,7 +284,7 @@ async function flowConsultMocked(cdp, shotsDir) {
 }
 
 async function flowStorageRoundTrip(cdp, shotsDir) {
-    const seed = buildSeed();
+    const seed = buildSeed(VERIFY_NOW_MS);
     await navigate(cdp, BASE_URL);
     await writeStorageAndReload(cdp, seed);
     await disableAnimations(cdp);
@@ -309,6 +313,106 @@ async function flowStorageRoundTrip(cdp, shotsDir) {
     };
 }
 
+
+function parseChatMessage(calls) {
+    const chatCalls = (calls || []).filter((c) => String(c.url).includes('/api/gemini/chat'));
+    const raw = chatCalls[0]?.body;
+    let parsed = null;
+    try { parsed = raw ? JSON.parse(raw) : null; } catch { parsed = null; }
+    return {
+        count: chatCalls.length,
+        message: parsed && typeof parsed.message === 'string' ? parsed.message : null,
+    };
+}
+
+async function flowConsultShortcut(cdp, shotsDir) {
+    const seed = buildSeed(VERIFY_NOW_MS);
+    delete seed.dia_chat_messages;
+    await writeStorageAndReload(cdp, seed);
+    await disableAnimations(cdp);
+    await installGeminiMocks(cdp);
+    await click(cdp, { selector: '#btn-home-ask-ai' });
+    await waitForText(cdp, '快捷提問');
+    await click(cdp, { text: '數據解讀' });
+    await waitForText(cdp, '【驗證用模擬回覆】');
+    const parsed = parseChatMessage(await readGeminiCalls(cdp));
+    const expected = SHORTCUT_TEXTS[0];
+    const assertions = {
+        mockedReplyVisible: (await visibleText(cdp)).includes('【驗證用模擬回覆】'),
+        messageExact: parsed.message === expected,
+    };
+    if (!Object.values(assertions).every(Boolean)) {
+        throw new Error(`consult-shortcut assertions failed: ${JSON.stringify({ assertions, parsed, expected })}`);
+    }
+    return {
+        name: 'consult-shortcut-request',
+        ok: true,
+        assertions,
+        request: { kind: 'shortcut_data_reading', message: parsed.message },
+        steps: [{ name: 'sent', shot: await shot(cdp, shotsDir, 'consult-shortcut') }],
+    };
+}
+
+async function flowConsultPreference(cdp, shotsDir) {
+    const shape = SHAPE_CASES.find((c) => c.id === 'preference');
+    const seed = buildSeed(VERIFY_NOW_MS);
+    seed.dia_chat_messages = JSON.stringify(shape.messages);
+    await writeStorageAndReload(cdp, seed);
+    await disableAnimations(cdp);
+    await installGeminiMocks(cdp);
+    await click(cdp, { selector: '#btn-home-ask-ai' });
+    await waitForText(cdp, '【夾具】怕痛');
+    await click(cdp, { text: '【夾具】怕痛' });
+    await click(cdp, { text: '確認提交我的偏好考量' });
+    await waitForText(cdp, '【驗證用模擬回覆】');
+    const parsed = parseChatMessage(await readGeminiCalls(cdp));
+    const expectedHeader = '我已選擇我的個人偏好（決策考量維度）：';
+    const expectedLine = '- 針對「【夾具】偏好問題：打針時你最在意什麼？」，我最看重：【【夾具】怕痛】（價值維度：pain）';
+    const assertions = {
+        hasHeader: typeof parsed.message === 'string' && parsed.message.startsWith(expectedHeader),
+        hasOptionLine: typeof parsed.message === 'string' && parsed.message.includes(expectedLine),
+        exact: parsed.message === `${expectedHeader}\n${expectedLine}`,
+    };
+    if (!Object.values(assertions).every(Boolean)) {
+        throw new Error(`consult-preference assertions failed: ${JSON.stringify({ assertions, parsed })}`);
+    }
+    return {
+        name: 'consult-preference-request',
+        ok: true,
+        assertions,
+        request: { kind: 'preference_submit', message: parsed.message },
+        steps: [{ name: 'submitted', shot: await shot(cdp, shotsDir, 'consult-preference') }],
+    };
+}
+
+async function flowConsultFollowUp(cdp, shotsDir) {
+    const shape = SHAPE_CASES.find((c) => c.id === 'comparison-decision');
+    const seed = buildSeed(VERIFY_NOW_MS);
+    seed.dia_chat_messages = JSON.stringify(shape.messages);
+    await writeStorageAndReload(cdp, seed);
+    await disableAnimations(cdp);
+    await installGeminiMocks(cdp);
+    await click(cdp, { selector: '#btn-home-ask-ai' });
+    await waitForText(cdp, '【夾具】可見追問-decision');
+    await click(cdp, { text: '【夾具】可見追問-decision' });
+    await waitForText(cdp, '【驗證用模擬回覆】');
+    const parsed = parseChatMessage(await readGeminiCalls(cdp));
+    const expected = '【夾具】可見追問-decision';
+    const assertions = {
+        messageExact: parsed.message === expected,
+    };
+    if (!Object.values(assertions).every(Boolean)) {
+        throw new Error(`consult-followup assertions failed: ${JSON.stringify({ assertions, parsed })}`);
+    }
+    return {
+        name: 'consult-followup-request',
+        ok: true,
+        assertions,
+        request: { kind: 'follow_up', message: parsed.message },
+        steps: [{ name: 'sent', shot: await shot(cdp, shotsDir, 'consult-followup') }],
+    };
+}
+
 async function main() {
     const outDir = process.argv.includes('--out')
         ? process.argv[process.argv.indexOf('--out') + 1]
@@ -321,12 +425,7 @@ async function main() {
 
     const chrome = await launchChrome({ port: Number(process.env.VERIFY_FLOW_CDP_PORT || 9224) });
     const cdp = await attachToBlankPage(chrome.port);
-    await cdp.send('Emulation.setDeviceMetricsOverride', {
-        width: 430,
-        height: 900,
-        deviceScaleFactor: 1,
-        mobile: false,
-    });
+    await prepareVerifyCdp(cdp);
 
     const runners = [
         flowOnboarding,
@@ -335,6 +434,9 @@ async function main() {
         flowSavedQuestions,
         flowMeProfile,
         flowConsultMocked,
+        flowConsultShortcut,
+        flowConsultPreference,
+        flowConsultFollowUp,
         flowStorageRoundTrip,
     ];
     const results = [];
@@ -353,6 +455,15 @@ async function main() {
             flows: results.map((r) => r.name),
             ok: results.every((r) => r.ok),
         };
+        const requests = {};
+        for (const result of results) {
+            if (result.request && result.request.kind) {
+                requests[result.request.kind] = { message: result.request.message };
+            }
+        }
+        if (Object.keys(requests).length) {
+            fs.writeFileSync(path.join(outDir, 'requests.normalized.json'), stableStringifyRaw(requests));
+        }
         writeJson(path.join(outDir, 'index.json'), index);
         console.log(`Flow captures written to ${outDir}`);
     } finally {

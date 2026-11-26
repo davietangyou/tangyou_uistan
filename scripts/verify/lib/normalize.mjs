@@ -82,3 +82,20 @@ function sortDeep(value) {
     if (typeof value === 'string') return normalizeText(value);
     return value;
 }
+
+/** Key-sorted JSON without touching string values (for stored option values and locked copy). */
+export function stableStringifyRaw(value) {
+    return JSON.stringify(sortDeepRaw(value), null, 2) + '\n';
+}
+
+function sortDeepRaw(value) {
+    if (Array.isArray(value)) return value.map(sortDeepRaw);
+    if (value && typeof value === 'object') {
+        const out = {};
+        for (const key of Object.keys(value).sort()) {
+            out[key] = sortDeepRaw(value[key]);
+        }
+        return out;
+    }
+    return value;
+}

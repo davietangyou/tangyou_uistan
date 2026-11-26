@@ -18,6 +18,12 @@ function listFiles(dir, acc = [], prefix = '') {
 }
 
 function isComparable(rel) {
+    const base = rel.split('/').pop();
+    // Informational reports that are expected to change during a visual
+    // restyle, and raw dumps, are not hard-compared.
+    if (base === 'visible-inventory.normalized.json') return false;
+    if (base === 'audit-summary.normalized.json') return false;
+    if (base === 'audit-report.json') return false;
     return rel.endsWith('.normalized.html')
         || rel.endsWith('.normalized.json')
         || rel.endsWith('.text.normalized.txt')

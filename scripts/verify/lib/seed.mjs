@@ -5,9 +5,18 @@
 export function buildSeed(now = Date.now()) {
     const day = 24 * 60 * 60 * 1000;
     const fmt = (ts) => {
-        const d = new Date(ts);
-        const pad = (n) => String(n).padStart(2, '0');
-        return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        // Format in Asia/Hong_Kong regardless of the Node process timezone.
+        const parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Asia/Hong_Kong',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hourCycle: 'h23',
+        }).formatToParts(new Date(ts));
+        const get = (type) => parts.find((p) => p.type === type)?.value;
+        return `${get('year')}/${get('month')}/${get('day')} ${get('hour')}:${get('minute')}`;
     };
     const profile = {
         name: '陳生',

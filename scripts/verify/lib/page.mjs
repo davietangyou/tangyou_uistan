@@ -102,7 +102,7 @@ function finderExpression({ text, placeholder, title, selector, withinNav }) {
         } else if (title) {
             el = [...scope.querySelectorAll('[title], button, [role="button"]')].find((e) => (e.getAttribute('title') || '').includes(title));
         } else if (needle) {
-            el = [...scope.querySelectorAll('button, [role="button"], label, a')].find((e) => (e.innerText || e.textContent || '').replace(/\\s+/g, ' ').includes(needle));
+            el = [...scope.querySelectorAll('button, [role="button"], label, a, [class*="cursor-pointer"]')].find((e) => (e.innerText || e.textContent || '').replace(/\\s+/g, ' ').includes(needle));
         }
         if (!el) {
             return { ok: false, reason: 'not-found', visible: (document.querySelector('#root')?.innerText || '').slice(0, 200) };

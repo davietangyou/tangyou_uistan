@@ -11,6 +11,7 @@ export interface StatTileProps {
     statusLabel?: string;
     tone?: StatTone;
     className?: string;
+    children?: React.ReactNode;
 }
 
 export const StatTile: React.FC<StatTileProps> = ({
@@ -20,6 +21,7 @@ export const StatTile: React.FC<StatTileProps> = ({
     statusLabel,
     tone = 'neutral',
     className,
+    children,
 }) => {
     return (
         <div className={cx('ds-root', 'ds-stat', tone !== 'neutral' && `ds-stat-tone-${tone}`, className)}>
@@ -31,6 +33,7 @@ export const StatTile: React.FC<StatTileProps> = ({
             {statusLabel ? (
                 <div className={cx('t-body-strong', tone === 'low' && 't-danger')}>{statusLabel}</div>
             ) : null}
+            {children}
         </div>
     );
 };

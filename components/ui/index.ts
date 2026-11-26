@@ -10,6 +10,7 @@ export {Card, type CardProps} from './Card';
 export {Chip, type ChipProps} from './Chip';
 export {Dialog, type DialogProps} from './Dialog';
 export {Field, type FieldProps} from './Field';
+export {Icon} from './Icon';
 export {IconButton, type IconButtonProps, type IconButtonTone} from './IconButton';
 export {ListRow, type ListRowProps} from './ListRow';
 export {SectionHeader, type SectionHeaderProps} from './SectionHeader';

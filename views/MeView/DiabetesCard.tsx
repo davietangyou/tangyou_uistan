@@ -2,8 +2,8 @@ import type {MeViewModel} from './useMeViewModel';
 import type {GroupProps} from './MeView';
 import { DiabetesType } from '../../utils/types';
 import { HK_HA_MEDICATION_GROUPS } from '../../utils/constants';
-import {cx} from '../../components/ui';
-import {FieldBlock, Icon, OptionTile, Pill, ProfileGroup} from '../ProfileShared/formParts';
+import {cx, Icon} from '../../components/ui';
+import {FieldBlock, OptionTile, Pill, ProfileGroup} from '../ProfileShared/formParts';
 
 export function DiabetesCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProps) {
     const {

@@ -1,7 +1,7 @@
 import type {ConsultViewModel} from './useConsultViewModel';
 import type {PreferenceQuestion, PreferenceOption, ChatOptionComparison} from '../../utils/types';
 import ReactMarkdown from 'react-markdown';
-import {UI_ICON_DEFAULTS, uiIcons, type UiIconName} from '../../components/ui';
+import {Icon, type UiIconName} from '../../components/ui';
 import {
     SHORTCUT_QUESTIONS,
     PREFERENCE_SUBMITTED_MARKER,
@@ -24,11 +24,6 @@ const VALUE_CATEGORY_ICONS: Record<string, UiIconName> = {
     Autonomy: 'autonomy',
     "Psychological Burden": 'support'
 };
-
-function Icon({name, size = UI_ICON_DEFAULTS.size, className}: {name: UiIconName; size?: number; className?: string}) {
-    const Glyph = uiIcons[name];
-    return <Glyph size={size} strokeWidth={UI_ICON_DEFAULTS.strokeWidth} className={className} aria-hidden="true" />;
-}
 
 /** Shortcut labels keep their emoji in consultText.ts; the chip shows a line icon instead. */
 function shortcutLabelText(label: string) {
@@ -476,13 +471,13 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                                                                         <p className="t-body-strong">
                                                                             {isKnowledgeComparison ? '👍 主要優勢／特點' : '👍 優勢效益 (Pros)'}
                                                                         </p>
-                                                                        {renderBulletPoints(opt.pros, true, "text-xs", "font-semibold")}
+                                                                        {renderBulletPoints(opt.pros, true)}
                                                                     </div>
                                                                     <div className="ds-consult-cons">
                                                                         <p className="t-body-strong">
                                                                             {isKnowledgeComparison ? '⚠️ 注意事項／限制' : '⚠️ 顧慮隱憂 (Cons)'}
                                                                         </p>
-                                                                        {renderBulletPoints(opt.cons, false, "text-xs", "font-semibold")}
+                                                                        {renderBulletPoints(opt.cons, false)}
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -638,8 +633,8 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                                                         <div key={optIdx} className="ds-consult-compare-item">
                                                             <p className="t-label">{opt.option}</p>
                                                             <div className="ds-consult-compare-cols">
-                                                                <div className="ds-consult-pros">{renderBulletPoints(opt.pros, true, "text-[11px]", "font-medium")}</div>
-                                                                <div className="ds-consult-cons">{renderBulletPoints(opt.cons, false, "text-[11px]", "font-medium")}</div>
+                                                                <div className="ds-consult-pros">{renderBulletPoints(opt.pros, true)}</div>
+                                                                <div className="ds-consult-cons">{renderBulletPoints(opt.cons, false)}</div>
                                                             </div>
                                                         </div>
                                                     ))}

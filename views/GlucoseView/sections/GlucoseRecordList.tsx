@@ -1,6 +1,7 @@
 import type {GlucoseViewModel} from '../useGlucoseViewModel';
 import {RecordCard} from './RecordCard';
-import {DisclosureButton, EmptyState, Icon} from './recordUi';
+import {DisclosureButton, EmptyState} from './recordUi';
+import {Icon} from '../../../components/ui';
 
 export function GlucoseRecordList({vm}: {vm: GlucoseViewModel}) {
     const {

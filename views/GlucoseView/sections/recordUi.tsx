@@ -3,12 +3,7 @@
  * Presentation only: every handler is passed in by the section that owns it.
  */
 import React from 'react';
-import {Segmented, UI_ICON_DEFAULTS, cx, uiIcons, type UiIconName} from '../../../components/ui';
-
-export function Icon({name, size = UI_ICON_DEFAULTS.size, className}: {name: UiIconName; size?: number; className?: string}) {
-    const C = uiIcons[name];
-    return <C size={size} strokeWidth={UI_ICON_DEFAULTS.strokeWidth} aria-hidden className={className} />;
-}
+import {Icon, Segmented, cx} from '../../../components/ui';
 
 export type RangeId = 'WEEK' | 'MONTH' | 'YEAR' | 'CUSTOM';
 const RANGE_OPTIONS = [

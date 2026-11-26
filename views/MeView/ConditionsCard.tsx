@@ -1,7 +1,8 @@
 import type {MeViewModel} from './useMeViewModel';
 import type {GroupProps} from './MeView';
 import { COMMON_CONDITIONS, OTHER_CONDITIONS, conditionsList } from '../../utils/constants';
-import {FieldBlock, Icon, OptionTile, ProfileGroup} from '../ProfileShared/formParts';
+import {FieldBlock, OptionTile, ProfileGroup} from '../ProfileShared/formParts';
+import {Icon} from '../../components/ui';
 
 export function ConditionsCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProps) {
     const {

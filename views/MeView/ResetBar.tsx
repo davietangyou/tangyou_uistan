@@ -1,6 +1,6 @@
 import type {MeViewModel} from './useMeViewModel';
 import {clearAllStorage} from '../../domain';
-import {Icon} from '../ProfileShared/formParts';
+import {Icon} from '../../components/ui';
 
 export function ResetBar(_props: {vm: MeViewModel}) {
     return (

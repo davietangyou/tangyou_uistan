@@ -2,9 +2,10 @@ import type {GlucoseViewModel} from '../useGlucoseViewModel';
 import { PREDEFINED_SYMPTOMS, SYMPTOM_DETAILS } from '../constants';
 import {RecordTimeRow} from './RecordTimeRow';
 import {RecordPeriodRow} from './RecordPeriodRow';
-import {Icon, VoiceButton} from './recordUi';
+import {VoiceButton} from './recordUi';
 import {glucoseStatus} from '../recordStatus';
 import type {UiIconName} from '../../../components/ui';
+import {Icon} from '../../../components/ui';
 
 // Quick tags are written into dietNote / exerciseNote verbatim — do not edit their text.
 const DIET_TAGS = ['清淡少油', '多蔬菜/高纖', '白飯/澱粉主食', '茶餐廳/高油外賣', '低GI雜糧糙米', '水果甜點', '無糖茶飲', '少吃了一餐'];

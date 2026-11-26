@@ -1,6 +1,7 @@
 import {getBmiEvaluation} from '../../utils/constants';
 import type {OnboardingViewModel} from './useOnboardingViewModel';
-import {BmiScale, FieldBlock, Icon, OptionTile, Pill, UnitSwitch, bmiTone} from '../ProfileShared/formParts';
+import {BmiScale, FieldBlock, OptionTile, Pill, UnitSwitch, bmiTone} from '../ProfileShared/formParts';
+import {Icon} from '../../components/ui';
 
 export function BasicsStep({vm}: {vm: OnboardingViewModel}) {
     const {

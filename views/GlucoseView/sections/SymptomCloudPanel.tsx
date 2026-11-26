@@ -1,5 +1,6 @@
 import type {GlucoseViewModel} from '../useGlucoseViewModel';
-import {CustomRangePanel, EmptyState, Icon, RangeSwitch} from './recordUi';
+import {CustomRangePanel, EmptyState, RangeSwitch} from './recordUi';
+import {Icon} from '../../../components/ui';
 
 export function SymptomCloudPanel({vm}: {vm: GlucoseViewModel}) {
     const {

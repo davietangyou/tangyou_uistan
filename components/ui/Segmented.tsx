@@ -1,4 +1,3 @@
-import React from 'react';
 import {cx} from './cx';
 
 export interface SegmentedOption<T extends string = string> {

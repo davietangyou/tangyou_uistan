@@ -1,6 +1,6 @@
-import { Button, Card } from '../../components/ui';
+import {Button, Card, Icon} from '../../components/ui';
 import type { SavedQuestionsViewModel } from './useSavedQuestionsViewModel';
-import { CountPill, Icon, IndexBadge, SectionHead } from './questionUi';
+import {CountPill, IndexBadge, SectionHead} from './questionUi';
 
 export function NextClinicSection({vm}: {vm: SavedQuestionsViewModel}) {
     const {

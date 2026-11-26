@@ -165,6 +165,7 @@ app.post("/api/gemini/analyze-saved-questions", async (req: Request, res: Respon
     }
 });
 
+// 未接線於 UI：路由與後端實作已存在，客戶端 generateDailyTipFromHKWebsites 尚無畫面呼叫。請勿刪除。
 app.post("/api/gemini/daily-tip", async (_req: Request, res: Response) => {
     try {
         const result = await generateDailyTipFromHKWebsitesServer();

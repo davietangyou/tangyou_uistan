@@ -1,3 +1,7 @@
+/**
+ * 每日小貼士生成。HTTP 路由 /api/gemini/daily-tip 已接上本函數，
+ * 但前端目前沒有調用 generateDailyTipFromHKWebsites()。請勿刪除。
+ */
 import { Type } from "@google/genai";
 import { getTextModel } from "./env.ts";
 import { generateContentWithRetry } from "./errors.ts";

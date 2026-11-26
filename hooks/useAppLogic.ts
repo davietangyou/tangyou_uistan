@@ -70,6 +70,7 @@ export const useAppLogic = () => {
     const {isLargeFont, setIsLargeFont} = useFontPreference();
 
     // 8. URL Params Logic (页面参数检查)
+    // 未接線：此旗標恒為 true，但目前沒有導航或頁面讀取它以進入 DetailView。請勿刪除。
     const showDetailTab = useMemo(() => {
         // const params = new URLSearchParams(window.location.search);
         // return params.get('showdetail') === 'true'; // 不做判定，改为默认展示 (参考原代码注释)

@@ -4,8 +4,8 @@ export enum View {
     Glucose = 'GLUCOSE',
     Consult = 'CONSULT',
     Me = 'ME',
-    Result = 'RESULT',
-    Detail = 'DETAIL',
+    Result = 'RESULT', // 未接線：無任何 setView(View.Result) 或對應頁面分支，請勿刪除
+    Detail = 'DETAIL', // 已在 App 註冊 DetailView，但無入口調用 setView(View.Detail)，請勿刪除
     SavedQuestions = 'SAVED_QUESTIONS'
 }
 

@@ -82,3 +82,4 @@ maven-wrapper.jar
 
 # cur project
 .env.*
+!.env.example

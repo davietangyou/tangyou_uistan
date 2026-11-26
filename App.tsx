@@ -9,12 +9,14 @@ import {HomeView} from './views/HomeView';
 import {GlucoseView} from './views/GlucoseView';
 import {ConsultView} from './views/ConsultView';
 import {MeView} from './views/MeView';
-import {DetailView} from './views/DetailView';
+import {DetailView} from './views/DetailView'; // 已註冊但無入口（View.Detail），請勿刪除
 import {SavedQuestionsView} from './views/SavedQuestionsView';
 
 // === Components / 全局組件 ===
 import {Navigation} from './components/Navigation';
 import {GlobalMic} from './components/GlobalMic';
+
+// 保留未直接使用的依賴：lucide-react 目前無 import；motion 僅被未掛載的 MedicationReminders 使用。請勿隨意移除。
 
 /**
  * App Component
@@ -63,6 +65,7 @@ const App: React.FC = () => {
 
                 {view === View.SavedQuestions && <SavedQuestionsView {...logic} />}
 
+                {/* 未接線：無任何 setView(View.Detail)。View.Result 同樣未使用。請勿刪除。 */}
                 {view === View.Detail && <DetailView {...logic} />}
             </div>
 

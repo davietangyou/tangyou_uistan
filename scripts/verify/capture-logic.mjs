@@ -13,13 +13,27 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../..');
 
 function parseSourceContracts() {
-    const serverSrc = fs.readFileSync(path.join(repoRoot, 'server.ts'), 'utf8');
     const routeRe = /app\.(get|post|put|patch|delete)\(\s*['"]([^'"]+)['"]/g;
     const routes = [];
-    let match;
-    while ((match = routeRe.exec(serverSrc))) {
-        routes.push({ method: match[1].toUpperCase(), path: match[2] });
-    }
+    const harvestRoutes = (src) => {
+        let match;
+        const re = new RegExp(routeRe.source, 'g');
+        while ((match = re.exec(src))) {
+            routes.push({ method: match[1].toUpperCase(), path: match[2] });
+        }
+    };
+    harvestRoutes(fs.readFileSync(path.join(repoRoot, 'server.ts'), 'utf8'));
+    const walkRoutes = (dir) => {
+        if (!fs.existsSync(dir)) return;
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+            const full = path.join(dir, entry.name);
+            if (entry.isDirectory()) walkRoutes(full);
+            else if (/\.(ts|js)$/.test(entry.name)) {
+                harvestRoutes(fs.readFileSync(full, 'utf8'));
+            }
+        }
+    };
+    walkRoutes(path.join(repoRoot, 'server'));
 
     function returnKeysFrom(filePath) {
         const src = fs.readFileSync(filePath, 'utf8');

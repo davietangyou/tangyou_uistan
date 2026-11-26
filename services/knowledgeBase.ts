@@ -1,3 +1,8 @@
+/**
+ * Clinical snippet catalog keyed by source id (ADA-*, HK-HB, HA-DIET, ...).
+ * Preferred source order in server/taxonomy routingConfig refers to these ids.
+ * Content is static and must stay byte-stable: it is assembled into AI prompts.
+ */
 export const CLINICAL_KNOWLEDGE = {
     "ADA-13": {
         title: "Older Adults Standards (ADA 2026)",

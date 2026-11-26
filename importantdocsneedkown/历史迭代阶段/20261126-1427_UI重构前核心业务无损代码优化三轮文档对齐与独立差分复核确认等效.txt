@@ -1,0 +1,276 @@
+================================================================================
+阶段历史归档：UI 重构前核心业务无损代码优化三轮、运行文档对齐与独立差分复核确认等效
+================================================================================
+
+归档时间：2026-11-26 14:27（Asia/Shanghai，UTC+8）
+归档文件：importantdocsneedkown/历史迭代阶段/20261126-1427_UI重构前核心业务无损代码优化三轮文档对齐与独立差分复核确认等效.txt
+工作分支：refactor/pre-ui-lossless（相对 main @ aea3f4b 的本地提交；本阶段未向远端推送）
+本归档对应收口时的代码与文档顶点：1d2ee39（本归档文件将另作一次本地提交）
+
+================================================================================
+一、阶段起点与原始处境
+================================================================================
+
+本阶段起始于《历史迭代阶段/20261126-1130_医学博士迭代代码变更差异辨识意图考古与两份文档集全量同步迭代.txt》已经收口、主分支停留在 aea3f4b 之后。当时仓库已经是单进程融合入口：根目录 `server.ts` 在开发态挂载 Vite middleware，生产态托管 `dist/`；全部 AI 请求收口于 `/api/gemini/*`；问诊界面是 Chat-only；本机习惯端口为 `.env.local` 中的 `PORT=9002`。
+
+项目主人在这一基线上，明确授权了一项面向未来 UI 重构的准备工作：在不改动客户端可见体验的前提下，把现有代码整理得更清晰、更符合工程惯例、也更容易在之后替换界面层。效果北极星可以概括为三条同时成立的约束：
+
+- 代码品质与可维护性提高，目录与职责便于后续换皮；
+- 客户端体验严格无损——核心业务逻辑、核心业务文案、核心 AI 提示词效果保持一致；不要求像素级一致，但 DOM 文本、样式规则、localStorage 键名与数据形态、`/api/gemini/*` 契约、安全门与分类体系、环境变量名称，以及既有脚本 `dev` / `build` / `start` / `lint`，均不得无故改写；
+- 尚未接到界面上的能力必须保留并加以标注，而不是顺手删除。
+
+与之配套的工作边界在阶段开始时即已说清，并在后续各轮授权中保持稳定：
+
+- 只在既有本地克隆、分支 `refactor/pre-ui-lossless` 上工作，以小而逻辑完整的本地提交记录过程；
+- 即使后来已具备向 GitHub 仓库写入的条件，仍不推送，除非另行给出明确指示；
+- 不启动远端云端代工；Git 作者为 davie.zheng <davie.zheng@usmarthk.com>；
+- 《产品与医学价值北极星.txt》《本项目剥离UI后用于UI重构的核心业务明细.txt》《任何代码迭代变动者须知.txt》默认只读，未经显式授权不改；
+- 本阶段的历史归档文件本身也须等待显式授权后才落盘（此前各轮报告中只准备过草稿，从未写入 `历史迭代阶段/`）；
+- 本机开发服务保持在 `0.0.0.0:9002`；密钥与 `.env.local` 的真实值不进入仓库、不进入文档正文。
+
+阶段开始时，仓库尚无专门的无损验证门，`package-lock.json` 与 `package.json` 不完全对齐（`npm ci` 会失败），若干大文件（`server/gemini.ts`、`hooks/useAppLogic.ts`、多份视图）仍以单体方式承载，页面皮肤与大字规则写在 `index.html` 的 `<style>` 中，`.env.example` 尚未入仓。这些都是本阶段要处理的工程实况，而不是产品业务本身的缺口。
+
+================================================================================
+二、阶段演进脉络与关键认知转折
+================================================================================
+
+### 2.1 授权链
+
+本阶段不是一次笼统的“可以开始优化”，而是由项目主人按轮次显式授权、每轮收口后再决定是否继续。脉络如下：
+
+- 第一轮（t4u / t5u）：授权开展 UI 重构前的核心业务无损优化；质量优先、不限时，按阶段规划并对照基线验证；先不写历史归档、先不推送。
+- 第二轮（t7u）：在同一北极星下继续；重点建议加强验证网、拆分仍偏大的文件、抽出与界面无关的领域层、集中 localStorage；可选的 CSS 整理仅在观感一致时才做。
+- 第三轮（t8u）：在同一规则下收口剩余事项——把 `index.html` 中的大字与皮肤 CSS 外置（须经截图门、大字开/关都过）、收紧视图 props 与对话类型、把动态键 `dia_auto_triggered_*` 纳入领域存储层，以及其他确实无损的改进。
+- 文档审计（t9u）：只读核验 `importantdocsneedkown/` 是否需在三轮代码之后对齐，明确禁止改文件。
+- 文档同步（t10u）：授权高质量更新活文档与根目录 README，并显式授权修订《任何代码迭代变动者须知.txt》第二条；《核心业务明细》按主人指示不改；00 索引中将 `9002` 误当作“过时端口”的一句可以改。
+- 独立差分复核（t11u / t12u）：用阅读 `main @ aea3f4b` 与分支 HEAD 之 diff 的方式，独立判断客户端体验是否等效无损；不信任先前验证门的结论；复核后列出可选改进，但不改代码。
+- 本归档（t13u）：项目主人确认工作已经收敛，可选改进项不再纳入本阶段；授权撰写本份历史迭代阶段文档，本地提交、仍不推送。
+
+每一轮授权都延续同一条底线：先对齐认知，再落笔；只读基石与推送、归档这两类动作，始终单独等待授权。
+
+### 2.2 第一轮：验证网、锁文件对齐与首批大文件拆分
+
+第一轮的本地提交时间约为 2026-11-26 12:26–12:43（Asia/Shanghai）。顺序上，先建立“改完如何知道没有改到用户可感知行为”的网，再动结构。
+
+- `999c2e4` 新增 `scripts/verify/` 与 `npm run verify`。验证门覆盖 lint、生产构建、逻辑与契约快照（路由、`useAppLogic` 回传键、View 枚举、localStorage 键名、npm 脚本，以及 `buildChatPrompts`、安全门、分类、血糖 / HbA1c / 档案上下文等纯函数），并在开发服务可访问时捕获可达视图的规范化 DOM。不引入 Playwright，不调用线上 Gemini。产物写在 git 忽略的 `verify-results/`，金样放在 `scripts/verify/fixtures/golden/`。
+- `08a542d` 为 Recharts 生成的不稳定呈现（随机 id、SVG path、默认展示属性、属性顺序等）增加规范化，避免 DOM 门把图表内部抖动误判为业务回归。
+- `3f816ed` 将 `package-lock.json` 与 `package.json` 对齐，使 `npm ci` 可重复成功。这是交付链路的修复，而不是产品功能改动。`package.json` 中 `@google/genai` 的声明本来就是 `^3.6.1`；对齐后锁文件解析为 `3.6.1`（对齐前的锁文件曾解析到 `1.50.1`，并因此无法直接 `npm ci`）。
+- 随后将 `server/gemini.ts` 拆为 `server/gemini/*` 并以原路径桶文件再导出；将 `hooks/useAppLogic.ts` 拆为 `hooks/appLogic/*`，对外入口与回传形状保持不变；将 `GlucoseView`、`ConsultView`、`MeView` 拆为目录内的 hook、分段组件与常量。
+- `32b5c9b` 为未接线能力补充注释，并新增可提交的 `.env.example`（`.gitignore` 增加 `!.env.example`）。环境变量加载顺序仍是：进程环境变量 ＞ `.env.server.local` ＞ `.env.local` ＞ `.env`，不覆盖已存在的高优先级变量。
+- `036a9fd` 在《手动搭建与迭代应用指南.txt》中写明：锁文件既已对齐，安装默认使用 `npm ci`。
+
+第一轮结束时，验证门已经可以作为后续拆分的对照基线。开发服务在拆分后仍监听 9002。
+
+### 2.3 第二轮：加厚验证网、领域层与其余大文件拆分
+
+第二轮本地提交时间约为 12:56–13:08（Asia/Shanghai）。
+
+- `e1b5569` 把验证网从“静态 DOM 快照”推进到真实指针与键盘路径：入门引导、大字开关、血糖增减、问题保存、个人档案往返、带页内 mock 的咨询发送，以及 localStorage 往返；步骤截图用 Pillow 做有限容差比较（官方门限为 max-mean 2、max-pct 0.5）。仍不引入 Playwright，沿用已有的 Chrome CDP。
+- `4078059` 为 `buildChatPrompts` 增加可选的 `nowMs`，缺省仍走 `Date.now()`，以便提示词金样在固定时钟下可复现；生产路径不传入该参数。
+- `0b2ea66` 抽出 `domain/`：集中存储键名、读写封装，以及档案、血糖、HbA1c、BMI、运动、字体、对话、提醒、问题、问候与覆诊日期等与界面无关的规则。捕获逻辑快照时，会继续从源码中收获 `dia_*` 字面量，以保持金样稳定。
+- `a95966b` 拆分分类体系，并把 HTTP 路由与环境加载从 `server.ts` 挪到 `server/http/*`、`server/env.ts`；进程入口文件名与监听 `0.0.0.0:PORT` 的约定不变。环境文件的查找目录按 `server/env.ts` 上溯两级回到仓库根，与拆分前从 `server.ts` 解析根目录的效果相同。此次拆分后开发服务重启，仍绑定 9002，`/api/health` 返回 `configured:true`。
+- 其余视图与未挂载组件继续拆分：`OnboardingView`、`SavedQuestionsView`（与 MeView 共用档案 / 问题辅助函数）、`HomeView`（问候与覆诊日期进入 domain）、`DetailView` 与 `App` 中的视图路由 / 焦点提示（抽出 `ViewRouter`、`FocusToast`），以及未挂载的 `MedicationReminders`。
+
+第二轮在领域层之后、分类与入门/问题拆分之后、以及 Home / Detail / App / 提醒拆分之后，验证门均达到 40/40。领域层 DOM 捕获曾出现一次短暂的 CDP “Inspected target navigated or closed”，重试后干净通过。
+
+### 2.4 第三轮：CSS 外置、类型收紧与动态存储键收口
+
+第三轮本地提交时间约为 13:41–13:44（Asia/Shanghai）。
+
+- 先尝试把皮肤与大字 CSS 交给 Vite 打包管线。该路径会把 `rgba(..., 0.02)` 一类颜色改写成八位十六进制，并把样式链接移到模块脚本之后，改变层叠与字节。这条路被放弃。
+- `84d4843` 改为把规则原文放到 `public/styles/app.css`（不经 Vite CSS 转换），`index.html` 在 Tailwind CDN 之后写入 `<link rel="stylesheet" href="%BASE_URL%styles/app.css">`。开发态实际请求 `/styles/app.css`；生产构建把文件原样复制为 `dist/styles/app.css`，链接变为 `./styles/app.css`。`npm run build` 可能打印 `./styles/app.css doesn't exist at build time, it will remain unchanged to be resolved at runtime`——这是预期现象，不是缺文件。
+- `3e86126` 收紧视图 props 与咨询对话类型：`ChatMessage` / `ChatApiResponse` / 偏好相关类型进入 `utils/types.ts`；去掉视图上的 `[key: string]: any`。这些是编译期信息，不改变运行时。过程中发现 `GlucoseView` 曾依赖被移除的索引签名使用 `isLargeFont`，已把该 prop 显式补回；若干对象字面量补了 `ChatMessage` 标注，以免角色被推断成过宽的 `string`。
+- `03ebc84` 将 `MedicationReminders` 的自动弹窗标记改走 domain 的 `hasAutoTriggered` / `markAutoTriggered`，运行时键仍是 `dia_auto_triggered_${日期}_${时段}`，值为 `'true'`。动态键用模板字符串拼接，逻辑快照中的字面量集合保持不变。
+
+第三轮在 CSS 外置后、以及类型与存储收口后，官方验证门均为 40/40。类型 / 存储改动的逻辑快照与基线字节一致。个别截图在严格逐像素比较时仍有与改动前同量级的抗锯齿或问候语时段抖动，落在官方容差之内。
+
+三轮代码工作至此，就被判断为授权范围内的预 UI 优化已经完成；剩下的是文档是否对齐、以及是否要用一次不依赖验证门的独立 diff 阅读来确认无损。
+
+### 2.5 文档审计与同步
+
+t9u 对 `importantdocsneedkown/` 做了只读审计，结论是：活文档需要补上 `public/styles/app.css`、目录树、`verify-results/`、`npm ci` 默认与 ZIP 导入时不可丢失的新路径；《任何代码迭代变动者须知.txt》第二条仍描述旧的双进程世界（`5173`、`8787`、`dev:ui` / `dev:api`、`server/index.ts`、`/api/ai/*`，以及一份已不存在的 `.md` 重启指南）；《核心业务明细》的业务键与接口事实仍然成立，仅有少量工程路径注记偏旧；北极星与既有历史归档不必改。00 索引把 `9002` 当作“过时端口”举例，与当前本机端口实况不符。
+
+t10u 授权后，于 14:11（Asia/Shanghai）本地提交了文档同步，未改《核心业务明细》、北极星与既有历史归档：
+
+- `6c5a3a8`：《任何代码迭代变动者须知.txt》只改第二条，第一条与第三条原文不动；交付北极星的精神不变，例子改写为当前单进程 `server.ts`、`/api/gemini/*`、既有脚本与开发用 `verify`，并把同步目标指向现行《手动搭建与迭代应用指南.txt》。00 索引仅修正那一处举例。
+- `2ab6964`：《仓库纯净性与AI迭代成果回灌实践.txt》升至 1.2——保护 `public/styles/app.css`，排除 `verify-results/`，说明 ZIP 导入时 `domain/`、`scripts/verify/`、`server/env.ts`、`server/http/` 等已跟踪路径不应被当成“工具没看见就可以删”，并记下预期的 Vite CSS 警告与可选的 `npm run verify`。
+- `390ef85`：《手动搭建与迭代应用指南.txt》升至 1.2——补充样式资源、目录树、健康检查中的 `/styles/app.css`，以及可选验证门。
+- `bb6f228`：《线上服务托管实例（systemd）.txt》升至 1.1——安装与更新默认改为 `npm ci`，并从 `.env.example` 复制 `.env.local`；在不改变“六项验收”历史结构的前提下，把样式资源可达性作为旁路检查。
+- `1d2ee39`：根目录 `README.md` 改为以 `npm ci`、`.env.example` 与 `public/styles/app.css` 为准，并指向上述两份运行文档。
+
+按 00 索引的规则，在 `历史迭代阶段/` 内按既有机制新增归档时，入口文件不必反复改动。本归档因此不修改 00 索引。
+
+### 2.6 独立差分复核及其结论
+
+t11u 要求以阅读 diff 的方式，把“刚下载、尚未做任何变更的代码”（`main @ aea3f4b`）与当时分支 HEAD（`1d2ee39`）对照，判断客户端体验是否等效无损。方法是对抗性的：不把先前验证门的 40/40 当作证据本身；对搬移的代码使用重命名 / 拷贝检测；对拆分文件按模块拼回后再比较函数体与字符串；提取用户可见文案集合与提示词 / 安全门 / 分类 / 模型参数并做集合或正文对照；并检查存储键、effect 依赖与注册顺序、默认值、事件处理、条件渲染、接口形态、环境加载、中间件顺序、错误处理、CSS 规则与加载顺序、`nowMs` 默认，以及可能改变运行时的类型写法。
+
+主要证据如下：
+
+- 外置 CSS 与原 `<style>` 在去掉空白后，规则正文一致，仅多了一条说明性注释；`index.html` 仍是 Tailwind CDN 在前、自定义样式在后。
+- 用户可见文案：两侧各 1604 条不重复的中文 / 粤语短语，集合差为空；英文界面字符串的集合与出现次数也一致。
+- `server/gemini` 与 `server/taxonomy` 中的具名函数均可一一对应；`CORE_CHAT_INSTRUCTION`、生活方式 / 快速通道 / 对比 / 图片 / PDA 等提示词块、安全门关键词与 `FULL_ROUTING_CONFIG` 在去掉注释与多余空白后一致；`services/knowledgeBase.ts` 的知识正文字节级一致。`buildChatPrompts` 的唯一源码差异是可选的 `nowMs`：生产路径不传入该参数，`undefined` 仍触发 `formatGlucoseContext` 参数默认值 `Date.now()`，与旧调用 `formatGlucoseContext(glucoseRecords)` 等效。
+- 七个静态 `dia_*` 键不变；自动触发键的运行时形态不变。血糖构建仍先处理“既无数値也无症状则静默返回”，再对缺失测量时点弹出「請先選擇「測量時間點」噢！」；负值仍钳制为 0；日期仍按 `zh-HK` 格式化。对话持久化仍剥离图片 base64。重置仍是 `localStorage.clear()`，确认文案未改。
+- 环境加载算法、`handleGeminiError` 友好文案、`/api/health` 与 `/api/gemini/*` 的注册顺序、`startServer` 中 Vite / `dist` 分支，均与拆分前一致。
+- `useAppLogic` 的持久化 effect 改为在子 hook 内注册，顺序略有前后，但键、值与依赖不变，不构成用户可感知差异。
+- `ViewRouter` / `FocusToast` 的条件与文案（「請先點擊一下您想要輸入的空格」）与拆分前一致，包括未接线的 `View.Detail`。
+
+复核结论是：在“核心业务逻辑一致、核心业务文案一致、核心 AI 提示词效果一致”这一标准下，客户端体验等效无损。像素级一致不是本阶段的要求，也不是这次复核的通过条件。复核列出了若干可选加固（例如在 `buildChatPrompts` 内把 `nowMs ?? Date.now()` 写得更直白、为 CSS 资源增加构建期存在性检查），并明确建议不要把问诊自动上报 effect 里原本就不完整的依赖数组当作“无损修复”去改——那会改变一条当前并未被 Chat 界面走到的路径。t13u 决定跳过这些可选项，本阶段不再改代码。
+
+================================================================================
+三、核心取舍与设计依据
+================================================================================
+
+1. 先有验证网，再拆文件
+   若没有可重复对照的基线，大文件拆分很难证明“只是搬移”。因此第一轮先落地 `npm run verify`，后续每一批结构改动都与基线对照。验证门是辅助，不是唯一证据；阶段收口时另做了一次独立的 diff 阅读。
+
+2. 不把 CSS 送进 Vite 打包管线
+   首条技术路径看起来更“现代”，但会改写颜色字节并移动链接位置，直接触碰层叠与大字规则的稳定性。最终选择 `public/styles/app.css` 作为不经转换的静态资源，以规则原文不变换取一次额外的静态文件请求。只要该文件随仓库和构建产物一起存在，用户看到的规则与拆分前一致。
+
+3. 不引入 Playwright，不加与本阶段无关的运行时依赖
+   交互验证走已有的 Chrome CDP 与 Pillow。`lucide-react` 等暂时未使用的依赖，以及仅被未挂载 `MedicationReminders` 使用的 `motion`，按“未接线能力一并保留”处理，不在本阶段清理。
+
+4. 未接线能力标注后保留
+   被明确保留的包括：`DetailView` / `View.Detail` / `View.Result`，未挂载的 `MedicationReminders`，客户端已封装但界面未调用的 `generateDailyTipFromHKWebsites`（以及对应的 `/api/gemini/daily-tip`），以及 `useAppLogic` 中在 `consultStep === 'RESULT'` 时自动上报的 effect（Chat-only 界面不会把步骤设成 RESULT）。它们属于“功能层完整、常规路径不可达”，不是死代码清理对象。
+
+5. 安装默认改为 `npm ci`
+   锁文件对齐之后，可重复安装成为默认路径；`npm install` 只作为 `npm ci` 失败时的退路，并需要单独看待锁文件变化。根 README、手动指南与 systemd 文档在文档同步轮达成一致。
+
+6. `nowMs` 只作为可选注入
+   它服务于验证金样的可复现性，不改变生产路径的提示词组装。独立复核确认缺省行为与旧代码等价后，不再为“写得更直白”而再改一刀。
+
+7. 问诊自动上报的 effect 依赖保持原样
+   该依赖数组在 main 上就是 `[consultStep, result]`。把它“补全”可能改变触发时机，因而不属于无损优化的范围。
+
+8. 《核心业务明细》本阶段不改
+   项目主人在文档同步授权中明确：核心业务明细不用改。该文档的临床与存储 / 接口事实经核对仍然成立；CSS 文件位置等工程注记的轻微滞后，按 00 索引情境 5，以代码与手动指南为准，不顺手改写只读业务基石。
+
+9. 代码与文档都只提交在本地
+   向 GitHub 推送、打开拉取请求、以及在主人确认收敛之前写入本归档，都不在本阶段已授予的动作之内。t13u 只授权了归档落盘与本地提交。
+
+================================================================================
+四、逐文件变动与零改动范围
+================================================================================
+
+下列范围以 `main @ aea3f4b` 到文档同步后的 `1d2ee39` 为准（尚未计入本归档文件自身）。本阶段共 26 个本地提交，全部留在 `refactor/pre-ui-lossless`。
+
+【新增的主要工程面】
+
+- `scripts/verify/`：验证编排、DOM / 逻辑 / 交互捕获、规范化、截图比较、金样与说明。
+- `domain/`：`storageKeys.ts`、`storage.ts`、`profile.ts`、`glucose.ts`、`hba1c.ts`、`bmi.ts`、`exercise.ts`、`font.ts`、`chatMessages.ts`、`reminders.ts`、`questions.ts`、`greeting.ts`、`clinicDate.ts` 及桶文件 `index.ts`。
+- `public/styles/app.css`：由原 `index.html` 内联样式迁出的皮肤与大字规则。
+- `server/env.ts`、`server/http/geminiError.ts`、`server/http/geminiRoutes.ts`，以及 `server/gemini/*`、`server/taxonomy/*` 的分文件（原入口 `server/gemini.ts`、`server/taxonomy.ts` 改为再导出）。
+- `hooks/appLogic/*`：档案、记录、咨询状态、字体、上报等子 hook；`hooks/useAppLogic.ts` 仍为对外入口。
+- 视图目录化：`views/HomeView/`、`GlucoseView/`、`ConsultView/`、`MeView/`、`OnboardingView/`、`SavedQuestionsView/`、`DetailView/`，根下保留原文件名作为入口。
+- `components/ViewRouter.tsx`、`components/FocusToast.tsx`、`components/MedicationReminders/`。
+- `.env.example`（无密钥的字段模板）。
+
+【主要修改的工程面】
+
+- `index.html`：内联 `<style>` 改为在 Tailwind CDN 之后引用 `%BASE_URL%styles/app.css`；标题与 Tailwind 引入方式不变。
+- `server.ts`：收缩为入口——加载环境、注册路由、按开发 / 生产启动；不再内含路由与 env 解析正文。
+- `package.json`：在既有 `dev` / `start` / `build` / `preview` / `lint` 之外增加 `verify`；依赖声明区间未作为本阶段的功能升级来改写。
+- `package-lock.json`：与 `package.json` 对齐，使 `npm ci` 成功。
+- `.gitignore`：增加 `verify-results` 与 `!.env.example`。
+- `utils/types.ts`：为咨询与偏好补上具名类型，并为未接线的 `View.Result` / `View.Detail` 加上注释；枚举值本身未改。
+- `services/geminiService.ts`、`services/dataService.ts`、`services/knowledgeBase.ts`：以类型收紧与注释为主，上报鉴权仍为历史硬编码，知识正文未改。
+- `App.tsx`：视图分支改为 `<ViewRouter logic={logic} />`，焦点提示改为 `<FocusToast />`。
+
+【文档同步轮修改的文件】
+
+- `importantdocsneedkown/任何代码迭代变动者须知.txt`（仅第二条，已经主人显式授权）；
+- `importantdocsneedkown/00_文档总索引与信息治理规范.txt`（仅修正将 `9002` 当作过时端口的举例）；
+- `importantdocsneedkown/仓库纯净性与AI迭代成果回灌实践.txt`（v1.2）；
+- `importantdocsneedkown/手动搭建与迭代应用指南.txt`（v1.2）；
+- `importantdocsneedkown/线上服务托管实例（systemd）.txt`（v1.1）；
+- 根目录 `README.md`。
+
+【零改动保护范围】
+
+- 《产品与医学价值北极星.txt》全文未改；
+- 《本项目剥离UI后用于UI重构的核心业务明细.txt》全文未改；
+- `历史迭代阶段/` 中既有四份归档未改（本文件为获授权后新增的第五份）；
+- `hooks/useSpeechFocus.ts`、`components/Navigation.tsx`、`components/Layout.tsx`、`components/GlobalMic.tsx`、`index.tsx`、`vite.config.ts` 的配置含义未作为本阶段的改动目标（端口仍由 `server.ts` + 环境变量承接，Vite 自身仍为 `port: 3000`、`host: 0.0.0.0`、`base: ''`、`allowedHosts: true`）；
+- 数据上报的路径、本机 `8002` 与硬编码 `fixed-pwd` 未改；
+- 反向代理、TLS、DNS 与线上已部署的 systemd unit 正文不在本阶段改动范围；
+- 未向 `origin` 推送，也未创建拉取请求。
+
+================================================================================
+五、运行与构建验证结果
+================================================================================
+
+1. 验证门（`npm run verify`）
+   - 命令为 `node scripts/verify/run.mjs`，默认假定开发服务在 `http://127.0.0.1:9002/`（可用 `VERIFY_BASE_URL` 覆盖）。
+   - 步骤包括：`npm run lint`（`tsc --noEmit`）、`npm run build`、逻辑 / 契约快照、服务可达时的 DOM 快照、七条 CDP 交互流与截图比较。
+   - 官方通过标准：逻辑与 DOM / 流规范化后的对照，以及截图 max-mean 2、max-pct 0.5。
+   - 第二轮、第三轮的关键节点均记录为 40/40。领域层捕获中的一次 CDP 瞬时失败经重试通过。严格逐像素的个别差值与改动前同量级，落在官方容差内。
+   - `verify-results/` 不进入 git；金样在 `scripts/verify/fixtures/golden/`。更细的说明见 `scripts/verify/README.md`。
+
+2. 运行态抽查
+   - 开发服务在拆分 `server.ts` 后重启，仍监听 `0.0.0.0:9002`。
+   - `/api/health` 返回 `ok:true`、`configured:true`，模型字段与既有形态一致。
+   - `/styles/app.css` 返回 HTTP 200、`Content-Type: text/css`，正文与 `public/styles/app.css`、`dist/styles/app.css` 字节一致。
+   - 生产构建会复制该样式文件；构建日志中关于 `./styles/app.css` 在构建期不存在的提示属于预期。
+
+3. 独立差分复核
+   - 对照范围为 `aea3f4b` 与 `1d2ee39` 的产品源码，不包括文档与验证脚本对用户体验的影响。
+   - 文案集合、提示词与安全 / 分类规则、存储键与记录构建、接口与环境加载的核对结果见第 2.6 节。
+   - 结论：核心业务逻辑、核心业务文案、核心 AI 提示词效果等效；本阶段在 t13u 之后不再为可选加固改代码。
+
+================================================================================
+六、当前现状边界与留待后续关注的事项
+================================================================================
+
+1. 仍存在的宽类型与未清理依赖
+   - 源码中仍有一些 `any`（例如语音识别、部分 `catch`、Gemini 内容部件、个别服务端 Promise）。它们不是本阶段“必须收完”的范围。
+   - `lucide-react` 等未在界面使用的依赖，以及仅服务于未挂载提醒组件的 `motion`，被有意保留。
+
+2. 问诊自动上报 effect 的依赖数组
+   - 仍为 `[consultStep, result]`，与 main 上一致。
+   - 当前 Chat-only 咨询不会把 `consultStep` 设为 `RESULT`，该自动上报常规不可达。若未来重新接上分步问诊，需要单独讨论这条路径，而不是把它当作无伤修正。
+
+3. 锁文件中的 `@google/genai` 解析结果
+   - `package.json` 在本阶段开始前已声明 `^3.6.1`。
+   - main 上的锁文件曾解析为 `1.50.1`，并与清单不一致，导致 `npm ci` 失败。
+   - 本分支对齐后解析为 `3.6.1`。源码中的 SDK 调用写法未作为一次“升级改写”来做。若有人用旧锁文件的解析结果来对比安装树，会看到这一差值；它属于安装可重复性修复，需要在后续环境中以 `npm ci` 为准来理解。
+
+4. 自定义样式现在依赖仓库内的静态资源
+   - 大字与卡片等规则从 `index.html` 迁到 `public/styles/app.css`。
+   - 若同步、解压或部署时丢掉该文件，Tailwind 工具类仍在，但自定义皮肤与大字会缺失。
+   - 活文档已记录检查方法（`curl` `/styles/app.css` 应为 200），以及不要为消除 Vite 的构建期提示而把该文件改成模块导入。
+
+5. 文档基石与归档机制
+   - 《核心业务明细》未改，其中关于 CSS 所在文件、个别模块拼装路径的工程注记可能仍停在拆分前的写法；阅读时以代码、须知与手动指南为工程实况，以该明细与北极星为临床与产品权威。
+   - 本文件是本阶段获授权后的唯一新归档；既有四份历史文件保持只读。
+
+6. 远端同步
+   - 分支 `refactor/pre-ui-lossless` 的提交仍只存在于本地。
+   - 向 GitHub 推送或开具拉取请求，不属于本阶段已完成的动作，需另一次明确指示。
+
+7. 本阶段跳过的可选加固
+   - 在 `buildChatPrompts` 内显式书写 `nowMs ?? Date.now()`；
+   - 为 `dist/styles/app.css` 增加额外的构建断言。
+   它们被判断为不影响等效结论，按 t13u 不再纳入本阶段。
+
+================================================================================
+七、阶段结论与对未来 UI 重构的交接
+================================================================================
+
+本阶段在“不改变长者已经看到、已经保存、已经问到的东西”这一前提下，完成了 UI 重构前的工程整理，并用验证门与一次独立的 diff 阅读相互印证：客户端体验在核心业务逻辑、文案与提示词效果上是等效的。代码拆分、领域层、验证网与运行文档已经对齐到当前仓库实况；只读业务基石没有被顺手涂改；历史记忆在获得授权后收入本文件。
+
+收口时的结构，可按“界面可以替换、规则尽量不动”来理解：
+
+- 进程入口仍是根目录 `server.ts`；环境在 `server/env.ts` 加载；路由在 `server/http/`；模型调用与提示词在 `server/gemini/`；安全门与分类在 `server/taxonomy/`。前端仍然只通过 `services/geminiService.ts` 访问同源 `/api/gemini/*`。
+- 与界面无关的规则、键名和记录构建在 `domain/`。换皮时，优先复用这些函数与键，而不是在新组件里另写一套 `dia_*` 或另一套血糖校验顺序。
+- `hooks/useAppLogic.ts` 仍是页面状态的对外入口；子 hook 在 `hooks/appLogic/`。视图按目录拆分，但业务回传形状与 View 枚举值保持稳定。
+- 皮肤与大字规则在 `public/styles/app.css`，由 `index.html` 在 Tailwind CDN 之后引入。若新 UI 仍要承接“默认大字、最小触控高度”等既有决策，需要同时考虑这份静态资源，而不是只复制 Tailwind 类名。
+- 验证门 `npm run verify` 可以在未来的界面重构中继续用作回归网：逻辑快照盯契约与提示词组装，DOM 与交互流盯仍被保留的可达路径。金样更新应是有意识的决策，而不是重构过程中的噪音。
+
+对后续 UI 重构，本阶段留下的判断水位可以归纳为：
+
+- 产品与临床的对错，仍以《产品与医学价值北极星.txt》和《本项目剥离UI后用于UI重构的核心业务明细.txt》为准；工程实况以当时的代码、须知与《手动搭建与迭代应用指南.txt》为准。
+- 存储键、接口路径、提示词与安全门、环境变量名称，属于对用户与模型都可见的契约，不宜在换皮时悄悄改写。
+- 未接线但仍然完整的能力（详情页、结果视图、用药提醒、每日贴士、分步问诊自动上报等）若要删除或改接，宜作为单独的产品决策，而不是重构时的顺便清理。
+- 从 AI Studio 取回的导出物，按《仓库纯净性与AI迭代成果回灌实践.txt》处理：`public/styles/app.css`、`domain/`、`scripts/verify/` 等已跟踪路径默认不是删除项；`verify-results/` 不进入仓库。
+- 本分支若需出现在远端，等待另一次明确的推送或开具拉取请求的授权。
+
+当前开发服务仍按既有约定停留在 9002。本阶段的代码优化与文档对齐到此收口。

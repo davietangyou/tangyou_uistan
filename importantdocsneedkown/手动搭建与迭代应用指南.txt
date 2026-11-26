@@ -1,7 +1,7 @@
 # 手动搭建与迭代应用指南
 ## macOS 本地 + Linux 线上
 
-版本：1.1
+版本：1.2
 适用项目：tangyou_uistan
 适用模式：dev 模式（`npm run dev`）
 
@@ -70,14 +70,15 @@ npm run dev
 ### 1.2 端口与环境变量
 
 - 默认端口由 `.env.local` 的 `PORT=9002` 指定；
-- `server.ts` 启动时按以下顺序读取环境变量，且不覆盖已存在的进程环境变量：
+- `server.ts` 启动时经 `server/env.ts` 按以下顺序读取环境变量，且不覆盖已存在的进程环境变量：
 
 ```
 进程环境变量 ＞ .env.server.local ＞ .env.local ＞ .env
 ```
 
 - `.env.local` 是机器专属文件，不进入仓库；
-- `.env.example` 是字段模板，进入仓库。
+- `.env.example` 是字段模板，进入仓库；
+- 环境变量的读取实现位于 `server/env.ts`，由 `server.ts` 启动时调用。
 
 ### 1.3 dev 模式的边界
 
@@ -89,6 +90,30 @@ dev 模式下：
 - 线上前台运行期间，SSH 会话保持连接；会话断开，进程会随之结束。
 
 长期线上托管由 systemd 实例文档负责；本文档的线上手动模式只用于首次快速验证。
+
+### 1.4 页面样式资源
+
+页面皮肤与大字规则写在仓库内的 `public/styles/app.css`。`index.html` 在 Tailwind CDN 之后引入：
+
+```html
+<link rel="stylesheet" href="%BASE_URL%styles/app.css">
+```
+
+dev 模式下，Vite 把 `public/` 作为静态根目录，浏览器实际请求 `/styles/app.css`。服务起来后可用下面的命令确认该资源在位：
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css
+```
+
+预期 HTTP 200，正文与 `public/styles/app.css` 一致。若同步或解压后缺少该文件，Tailwind 工具类仍可用，但大字模式与卡片等自定义样式会丢失。
+
+本文只覆盖 dev 模式。若改走 `npm run build && npm start`，构建会把该文件原样复制为 `dist/styles/app.css`，页面链接变为相对路径 `./styles/app.css`。`npm run build` 可能打印：
+
+```
+./styles/app.css doesn't exist at build time, it will remain unchanged to be resolved at runtime
+```
+
+这是预期现象：该文件是 `public/` 下的静态资源，不是 Vite 模块。不必为消除这行提示而把它改成源码里的 CSS import——那样会改写颜色与标签顺序。
 
 ---
 
@@ -108,7 +133,7 @@ dev 模式下：
 
 ### 2.2 加载顺序
 
-`server.ts` 启动时的加载顺序：
+`server.ts` 启动时经 `server/env.ts` 的加载顺序：
 
 ```
 进程环境变量 ＞ .env.server.local ＞ .env.local ＞ .env
@@ -156,6 +181,14 @@ curl -sS http://127.0.0.1:9002/api/health; echo
 | `model`、`fastModel`、`visionModel`、`transcribeModel` | 当前模型路由 |
 | `customBaseUrl` | 是否启用了 `GEMINI_BASE_URL` |
 
+样式资源也可以一并确认：
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css
+```
+
+预期 HTTP 200。
+
 ### 3.2 浏览器冒烟
 
 本地入口：
@@ -199,6 +232,22 @@ sudo ss -ltnp | grep 9002
 
 无输出表示端口已释放。若有残留进程，可以按 PID 结束。
 
+### 3.4 可选：无损改动验证门
+
+日常启动不必执行。做不应改变客户端可见行为的改动时，可用仓库内的验证门：
+
+```bash
+npm run verify
+```
+
+该命令对应 `package.json` 的 `verify` 脚本（`node scripts/verify/run.mjs`）。完整的 DOM 与交互快照需要本机 dev 已在 9002 监听，并有 Chrome。产物写在 git 忽略的 `verify-results/`；提交进仓库的金样在 `scripts/verify/fixtures/golden/`。与某次基线对照时，可以加上 `--out` 与 `--compare`，例如：
+
+```bash
+npm run verify -- --out verify-results/phase-N --compare verify-results/baseline
+```
+
+不要把 `verify-results/` 提交进仓库，也不必拷到线上托管目录。更细的说明见 `scripts/verify/README.md`。
+
 ---
 
 ## 4. 通用迭代应用流程
@@ -227,6 +276,8 @@ sudo ss -ltnp | grep 9002
 | `.env.example` | 对比差异，必要时更新 `.env.local` |
 | `vite.config.ts` | 重启 |
 | `server.ts` / `server/**` | 重启 |
+| `public/styles/app.css` 或 `index.html` 中的样式链接 | 确认文件仍在；刷新或重启后检查大字开/关外观 |
+| `scripts/verify/**` | 通常无需重启；金样变更时再按需跑 `npm run verify` |
 | 前端源码 | 手动流程下重启（Vite 热更新只在运行中生效） |
 | 仅文档 | 通常无需重启 |
 
@@ -468,9 +519,10 @@ Server running on http://0.0.0.0:9002
 
 ```bash
 curl -sS http://127.0.0.1:9002/api/health; echo
+curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css
 ```
 
-预期返回 `ok:true`、`configured:true`。
+预期 health 返回 `ok:true`、`configured:true`；样式资源返回 HTTP 200。
 
 浏览器打开：
 
@@ -634,9 +686,10 @@ Server running on http://0.0.0.0:9002
 
 ```bash
 curl -sS http://127.0.0.1:9002/api/health; echo
+curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css
 ```
 
-预期返回 `ok:true`、`configured:true`。
+预期 health 返回 `ok:true`、`configured:true`；样式资源返回 HTTP 200。
 
 域名入口（反向代理已配置时）：
 
@@ -704,6 +757,7 @@ sudo ss -ltnp | grep 9002
 | 网络超时 | 无法直连 Gemini 域名 | 设置 `GEMINI_BASE_URL` |
 | `npm ci` 失败 | 依赖安装异常（lockfile 现已对齐，正常应可 npm ci） | 先重试 `npm ci`；仍失败再改用 `npm install` 并评审 lockfile |
 | 浏览器 404 | 访问端口与 `PORT` 不一致 | 确认 `.env.local` 的 `PORT` 与 URL |
+| 页面字体或卡片样式异常，但 Tailwind 仍在 | 缺少 `public/styles/app.css`，或 `index.html` 未引入该样式表 | `ls public/styles/app.css`；`curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css` 应为 200 |
 | `node -v` 不是 v24 | 新终端未执行 `nvm use` | 进入项目目录执行 `nvm use`，或设置 `nvm alias default 24` |
 
 ### 8.2 线上
@@ -716,6 +770,7 @@ sudo ss -ltnp | grep 9002
 | `node: command not found` | `sudo -H -u webser` 的 PATH 或 Node 安装问题 | `sudo -H -u webser which node`、`node -v` |
 | `/da04` 不存在 | 数据盘未挂载 | `findmnt /da04` |
 | 反向代理 502/404 | 上游 9002 未监听或代理配置不对 | 先 `curl 127.0.0.1:9002/api/health` |
+| 页面字体或卡片样式异常，但 Tailwind 仍在 | 缺少 `public/styles/app.css`，或 `index.html` 未引入该样式表 | `ls public/styles/app.css`；`curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css` 应为 200 |
 | SSH 断开后服务消失 | 前台进程随会话结束 | 手动阶段用前台验证；长期用 systemd |
 | 模型 404 / 网络超时 | 同本地 | 检查模型覆盖与 `GEMINI_BASE_URL` |
 
@@ -732,6 +787,7 @@ sudo ss -ltnp | grep 9002
 - [ ] `.env.local` 含 `GEMINI_API_KEY` 与 `PORT=9002`
 - [ ] `npm run dev` 输出 `Server running on http://0.0.0.0:9002`
 - [ ] `/api/health` 返回 `ok:true`、`configured:true`
+- [ ] `/styles/app.css` 返回 HTTP 200
 - [ ] 浏览器 `http://127.0.0.1:9002/` 可打开
 - [ ] 文字 AI 问答通过
 
@@ -746,6 +802,7 @@ sudo ss -ltnp | grep 9002
 - [ ] `.env.local` 权限 600、属主 `webser:webgp`
 - [ ] 前台 `npm run dev` 输出 `Server running on http://0.0.0.0:9002`
 - [ ] `/api/health` 返回 `ok:true`、`configured:true`
+- [ ] `/styles/app.css` 返回 HTTP 200
 - [ ] 域名入口冒烟通过
 - [ ] 停止后 `ss` 无 9002 监听
 
@@ -760,6 +817,7 @@ sudo ss -ltnp | grep 9002
 - [ ] `.env.example` 变化时更新了 `.env.local`
 - [ ] 服务已重启
 - [ ] `/api/health` 正常
+- [ ] `/styles/app.css` 仍返回 HTTP 200
 - [ ] 本次改动涉及的页面或接口冒烟通过
 - [ ] 回退命令已准备
 
@@ -796,6 +854,8 @@ sudo ss -ltnp | grep 9002
 | 安装依赖 | `npm ci --prefer-offline --no-audit --no-fund` | `sudo -H -u webser npm ci --prefer-offline --no-audit --no-fund` |
 | 启动 | `npm run dev` | `sudo -H -u webser npm run dev` |
 | 健康检查 | `curl -sS http://127.0.0.1:9002/api/health; echo` | 同左 |
+| 样式资源 | `curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css` | 同左 |
+| 可选验证门 | `npm run verify` | 同左（需 Chrome；产物在 `verify-results/`） |
 | 端口检查 | `lsof -iTCP:9002 -sTCP:LISTEN` | `sudo ss -ltnp \| grep 9002` |
 | 记录旧 commit | `OLD_HEAD="$(git rev-parse HEAD)"` | `OLD_HEAD="$(sudo -H -u webser git rev-parse HEAD)"` |
 | 拉取 | `git pull --ff-only` | `sudo -H -u webser git pull --ff-only` |
@@ -813,8 +873,14 @@ sudo ss -ltnp | grep 9002
 ├── .nvmrc
 ├── .env.example
 ├── .env.local
+├── index.html
+├── index.tsx
+├── App.tsx
 ├── server.ts
 ├── server/
+├── public/styles/app.css
+├── domain/
+├── scripts/verify/
 ├── services/
 ├── views/
 ├── components/
@@ -838,8 +904,14 @@ sudo ss -ltnp | grep 9002
             ├── .nvmrc
             ├── .env.example
             ├── .env.local
+            ├── index.html
+            ├── index.tsx
+            ├── App.tsx
             ├── server.ts
             ├── server/
+            ├── public/styles/app.css
+            ├── domain/
+            ├── scripts/verify/
             ├── services/
             ├── views/
             ├── components/

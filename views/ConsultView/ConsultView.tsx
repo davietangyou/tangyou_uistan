@@ -33,7 +33,9 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
 
     return (
         <div className="ds-root ds-consult">
-            
+            {/* Screen-reader page heading (the visible page uses the nav tab as its title) */}
+            <h2 className="ds-sr-only">AI 控糖問答</h2>
+
             {/* 浮動提示 Toast (存入問題清單成功反饋) */}
             {toastMessage && (
                 <div className="ds-consult-toast" role="status" aria-live="polite">

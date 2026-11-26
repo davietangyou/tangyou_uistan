@@ -4991,3 +4991,47 @@ textarea.ds-field-control {
     .ds-ob-next > svg { display: none; }
     .ds-ob-next { padding: 0 12px; }
 }
+
+/* =============================================================================
+   Stage 9: global polish + accessibility (append-only)
+   ============================================================================= */
+
+/* Keyboard focus never lands under the fixed bottom nav / floating mic:
+   focus() and scrollIntoView() keep this much room at the bottom. The html
+   element sits above .large-font, so the large-mode mic/nav sizes (+12px)
+   are added here explicitly. */
+html {
+    scroll-padding-top: 16px;
+    scroll-padding-bottom: calc(var(--shell-clearance) + 12px);
+}
+
+/* Home 下次問診清單 question text: avoid a lone last character such as
+   「藥？」 at 320px large. Line-breaking only; scoped to this one element
+   (a site-wide text-wrap: pretty split dates like 「(週四)」 and was rejected). */
+.ds-home-q-text {
+    text-wrap: pretty;
+}
+
+/* Consult composer: the same 3px focus ring as every other control. */
+.ds-consult-composer:focus-within {
+    outline: 3px solid var(--c-focus);
+    outline-offset: 2px;
+}
+
+/* Quick memo dialog: stays clear of the floating mic (which keeps working
+   for voice input) and of the device safe areas; its content scrolls inside. */
+.ds-consult-memo-backdrop {
+    padding:
+        max(16px, env(safe-area-inset-top, 0px))
+        max(16px, env(safe-area-inset-right, 0px))
+        calc(var(--shell-clearance) - 4px)
+        max(16px, env(safe-area-inset-left, 0px));
+}
+
+.ds-consult-memo-dialog {
+    max-height: 100%;
+}
+
+.ds-consult-memo-dialog:focus {
+    outline: none;
+}

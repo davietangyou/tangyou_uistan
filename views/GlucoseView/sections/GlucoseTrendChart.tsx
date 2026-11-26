@@ -12,6 +12,10 @@ import {
 } from 'recharts';
 import {EmptyState} from './recordUi';
 
+// Accessible name for the focusable chart svg (recharts accessibilityLayer adds tabIndex=0);
+// aria-label rather than title so no native hover tooltip appears. Same text as the visible heading.
+const CHART_TITLE = '血糖趨勢走勢';
+
 // Chart palette (design tokens; recharts needs literal colours).
 // Thresholds are unchanged: band 4–7, lines at 4 / 7 / 10.
 const C = {
@@ -40,7 +44,7 @@ export function GlucoseTrendChart({vm}: {vm: GlucoseViewModel}) {
             <div className={`ds-rec-chart-box${isLargeFont ? ' is-large' : ''}`}>
                 {chartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData} margin={{ top: 12, right: 12, left: 0, bottom: 4 }}>
+                        <LineChart data={chartData} margin={{ top: 12, right: 12, left: 0, bottom: 4 }} aria-label={CHART_TITLE}>
                             <CartesianGrid strokeDasharray="4 6" vertical={false} stroke={C.grid} />
                             <XAxis
                                 dataKey="name"

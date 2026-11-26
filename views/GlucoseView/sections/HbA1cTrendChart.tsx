@@ -11,6 +11,10 @@ import {
 } from 'recharts';
 import {EmptyState} from './recordUi';
 
+// Accessible name for the focusable chart svg (recharts accessibilityLayer adds tabIndex=0);
+// aria-label rather than title so no native hover tooltip appears. Same text as the visible heading.
+const CHART_TITLE = '糖化血紅素趨勢';
+
 // Same reference lines as before (7% target, 8% high); labels moved to the legend.
 const C = {axis: '#636B65', grid: '#E3E7DD', target: '#2E7D4F', high: '#B42318', data: '#4A6E85'};
 
@@ -28,7 +32,7 @@ export function HbA1cTrendChart({vm}: {vm: GlucoseViewModel}) {
             <div className={`ds-rec-chart-box${isLargeFont ? ' is-large' : ''}`}>
                 {chartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData} margin={{ top: 12, right: 12, left: 0, bottom: 4 }}>
+                        <LineChart data={chartData} margin={{ top: 12, right: 12, left: 0, bottom: 4 }} aria-label={CHART_TITLE}>
                             <CartesianGrid strokeDasharray="4 6" vertical={false} stroke={C.grid} />
                             <XAxis dataKey="name" fontSize={tickSize} tick={{ fill: C.axis }} axisLine={{ stroke: C.grid }} tickLine={false} interval="preserveStartEnd" minTickGap={isLargeFont ? 40 : 28} />
                             <YAxis domain={[4, 'auto']} fontSize={tickSize} width={isLargeFont ? 40 : 34} tickCount={5} axisLine={false} tickLine={false} tick={{ fill: C.axis }} />

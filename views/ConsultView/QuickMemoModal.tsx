@@ -1,3 +1,4 @@
+import {useEffect, useRef} from 'react';
 import type {ConsultViewModel} from './useConsultViewModel';
 import {View} from '../../utils/types';
 import {UI_ICON_DEFAULTS, uiIcons} from '../../components/ui';
@@ -16,6 +17,27 @@ export function QuickMemoModal({vm}: {vm: ConsultViewModel}) {
         toggleQuickMemoVoice
     } = vm;
 
+    // Keyboard basics only: move focus into the dialog when it opens, close on
+    // Escape (same effect as 取消), and return focus to the opener on close.
+    // Tab is deliberately not trapped so the global voice mic stays reachable.
+    const dialogRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (!isQuickMemoOpen) return;
+        const opener = document.activeElement as HTMLElement | null;
+        dialogRef.current?.focus({preventScroll: true});
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                setIsQuickMemoOpen(false);
+            }
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => {
+            document.removeEventListener('keydown', onKeyDown);
+            if (opener && opener.isConnected) opener.focus({preventScroll: true});
+        };
+    }, [isQuickMemoOpen, setIsQuickMemoOpen]);
+
     if (!isQuickMemoOpen) return null;
 
     const icon = {size: UI_ICON_DEFAULTS.size, strokeWidth: UI_ICON_DEFAULTS.strokeWidth, 'aria-hidden': true} as const;
@@ -29,7 +51,7 @@ export function QuickMemoModal({vm}: {vm: ConsultViewModel}) {
 
     return (
             <div className="ds-consult-memo-backdrop">
-                <div className="ds-consult-memo-dialog" role="dialog" aria-modal="true" aria-labelledby="quick-memo-title">
+                <div ref={dialogRef} tabIndex={-1} className="ds-consult-memo-dialog" role="dialog" aria-modal="true" aria-labelledby="quick-memo-title">
                     <div className="ds-consult-memo-head">
                         <span className="ds-consult-memo-mark"><NoteIcon {...icon} /></span>
                         <div className="ds-consult-memo-titles">

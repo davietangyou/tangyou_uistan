@@ -59,6 +59,12 @@ import {
     X,
     Eye,
     Zap,
+    Footprints,
+    Thermometer,
+    TrendingUp,
+    Filter,
+    RotateCcw,
+    ClipboardList,
 } from 'lucide-react';
 
 export const UI_ICON_DEFAULTS = {
@@ -121,6 +127,13 @@ export const uiIcons = {
     convenience: Package,
     qualityOfLife: Star,
     autonomy: Hand,
+    // Stage 6 (records)
+    exercise: Footprints,
+    symptom: Thermometer,
+    trend: TrendingUp,
+    filter: Filter,
+    reset: RotateCcw,
+    records: ClipboardList,
 } as const;
 
 export type UiIconName = keyof typeof uiIcons;

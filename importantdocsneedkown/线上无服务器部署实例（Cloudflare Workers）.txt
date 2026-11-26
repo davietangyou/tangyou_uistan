@@ -1,6 +1,6 @@
 # 线上无服务器部署实例（Cloudflare Workers）
 
-版本：1.0
+版本：1.1
 记录时间：2026-11-26
 当前状态：代码与配置已就绪，并已在本地 `wrangler dev` 下验证；尚未部署到 Cloudflare，正式域名尚未切换。
 
@@ -80,7 +80,14 @@ DO 内直接运行 `server/app.ts` 的 `createApp()`（借助 Workers 的 `node:
 
 前端 `services/dataService.ts` 把录音与 JSON 上报到写死的 `https://tangyou-app.alphathought.org/chtatain-datacent/client-api/tangserv/newyshwo/vidoquse/...`，该路径一直由旧伺服器上的另一个服务（本地开发时为 `localhost:8002`）处理。项目主人决定上报服务继续留在旧伺服器。
 
-Worker 对 `/chtatain-datacent/*` 做原样反向代理：方法、路径、查询串、请求头（含 `fixed-pwd`、`check-same-md5`）与请求体保持不变，重定向原样返回（`redirect: "manual"`），目标源站由变量 `UPLOAD_ORIGIN` 决定。`UPLOAD_ORIGIN` 为空或无效时返回 502 JSON，上游不可达时返回 502 JSON（`{"error":"上報服務暫時無法連接，請稍後再試。"}`）。
+Worker 对 `/chtatain-datacent/*` 做反向代理：方法、路径、查询串与请求体保持不变，重定向原样返回（`redirect: "manual"`），目标源站由变量 `UPLOAD_ORIGIN` 决定。
+
+请求头按“业务头原样、链路头不带”的原则处理：
+
+- 原样保留：`fixed-pwd`、`check-same-md5`、`content-type`、`content-length`、`authorization`、`user-agent`、`accept*` 及其他业务自定义头；
+- 不转发：`host`（由目标地址决定）、逐跳头（`connection`、`keep-alive`、`proxy-connection`、`proxy-authorization`、`proxy-authenticate`、`transfer-encoding`、`te`、`trailer`、`upgrade`），以及 Cloudflare / 代理链自带的头（所有 `cf-*`、所有 `x-forwarded-*`、`x-real-ip`、`forwarded`、`cdn-loop`）；
+- 新设：`X-Forwarded-For` 为真实客户端 IP（取自 Cloudflare 写入的 `CF-Connecting-IP`），旧上报服务若记录来源 IP 仍可读到；客户端自带的 `X-Forwarded-For` 不会被透传，避免伪造；
+- Workers 运行时会为所有子请求自动附加 `CF-Worker` 头（值为所属 zone），这是平台行为，无法也无需去除。`UPLOAD_ORIGIN` 为空或无效时返回 502 JSON，上游不可达时返回 502 JSON（`{"error":"上報服務暫時無法連接，請稍後再試。"}`）。
 
 ### 2.5 正式域名采用 Route 模式而不是 Custom Domain
 
@@ -91,6 +98,8 @@ Worker 对 `/chtatain-datacent/*` 做原样反向代理：方法、路径、查�
 - Custom Domain 模式会接管 DNS 记录，Worker 自身成为源站，回源旧伺服器需要另建主机名，切换与回滚动作都更多。
 
 切换前（`*.workers.dev` 测试阶段），Worker 对 `https://tangyou-app.alphathought.org` 的请求属于跨 zone 请求，照常经过前门到达旧伺服器，同样可用。
+
+“Route 模式下同 zone 子请求直达源站”是 Cloudflare 文档描述的平台行为，本地 `wrangler dev` 无法模拟。正式切换后，需要按第 7 节第 4 步实测上报路径确实到达旧伺服器（而不是回到 Worker 形成循环或报错），才算这条设计在线上成立；若实测不成立，按第 8 节删除 Route 即可即时回滚，再改为给旧伺服器单独建一个回源主机名并更新 `UPLOAD_ORIGIN`。
 
 ---
 
@@ -115,6 +124,8 @@ Worker 对 `/chtatain-datacent/*` 做原样反向代理：方法、路径、查�
 | 前端 | 线上 systemd 当前为 dev 模式（Vite middleware）；`npm start` 为 `dist/` | 始终为 `vite build` 产物 `dist/` |
 | SPA 回落 | 任何非 `/api/` 的 GET 回 `index.html` | 导航请求与未命中静态文件的 GET 回 `index.html`（已验证） |
 | 非 `/api` 的 POST 等未知请求 | Express 默认 404 | 交给 Static Assets 处理，状态码可能不同（前端不发出此类请求） |
+| `GET /api`、`GET /api/` | 404 `{"error":"找不到對應的 API 端點。"}`（dev 与 `npm start` 均已实测） | 相同（经 DO 内同一个 Express），无差异 |
+| DO 本身不可达（重置、过载、部署切换瞬间） | 不适用 | Worker 返回 503 `{"error":"AI 服務暫時無法處理請求，請稍後再試。"}`（`Cache-Control: no-store`），与后端既有错误同形；不自动重试，因为请求体可能已被读取 |
 | 冷却状态 | 每进程一份 | 单例 DO 全局一份 |
 | Gemini 出站地区 | 伺服器所在地 | 美西（DO） |
 | 超过 25mb 的请求体 | Express 413 | 相同（DO 内同一个 Express）；Workers 付费套餐请求体上限 100 MB |
@@ -164,15 +175,18 @@ VERIFY_BASE_URL=http://127.0.0.1:8799/ npm run verify -- --out verify-results/cf
 1. 在 Google AI Studio / Google Cloud 轮换 `GEMINI_API_KEY`（旧密钥曾在对话中出现过），新密钥同时更新到旧伺服器 `.env.local` 并重启 `tangyou_uistan.service`。
 2. Cloudflare 账号开通 Workers 付费套餐。
 3. 登录 wrangler（二选一）：`npx --yes wrangler@4.168.0 login`（浏览器授权），或设置具备 Workers Scripts 编辑与 Workers Routes 编辑权限的 `CLOUDFLARE_API_TOKEN` 环境变量。
-4. 部署到 `*.workers.dev` 测试地址（此时 `routes` 仍为注释状态，不影响正式域名）：
+4. 先写入机密，再首次部署，确保 Worker 第一次上线时就带着密钥（交互输入新密钥，不写入任何文件）：
+   ```bash
+   npx --yes wrangler@4.168.0 secret put GEMINI_API_KEY
+   ```
+   Worker 尚不存在时，wrangler 会询问是否以 `tangyou-app` 这个名字新建 Worker 并写入机密，回答 yes 即可（会先建一个占位 Worker，下一步部署时被完整代码覆盖，机密保留）。
+   另一种等价做法是首次部署时一并上传（替代第 4、5 步）：`npm run build && npx --yes wrangler@4.168.0 deploy --secrets-file <仓库外的临时 JSON 文件>`，文件内容为 `{"GEMINI_API_KEY":"..."}`，部署后立即删除该文件；使用 JSON 格式可避免 dotenv 变量展开读到其他环境变量。
+5. 部署到 `*.workers.dev` 测试地址（此时 `routes` 仍为注释状态，不影响正式域名）：
    ```bash
    npm ci
    npm run cf:deploy
    ```
-5. 写入机密（交互输入新密钥，不写入任何文件）：
-   ```bash
-   npx --yes wrangler@4.168.0 secret put GEMINI_API_KEY
-   ```
+   之后的部署不会覆盖或删除已有机密。
 6. 在香港网络下验收测试地址：
    ```bash
    W=https://tangyou-app.<账号子域>.workers.dev
@@ -234,7 +248,7 @@ npm run cf:deploy
 | --- | --- |
 | `npm ci` / `npm run lint` / `npm run build` | 通过 |
 | Node 端 `npm run verify`（对比既有基线） | 通过；差异仅为 `package.json` 新增两个脚本与按时段变化的问候表情 |
-| `wrangler deploy --dry-run` | 通过；上传体积 2377.76 KiB（gzip 476.62 KiB）；生产打包中 Express 环境为 `production` |
+| `wrangler deploy --dry-run` | 通过；上传体积 2378.79 KiB（gzip 476.94 KiB）；生产打包中 Express 环境为 `production` |
 | `/api/health` | 200，`configured:true`，`Cache-Control: no-store` |
 | DO 路径 | 日志出现 `[gemini-egress] Express app started inside Durable Object (gemini-egress-v1).` |
 | 真实 `/api/gemini/chat` | 200，约 2.4 s，返回字段结构与 Node 端一致 |
@@ -245,4 +259,6 @@ npm run cf:deploy
 | SPA 回落（导航与非导航） | 200，内容与 `index.html` 相同 |
 | `/api/nope`、`/api` | 404 `{"error":"找不到對應的 API 端點。"}` |
 | 上报代理（POST multipart、GET、OPTIONS、302） | 路径、查询串、`fixed-pwd`、`check-same-md5`、请求体均原样到达桩服务；302 原样返回 |
+| DO 故障模拟（临时测试配置，DO 的 fetch 直接抛错） | 503 `{"error":"AI 服務暫時無法處理請求，請稍後再試。"}`，`Cache-Control: no-store`，日志 `[gemini-egress] Durable Object request failed` |
+| 上报代理请求头过滤 | 桩服务收到 `fixed-pwd`、`check-same-md5`、`authorization`、`content-type`、`content-length`、自定义头；未收到任何 `cf-*`（运行时自带的 `cf-worker` 除外）、客户端自带 `x-forwarded-*`、`x-real-ip`、`forwarded`、`connection`、`keep-alive`、`upgrade`；`x-forwarded-for` 为 `CF-Connecting-IP` 的值 |
 | 验证门指向 Worker（`VERIFY_BASE_URL`） | DOM 与 7 条流程全部通过；与 Node 端对比差异仅为 baseUrl、recharts 自增 id 与两处数像素的光标区域 |

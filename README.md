@@ -26,6 +26,6 @@ The same code can also run on Cloudflare Workers without a server. This does not
 
 - `cloudflare/worker.ts` is the Worker entry. Static assets come from `dist/`, `/api/*` goes to a Durable Object pinned to US West (`wnam`) that runs the same Express app (`server/app.ts`), so Gemini calls leave from the US, and `/chtatain-datacent/*` is proxied to the old upload server (`UPLOAD_ORIGIN`).
 - `wrangler.jsonc` holds the Worker config. The `tangyou-app.alphathought.org` route is commented out until it is approved.
-- Local check: `npm run cf:dev` (reads `GEMINI_API_KEY` from `.env.local`; never uploaded). Deploy: `npm run cf:deploy`, then `npx --yes wrangler@4.168.0 secret put GEMINI_API_KEY`.
+- Local check: `npm run cf:dev` (reads `GEMINI_API_KEY` from `.env.local`; never uploaded). Deploy: first `npx --yes wrangler@4.168.0 secret put GEMINI_API_KEY` (rotate the key first), then `npm run cf:deploy`.
 
 Architecture, steps, domain switch, and rollback: `importantdocsneedkown/线上无服务器部署实例（Cloudflare Workers）.txt`.

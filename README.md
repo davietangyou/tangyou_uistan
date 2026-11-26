@@ -22,10 +22,10 @@ For macOS and Linux setup, iteration, and smoke checks, see `importantdocsneedko
 
 ## Deploy to Cloudflare Workers (optional, no server)
 
-The same code can also run on Cloudflare Workers without a server. This does not change the Node / AI Studio flow above: `server.ts` and `npm run dev` / `npm start` do not read any Workers config.
+The same code can also run on Cloudflare Workers without a server. This is a second publish channel, alongside the systemd server guide. It does not change the Node / AI Studio flow: `server.ts` and `npm run dev` / `npm start` do not read any Workers config.
 
 - `cloudflare/worker.ts` is the Worker entry. Static assets come from `dist/`, `/api/*` goes to a Durable Object pinned to US West (`wnam`) that runs the same Express app (`server/app.ts`), so Gemini calls leave from the US, and `/chtatain-datacent/*` is proxied to the old upload server (`UPLOAD_ORIGIN`).
-- `wrangler.jsonc` holds the Worker config. The `tangyou-app.alphathought.org` route is commented out until it is approved.
-- Local check: `npm run cf:dev` (reads `GEMINI_API_KEY` from `.env.local`; never uploaded). Deploy: first `npx --yes wrangler@4.168.0 secret put GEMINI_API_KEY` (rotate the key first), then `npm run cf:deploy`.
+- `wrangler.jsonc` holds the Worker config, including the live `tangyou-app.alphathought.org` route. Do not change `name` or `routes` without the resource owner's confirmation.
+- Local check: `npm run cf:dev` (reads `GEMINI_API_KEY` from `.env.local`; never uploaded). Deploy only after reading the guide below: put `GEMINI_API_KEY` as a Worker Secret first, then `npm run cf:deploy`.
 
-Architecture, steps, domain switch, and rollback: `importantdocsneedkown/线上无服务器部署实例（Cloudflare Workers）.txt`.
+A blank-slate operator (human or AI) who has this repo should follow `importantdocsneedkown/线上无服务器部署实例（Cloudflare Workers）.txt`: it tells them what to agree with the resource owner, and how to publish to a specified Cloudflare account and domain, plus rollback and the current production example.

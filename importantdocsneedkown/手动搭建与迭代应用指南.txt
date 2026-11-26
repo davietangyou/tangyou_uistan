@@ -1,7 +1,7 @@
 # 手动搭建与迭代应用指南
 ## macOS 本地 + Linux 线上
 
-版本：1.3
+版本：1.4
 适用项目：tangyou_uistan
 适用模式：dev 模式（`npm run dev`）
 
@@ -24,7 +24,7 @@
 - 线上 systemd 长期托管：由 systemd 实例文档负责；
 - 反向代理、TLS、DNS：由上层设施负责；
 - 生产构建与生产托管：本文档只使用 dev 模式；
-- Cloudflare Workers 无服务器部署：由《线上无服务器部署实例（Cloudflare Workers）.txt》负责，它与本文档的 dev 模式共用同一套 `/api/gemini/*` 路由代码（`server/app.ts`），互不改变对方的启动方式；
+- Cloudflare Workers 无服务器部署：由《线上无服务器部署实例（Cloudflare Workers）.txt》负责。它是与本文档及《线上服务托管实例（systemd）》并列的一条线上发布渠道；持有本仓库代码的执行者可依据该文档，与资源拥有者沟通后发布到指定的 Cloudflare 账号与指定域名。它与本文档的 dev 模式共用同一套 `/api/gemini/*` 路由代码（`server/app.ts`），互不改变对方的启动方式；
 - AI 辅助发布：属于另一条独立链路。
 
 ### 0.3 阅读路径

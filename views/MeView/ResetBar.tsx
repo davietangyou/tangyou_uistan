@@ -1,4 +1,5 @@
 import type {MeViewModel} from './useMeViewModel';
+import {clearAllStorage} from '../../domain';
 
 export function ResetBar(_props: {vm: MeViewModel}) {
     return (
@@ -10,7 +11,7 @@ export function ResetBar(_props: {vm: MeViewModel}) {
                 <button
                     onClick={() => {
                         if (confirm('確定要清除所有紀錄嗎？所有個人設定、數據與對話紀錄將無法恢復。')) {
-                            localStorage.clear();
+                            clearAllStorage();
                             window.location.reload();
                         }
                     }}

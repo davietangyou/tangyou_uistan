@@ -61,6 +61,11 @@ function parseSourceContracts() {
                 for (const m of src.matchAll(/localStorage\.(?:get|set|remove)Item\(\s*['"]([^'"]+)['"]/g)) {
                     storageKeys.add(m[1]);
                 }
+                // Also harvest canonical key literals (STORAGE_KEYS.profile = 'dia_profile', etc.)
+                // so a centralized accessor does not drop keys from the contract snapshot.
+                for (const m of src.matchAll(/['"](dia_[a-z0-9_]+)['"]/g)) {
+                    storageKeys.add(m[1]);
+                }
             }
         }
     };

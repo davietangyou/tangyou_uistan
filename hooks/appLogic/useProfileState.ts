@@ -1,14 +1,14 @@
 import {useEffect, useState} from 'react';
 import type {DecisionResult, UserProfile} from '../../utils/types';
 import * as DataService from '../../services/dataService';
-import {loadProfileFromStorage} from './loadProfile';
+import {loadProfileFromStorage, persistProfile, toggleConditionOnProfile, mergeSavedDoctorQuestions} from '../../domain';
 
 export function useProfileState() {
     const [profile, setProfile] = useState<UserProfile>(() => loadProfileFromStorage());
 
     const [onboardingStep, setOnboardingStep] = useState(1);
 
-    useEffect(() => localStorage.setItem('dia_profile', JSON.stringify(profile)), [profile]);
+    useEffect(() => persistProfile(profile), [profile]);
 
     const updateProfileWithExtraction = (extracted?: DecisionResult['extractedProfileData']) => {
         if (!extracted) return;
@@ -18,27 +18,14 @@ export function useProfileState() {
 
     // 切換病症狀態
     const toggleCondition = (cond: string) => {
-        const current = profile.conditions || [];
-        if (cond === 'NONE') {
-            setProfile({...profile, conditions: ['NONE']});
-            return;
-        }
-        let next = current.filter(c => c !== 'NONE');
-        if (next.includes(cond)) {
-            next = next.filter(c => c !== cond);
-        } else {
-            next = [...next, cond];
-        }
-        setProfile({...profile, conditions: next});
+        setProfile(toggleConditionOnProfile(profile, cond));
     };
 
     // 保存醫生問題
     const saveDoctorQuestions = (questions: string[]) => {
-        if (!questions.length) return;
-        const current = profile.savedDoctorQuestions || [];
-        // 合併並去重，保持最新
-        const updated = [...new Set([...questions, ...current])];
-        setProfile({...profile, savedDoctorQuestions: updated});
+        const updated = mergeSavedDoctorQuestions(profile, questions);
+        if (updated === profile) return;
+        setProfile(updated);
     };
 
     // 上报完整数据流程 (Refactored using DataService)

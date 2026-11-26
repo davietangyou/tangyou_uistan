@@ -1,13 +1,11 @@
 import {useEffect, useState} from 'react';
+import {loadLargeFontPreference, persistLargeFontPreference} from '../../domain';
 
 export function useFontPreference() {
     // 7. Accessibility State (老友大字模式 / 護眼大字體色調)
-    const [isLargeFont, setIsLargeFont] = useState<boolean>(() => {
-        const saved = localStorage.getItem('dia_large_font');
-        return saved ? saved === 'true' : true; // 預設開啟大字護老模式
-    });
+    const [isLargeFont, setIsLargeFont] = useState<boolean>(() => loadLargeFontPreference());
 
-    useEffect(() => localStorage.setItem('dia_large_font', String(isLargeFont)), [isLargeFont]);
+    useEffect(() => persistLargeFontPreference(isLargeFont), [isLargeFont]);
 
     return {isLargeFont, setIsLargeFont};
 }

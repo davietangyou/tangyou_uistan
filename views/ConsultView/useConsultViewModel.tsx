@@ -2,6 +2,7 @@ import {useEffect, useRef, useState} from 'react';
 import type {ConsultViewProps} from './types';
 import type { ChatTurn } from '../../utils/types';
 import {getConversationalChatResponse} from '../../services/geminiService';
+import {loadChatMessages, persistChatMessages, clearChatMessages} from '../../domain';
 
 export function useConsultViewModel(props: ConsultViewProps) {
     const {
@@ -24,43 +25,12 @@ export function useConsultViewModel(props: ConsultViewProps) {
 
     // AI 聊天室狀態 (支援 LocalStorage 自動保存)
     const [chatInput, setChatInput] = useState('');
-    const [chatMessages, setChatMessages] = useState<any[]>(() => {
-        try {
-            const saved = localStorage.getItem('dia_chat_messages');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    return parsed;
-                }
-            }
-        } catch (e) {
-            console.error("無法讀取歷史對話紀錄", e);
-        }
-        return DEFAULT_CHAT_MESSAGES;
-    });
+    const [chatMessages, setChatMessages] = useState<any[]>(() => loadChatMessages(DEFAULT_CHAT_MESSAGES));
 
     // 當對話訊息更新時自動持久化保存
     // 存入 localStorage 前剝離圖片 base64 和 previewUrl，防止 localStorage 溢出
     useEffect(() => {
-        try {
-            const messagesToStore = chatMessages.map(msg => {
-                if (msg.imageAttachment) {
-                    return {
-                        ...msg,
-                        imageAttachment: {
-                            mimeType: msg.imageAttachment.mimeType,
-                            base64: '',
-                            previewUrl: '',
-                            name: msg.imageAttachment.name
-                        }
-                    };
-                }
-                return msg;
-            });
-            localStorage.setItem('dia_chat_messages', JSON.stringify(messagesToStore));
-        } catch (e) {
-            console.error("儲存對話紀錄失敗", e);
-        }
+        persistChatMessages(chatMessages);
     }, [chatMessages]);
 
     // 清空歷史對話處理
@@ -74,11 +44,7 @@ export function useConsultViewModel(props: ConsultViewProps) {
         setOtherCustomText({});
         setExpandedDetailedSections({});
         setExpandedDiscussionPoints({});
-        try {
-            localStorage.removeItem('dia_chat_messages');
-        } catch (e) {
-            console.error("清空對話儲存失敗", e);
-        }
+        clearChatMessages();
     };
     const [chatLoading, setChatLoading] = useState(false);
     const [chatSavedQs, setChatSavedQs] = useState<Record<string, boolean>>({});

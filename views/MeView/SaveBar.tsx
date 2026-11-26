@@ -1,4 +1,5 @@
 import type {MeViewModel} from './useMeViewModel';
+import {persistProfile} from '../../domain';
 
 export function SaveBar({vm}: {vm: MeViewModel}) {
     const {
@@ -15,7 +16,7 @@ export function SaveBar({vm}: {vm: MeViewModel}) {
             <div className="pt-2 space-y-3">
                 <button
                     onClick={() => {
-                        localStorage.setItem('dia_profile', JSON.stringify(profile));
+                        persistProfile(profile);
                         setSaveSuccess(true);
                         setTimeout(() => setSaveSuccess(false), 2500);
                     }}

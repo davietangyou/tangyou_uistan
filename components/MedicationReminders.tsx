@@ -16,6 +16,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile } from '../utils/types';
 import { motion, AnimatePresence } from 'motion/react';
+import {loadReminders, persistReminders, loadTakenLogs, persistTakenLogs} from '../domain';
 
 interface MedicationRemindersProps {
     profile: UserProfile;
@@ -48,29 +49,11 @@ export const MedicationReminders: React.FC<MedicationRemindersProps> = ({
 }) => {
     // 1. 初始化狀態
     const [reminders, setReminders] = useState<ReminderItem[]>(() => {
-        const saved = localStorage.getItem('dia_reminders_v2');
-        if (saved) {
-            try {
-                return JSON.parse(saved);
-            } catch (e) {
-                console.error(e);
-            }
-        }
         // 預設空的提醒
-        return [];
+        return loadReminders<ReminderItem>([]);
     });
 
-    const [takenLogs, setTakenLogs] = useState<Record<string, boolean>>(() => {
-        const saved = localStorage.getItem('dia_taken_logs_v2');
-        if (saved) {
-            try {
-                return JSON.parse(saved);
-            } catch (e) {
-                console.error(e);
-            }
-        }
-        return {};
-    });
+    const [takenLogs, setTakenLogs] = useState<Record<string, boolean>>(() => loadTakenLogs({}));
 
     const [isManageOpen, setIsManageOpen] = useState(false);
     const [newMedName, setNewMedName] = useState('');
@@ -96,12 +79,12 @@ export const MedicationReminders: React.FC<MedicationRemindersProps> = ({
 
     // 保存提醒到 localStorage
     useEffect(() => {
-        localStorage.setItem('dia_reminders_v2', JSON.stringify(reminders));
+        persistReminders(reminders);
     }, [reminders]);
 
     // 保存服藥記錄到 localStorage
     useEffect(() => {
-        localStorage.setItem('dia_taken_logs_v2', JSON.stringify(takenLogs));
+        persistTakenLogs(takenLogs);
     }, [takenLogs]);
 
     // 3. 獲取當前時段

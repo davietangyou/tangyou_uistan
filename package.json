@@ -9,7 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "verify": "node scripts/verify/run.mjs"
+    "verify": "node scripts/verify/run.mjs",
+    "cf:dev": "vite build && npx --yes wrangler@4.168.0 dev",
+    "cf:deploy": "vite build && npx --yes wrangler@4.168.0 deploy"
   },
   "dependencies": {
     "@google/genai": "^3.6.1",

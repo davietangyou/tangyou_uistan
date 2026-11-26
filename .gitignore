@@ -83,3 +83,7 @@ maven-wrapper.jar
 # cur project
 .env.*
 !.env.example
+
+# Cloudflare Workers（wrangler 本地密鑰與本地狀態，不進入倉庫）
+.dev.vars*
+.wrangler

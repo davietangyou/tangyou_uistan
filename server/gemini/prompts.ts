@@ -135,6 +135,8 @@ export interface BuildChatPromptsParams {
     isPreferenceResponse: boolean;
     hasPreferenceInHistory: boolean;
     scenarios: ScenarioValue[];
+    /** Optional clock injection for deterministic prompt assembly. Defaults to Date.now(). */
+    nowMs?: number;
 }
 
 export function buildChatPrompts(params: BuildChatPromptsParams): {
@@ -155,6 +157,7 @@ export function buildChatPrompts(params: BuildChatPromptsParams): {
         isPreferenceResponse,
         hasPreferenceInHistory,
         scenarios,
+        nowMs,
     } = params;
 
     const needsLifestyleBlock =
@@ -203,7 +206,7 @@ ${knowledgeText || "依據一般 ADA / 香港糖尿病管理實證原則"}
 ${formatHbA1cContext(hba1cRecords)}
 
 【近 30 天指尖血糖統計、情境備註與資料充分性】
-${formatGlucoseContext(glucoseRecords)}
+${formatGlucoseContext(glucoseRecords, nowMs)}
 
 【對話歷史（僅含最近有效對話）】
 ${formatHistoryContext(trimmedHistory)}

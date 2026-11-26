@@ -252,6 +252,7 @@ async function captureLogic() {
             isPreferenceResponse: input.isPreferenceResponse,
             hasPreferenceInHistory: input.hasPreferenceInHistory,
             scenarios: input.scenarios,
+            nowMs: FIXED_NOW,
         });
     }
 

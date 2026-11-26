@@ -1,8 +1,8 @@
 # 线上无服务器部署实例（Cloudflare Workers）
 
-版本：1.1
+版本：1.2
 记录时间：2026-11-26
-当前状态：代码与配置已就绪，并已在本地 `wrangler dev` 下验证；尚未部署到 Cloudflare，正式域名尚未切换。
+当前状态：已部署到 Cloudflare。测试地址 `https://tangyou-app.davie12580.workers.dev` 与正式域名 `https://tangyou-app.alphathought.org` 均已由 Worker 承接（Route 已启用）。DNS 橙云 A 记录未改，上报路径仍回源旧伺服器。
 
 ---
 
@@ -197,24 +197,17 @@ VERIFY_BASE_URL=http://127.0.0.1:8799/ npm run verify -- --out verify-results/cf
 
 ---
 
-## 7. 正式切换 tangyou-app.alphathought.org（经项目主人确认后执行）
+## 7. 正式切换 tangyou-app.alphathought.org
 
-1. 确认第 6 节验收通过，旧伺服器上报服务（8002 与 nginx 的 `/chtatain-datacent/` 转发）正常，并记录切换前上报路径的基准响应：
-   ```bash
-   U=https://tangyou-app.alphathought.org/chtatain-datacent/client-api/tangserv/newyshwo/vidoquse/fileget/probe/probe.json
-   curl -s -o /dev/null -w "%{http_code}\n" "$U"     # 记下状态码作为基准
-   ```
-2. 编辑 `wrangler.jsonc`，取消末尾 `routes` 一行的注释：
-   ```jsonc
-   ,"routes": [{ "pattern": "tangyou-app.alphathought.org/*", "zone_name": "alphathought.org" }]
-   ```
-3. `npm run cf:deploy`。DNS 记录保持不变（仍为指向旧伺服器的橙云 A 记录）。
-4. 验收：
-   ```bash
-   curl -s https://tangyou-app.alphathought.org/api/health
-   ```
-   浏览器打开正式域名，完成一次咨询；再执行第 1 步的 `curl "$U"`，状态码应与切换前基准一致，且旧伺服器上报服务日志能看到这次请求（说明 Worker 已把上报路径回源旧伺服器）。前端自动上报目前未接线于对话式问诊画面，若详情页的上报按钮可达，也可以实际触发一次上报确认。
-5. 提交 `wrangler.jsonc` 的这一行改动，使仓库与线上一致。
+已于 2026-11-26（香港时间）经项目主人确认并完成切换。`wrangler.jsonc` 末尾 `routes` 已启用：
+
+```jsonc
+"routes": [{ "pattern": "tangyou-app.alphathought.org/*", "zone_name": "alphathought.org" }]
+```
+
+DNS 记录未改（仍为指向旧伺服器的橙云 A 记录）。切换前上报探活 `.../probe/probe.json` 基准为 HTTP 200、空响应体（Content-Length: 0）；切换后相同。`/api/health` 为 `configured:true`，正式域名上的真实咨询返回 200。首页改为正式构建产物（不再是旧伺服器上的 `npm run dev` 页面）。
+
+若需在其他账号或环境重复此次切换，步骤仍是：先在测试地址验收（第 6 节）并记录上报探活基准 → 启用上述 `routes` → `npm run cf:deploy`（不改 DNS）→ 验收 health、一次咨询、以及探活状态码与基准一致。
 
 ---
 

@@ -29,9 +29,8 @@
   },
 
   "workers_dev": true,
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
 
-  // 切換正式域名（經項目主人確認後再取消註釋並重新部署）：
-  // Route 模式保留現有橙雲 A 記錄（舊伺服器繼續作為源站，承接上報路徑），刪除該 route 即可回滾。
-  // ,"routes": [{ "pattern": "tangyou-app.alphathought.org/*", "zone_name": "alphathought.org" }]
+  // 2026-11-26 經項目主人確認後啟用 Route。保留現有橙雲 A 記錄（舊伺服器繼續作為源站，承接上報路徑），刪除該 route 即可回滾。
+  "routes": [{ "pattern": "tangyou-app.alphathought.org/*", "zone_name": "alphathought.org" }]
 }

@@ -4,6 +4,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 function listFiles(dir, acc = [], prefix = '') {
     if (!fs.existsSync(dir)) return acc;
@@ -21,7 +22,16 @@ function isComparable(rel) {
         || rel.endsWith('.normalized.json')
         || rel.endsWith('.text.normalized.txt')
         || rel.endsWith('index.json')
-        || rel === 'status.json';
+        || rel === 'status.json'
+        || (rel.endsWith('.png') && rel.includes('/shots/'));
+}
+
+function comparePng(aPath, bPath) {
+    const script = path.join(path.dirname(new URL(import.meta.url).pathname), 'lib/compare-png.py');
+    const res = spawnSync('python3', [script, aPath, bPath, '--max-mean', '2', '--max-pct', '0.5'], { encoding: 'utf8' });
+    let report = {};
+    try { report = JSON.parse(res.stdout || '{}'); } catch { report = { ok: false, raw: res.stdout, err: res.stderr }; }
+    return { ok: res.status === 0 && report.ok !== false, report, stderr: res.stderr };
 }
 
 function main() {
@@ -43,8 +53,21 @@ function main() {
             missing.push({ file: rel, inBaseline: fs.existsSync(aPath), inCurrent: fs.existsSync(bPath) });
             continue;
         }
+        if (rel.endsWith('.png')) {
+            const png = comparePng(aPath, bPath);
+            if (!png.ok) diffs.push({ file: rel, kind: 'screenshot', ...png.report });
+            continue;
+        }
         const a = fs.readFileSync(aPath, 'utf8');
         const b = fs.readFileSync(bPath, 'utf8');
+        if (rel === 'status.json') {
+            const aj = JSON.parse(a);
+            const bj = JSON.parse(b);
+            const keys = [...new Set([...Object.keys(aj), ...Object.keys(bj)])].filter((k) => aj[k] !== 'skipped' && bj[k] !== 'skipped' && aj[k] !== undefined && bj[k] !== undefined);
+            const changed = keys.filter((k) => JSON.stringify(aj[k]) !== JSON.stringify(bj[k]));
+            if (changed.length) diffs.push({ file: rel, keys: changed });
+            continue;
+        }
         if (a !== b) diffs.push(rel);
     }
     const report = { baseline, current, compared: all.length, identical: all.length - diffs.length - missing.length, diffs, missing };

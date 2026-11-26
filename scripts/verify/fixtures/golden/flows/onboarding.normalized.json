@@ -1,0 +1,37 @@
+{
+  "assertions": {
+    "age": true,
+    "gender": true,
+    "hasProfileKey": true,
+    "name": true,
+    "onHome": true
+  },
+  "name": "onboarding",
+  "ok": true,
+  "steps": [
+    {
+      "name": "land-onboarding",
+      "shot": "shots/onboarding-start.png",
+      "text": "如何稱呼您？"
+    },
+    {
+      "name": "filled-step1",
+      "shot": "shots/onboarding-filled.png"
+    },
+    {
+      "name": "step2",
+      "text": "完成並進入糖友導航"
+    },
+    {
+      "assertions": {
+        "age": true,
+        "gender": true,
+        "hasProfileKey": true,
+        "name": true,
+        "onHome": true
+      },
+      "name": "arrived-home",
+      "shot": "shots/onboarding-home.png"
+    }
+  ]
+}

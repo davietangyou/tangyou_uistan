@@ -1,0 +1,19 @@
+{
+  "assertions": {
+    "countIncreased": true,
+    "textPersisted": true,
+    "visible": true
+  },
+  "counts": {
+    "after": 3,
+    "before": 2
+  },
+  "name": "saved-questions-add",
+  "ok": true,
+  "steps": [
+    {
+      "name": "added",
+      "shot": "shots/saved-questions-added.png"
+    }
+  ]
+}

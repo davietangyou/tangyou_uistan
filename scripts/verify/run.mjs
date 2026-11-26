@@ -45,6 +45,7 @@ const outRoot = path.resolve(repoRoot, argValue('--out', 'verify-results/latest'
 const compareRoot = process.argv.includes('--compare') ? path.resolve(repoRoot, argValue('--compare')) : null;
 const skipBuild = process.argv.includes('--skip-build');
 const skipDom = process.argv.includes('--skip-dom');
+const skipFlows = process.argv.includes('--skip-flows');
 fs.mkdirSync(outRoot, { recursive: true });
 
 console.log(`\n=== verify lint ===`);
@@ -83,11 +84,24 @@ if (!skipDom && await serverUp(healthUrl)) {
     console.log('Skipping DOM capture (--skip-dom).');
 }
 
+const flowsDir = path.join(outRoot, 'flows');
+if (!skipFlows && await serverUp(healthUrl)) {
+    console.log(`\n=== verify flows ===`);
+    const flows = await run('node', ['scripts/verify/capture-flows.mjs', '--out', flowsDir]);
+    if (flows.code !== 0) process.exit(flows.code);
+} else if (!skipFlows) {
+    console.warn(`Dev server not reachable at ${healthUrl}; skipping interaction flows.`);
+    fs.writeFileSync(path.join(outRoot, 'flows-skipped.txt'), `Dev server not reachable at ${healthUrl}\n`);
+} else {
+    console.log('Skipping interaction flows (--skip-flows).');
+}
+
 const status = {
     lint: lint.code,
     build: skipBuild ? 'skipped' : 0,
     logic: logic.code,
     dom: skipDom ? 'skipped' : (fs.existsSync(path.join(outRoot, 'dom', 'index.json')) ? 0 : 'missing'),
+    flows: skipFlows ? 'skipped' : (fs.existsSync(path.join(outRoot, 'flows', 'index.json')) ? 0 : 'missing'),
 };
 fs.writeFileSync(path.join(outRoot, 'status.json'), JSON.stringify(status, null, 2) + '\n');
 

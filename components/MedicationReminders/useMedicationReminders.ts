@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import {loadReminders, persistReminders, loadTakenLogs, persistTakenLogs} from '../../domain';
+import {loadReminders, persistReminders, loadTakenLogs, persistTakenLogs, hasAutoTriggered, markAutoTriggered} from '../../domain';
 import type { MedicationRemindersProps, ReminderItem } from './types';
 import { HK_COMMON_MEDS } from './constants';
 
@@ -101,12 +101,11 @@ export function useMedicationReminders({
         const unfinished = currentPeriodMeds.filter(r => !takenLogs[`${todayStr}_${r.id}`]);
 
         if (unfinished.length > 0) {
-            const triggerKey = `dia_auto_triggered_${todayStr}_${currentPeriod}`;
-            const alreadyTriggered = localStorage.getItem(triggerKey);
+            const alreadyTriggered = hasAutoTriggered(todayStr, currentPeriod);
 
             if (!alreadyTriggered) {
                 // 標記已自動觸發過
-                localStorage.setItem(triggerKey, 'true');
+                markAutoTriggered(todayStr, currentPeriod);
                 setIsTestMode(false);
                 setShowReminderPopup(true);
                 
@@ -172,7 +171,7 @@ export function useMedicationReminders({
     };
 
     // 處理一鍵登記時段內所有藥物已服用
-    const handleTakeAll = (meds: any[]) => {
+    const handleTakeAll = (meds: ReminderItem[]) => {
         meds.forEach(med => {
             const isMock = med.id.startsWith('mock_');
             if (isMock) {

@@ -12,4 +12,11 @@ export const STORAGE_KEYS = {
     takenLogs: 'dia_taken_logs_v2',
 } as const;
 
+/**
+ * MedicationReminders also writes a dynamic per-day, per-period flag
+ * with the template dia_auto_triggered_${date}_${period}. Use
+ * autoTriggeredStorageKey() rather than inventing a new prefix.
+ */
+
+
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];

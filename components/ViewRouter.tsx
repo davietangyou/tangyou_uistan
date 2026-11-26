@@ -1,4 +1,5 @@
 import {View} from '../utils/types';
+import type {AppLogic} from '../hooks/useAppLogic';
 import {OnboardingView} from '../views/OnboardingView';
 import {HomeView} from '../views/HomeView';
 import {GlucoseView} from '../views/GlucoseView';
@@ -8,7 +9,7 @@ import {DetailView} from '../views/DetailView'; // 已註冊但無入口（View.
 import {SavedQuestionsView} from '../views/SavedQuestionsView';
 
 /** Renders the active view from useAppLogic. View.Detail / View.Result stay registered. */
-export function ViewRouter({logic}: {logic: any}) {
+export function ViewRouter({logic}: {logic: AppLogic}) {
     const {view} = logic;
     return (
         <>

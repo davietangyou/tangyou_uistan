@@ -88,21 +88,21 @@ export function useGlucoseViewModel(props: GlucoseViewProps) {
         if (!newGlucose.timeType) {
             const h = new Date().getHours();
             if (h >= 6 && h < 9) {
-                setNewGlucose((prev: any) => ({ ...prev, timeType: '空腹', mealTag: undefined }));
+                setNewGlucose((prev) => ({ ...prev, timeType: '空腹', mealTag: undefined }));
             } else if (h >= 9 && h < 11) {
-                setNewGlucose((prev: any) => ({ ...prev, timeType: '餐後2小時', mealTag: '早餐' }));
+                setNewGlucose((prev) => ({ ...prev, timeType: '餐後2小時', mealTag: '早餐' }));
             } else if (h >= 11 && h < 13) {
-                setNewGlucose((prev: any) => ({ ...prev, timeType: '餐前', mealTag: '午餐' }));
+                setNewGlucose((prev) => ({ ...prev, timeType: '餐前', mealTag: '午餐' }));
             } else if (h >= 13 && h < 16) {
-                setNewGlucose((prev: any) => ({ ...prev, timeType: '餐後2小時', mealTag: '午餐' }));
+                setNewGlucose((prev) => ({ ...prev, timeType: '餐後2小時', mealTag: '午餐' }));
             } else if (h >= 17 && h < 19) {
-                setNewGlucose((prev: any) => ({ ...prev, timeType: '餐前', mealTag: '晚餐' }));
+                setNewGlucose((prev) => ({ ...prev, timeType: '餐前', mealTag: '晚餐' }));
             } else if (h >= 19 && h < 21) {
-                setNewGlucose((prev: any) => ({ ...prev, timeType: '餐後2小時', mealTag: '晚餐' }));
+                setNewGlucose((prev) => ({ ...prev, timeType: '餐後2小時', mealTag: '晚餐' }));
             } else if (h >= 21) {
-                setNewGlucose((prev: any) => ({ ...prev, timeType: '睡前', mealTag: undefined }));
+                setNewGlucose((prev) => ({ ...prev, timeType: '睡前', mealTag: undefined }));
             } else {
-                setNewGlucose((prev: any) => ({ ...prev, timeType: '日常其他時間', mealTag: undefined }));
+                setNewGlucose((prev) => ({ ...prev, timeType: '日常其他時間', mealTag: undefined }));
             }
         }
     }, []);
@@ -111,7 +111,7 @@ export function useGlucoseViewModel(props: GlucoseViewProps) {
         setRecordDate(newD);
         setIsLiveTime(isLive);
         const formatted = formatDisplayDateTime(newD);
-        setNewGlucose((prev: any) => ({
+        setNewGlucose((prev) => ({
             ...prev,
             customTimestamp: isLive ? undefined : newD.getTime(),
             customDateStr: isLive ? undefined : formatted.dateStr
@@ -119,7 +119,7 @@ export function useGlucoseViewModel(props: GlucoseViewProps) {
     };
 
     const handleSelectPeriod = (item: typeof PERIOD_OPTIONS[0]) => {
-        setNewGlucose((prev: any) => ({
+        setNewGlucose((prev) => ({
             ...prev,
             timeType: item.timeType,
             mealTag: item.mealTag
@@ -185,17 +185,17 @@ export function useGlucoseViewModel(props: GlucoseViewProps) {
                 if (target === 'symptom') {
                     setCustomSymptomText(prev => prev ? prev + '、' + cleanText : cleanText);
                 } else if (target === 'diet') {
-                    setNewGlucose((prev: any) => ({
+                    setNewGlucose((prev) => ({
                         ...prev,
                         dietNote: prev.dietNote ? prev.dietNote + '，' + cleanText : cleanText
                     }));
                 } else if (target === 'exercise') {
-                    setNewGlucose((prev: any) => ({
+                    setNewGlucose((prev) => ({
                         ...prev,
                         exerciseNote: prev.exerciseNote ? prev.exerciseNote + '，' + cleanText : cleanText
                     }));
                 } else if (target === 'note') {
-                    setNewGlucose((prev: any) => ({
+                    setNewGlucose((prev) => ({
                         ...prev,
                         illnessNote: prev.illnessNote ? prev.illnessNote + '，' + cleanText : cleanText
                     }));
@@ -219,13 +219,13 @@ export function useGlucoseViewModel(props: GlucoseViewProps) {
             }
         });
         
-        setNewGlucose((prev: any) => ({...prev, symptoms: next}));
+        setNewGlucose((prev) => ({...prev, symptoms: next}));
         setCustomSymptomText('');
     };
 
     const handleRemoveCustomSymptom = (sym: string) => {
         const next = (newGlucose.symptoms || []).filter(x => x !== sym);
-        setNewGlucose((prev: any) => ({...prev, symptoms: next}));
+        setNewGlucose((prev) => ({...prev, symptoms: next}));
     };
 
     const selectedCustomSymptoms = useMemo(() => {

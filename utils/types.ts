@@ -182,3 +182,115 @@ export interface ChatTurn {
     role: 'user' | 'assistant';
     content: string;
 }
+
+/** One option on a consult preference (value-clarification) card. */
+export interface PreferenceOption {
+    valueCategory: string;
+    label: string;
+    description: string;
+}
+
+export interface PreferenceQuestion {
+    id: string;
+    questionText: string;
+    options: PreferenceOption[];
+}
+
+export interface PreferenceSelection {
+    questionText: string;
+    label: string;
+    valueCategory: string;
+    rating?: number;
+}
+
+export interface ChatSafetyContact {
+    label: string;
+    number: string;
+    note?: string;
+}
+
+/** Client copy of the safety-gate assessment carried on a consult reply. */
+export interface ChatSafety {
+    isEmergency: boolean;
+    triggered: boolean;
+    blockLLM: boolean;
+    severity: 'NONE' | 'CAUTION' | 'URGENT' | 'EMERGENCY';
+    category?: 'acute_hypoglycemia' | 'dka_hhs' | 'foot_wound' | 'mental_health' | 'high_risk_unwell';
+    title?: string;
+    message?: string;
+    replyMessage?: string;
+    actionSteps?: string[];
+    contacts?: ChatSafetyContact[];
+    matchedSignal?: string;
+}
+
+export interface ChatOptionComparison {
+    option: string;
+    pros: string;
+    cons: string;
+}
+
+export interface ChatImageAttachment {
+    base64: string;
+    mimeType: string;
+    previewUrl?: string;
+    name?: string;
+}
+
+/**
+ * Consult chat bubble persisted in dia_chat_messages.
+ * Distinct from ChatTurn, which is the {role, content} history sent to /api/gemini/chat.
+ */
+export interface ChatMessage {
+    id: string;
+    role: 'user' | 'assistant';
+    content: string;
+    isWelcome?: boolean;
+    isError?: boolean;
+    imageAttachment?: ChatImageAttachment;
+    optionsComparison?: ChatOptionComparison[];
+    comparisonKind?: 'decision' | 'knowledge' | string;
+    patientValuesSummary?: string;
+    doctorQuestions?: string[];
+    suggestedFollowUps?: string[];
+    traceability?: {
+        scenario?: string;
+        topic_focus?: string;
+        subtopic?: string;
+        sources?: string[];
+        safetyModeTriggered?: boolean;
+        confidence?: string;
+        isFallback?: boolean;
+        triggeredNodes?: string[];
+        currentStep?: string;
+    };
+    activeNode?: number;
+    safety?: ChatSafety;
+    preferenceQuestions?: PreferenceQuestion[];
+    briefVersion?: { takeHomeMessages?: string[] };
+    detailedVersion?: {
+        optionComparison?: ChatOptionComparison[];
+        suggestedDiscussionPoints?: string[];
+        generalExplanation?: string;
+    };
+}
+
+/** JSON body returned by POST /api/gemini/chat. */
+export interface ChatApiResponse {
+    reply: string;
+    activeNode?: number;
+    safety?: ChatSafety;
+    traceability?: ChatMessage['traceability'];
+    briefVersion?: ChatMessage['briefVersion'];
+    detailedVersion?: ChatMessage['detailedVersion'];
+    optionsComparison?: ChatOptionComparison[];
+    comparisonKind?: 'decision' | 'knowledge' | string;
+    patientValuesSummary?: string;
+    doctorQuestions?: string[];
+    suggestedFollowUps?: string[];
+    preferenceQuestions?: PreferenceQuestion[];
+    decisionType?: string;
+    confidence?: number;
+    isLowConfidenceDefaulted?: boolean;
+    explorationQuestion?: string;
+}

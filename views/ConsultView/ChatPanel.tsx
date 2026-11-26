@@ -1,4 +1,5 @@
 import type {ConsultViewModel} from './useConsultViewModel';
+import type {PreferenceQuestion, PreferenceOption, PreferenceSelection, ChatOptionComparison} from '../../utils/types';
 import ReactMarkdown from 'react-markdown';
 
 export function ChatPanel({vm}: {vm: ConsultViewModel}) {
@@ -257,7 +258,7 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                                         {/* Node 3: 偏好釐清卡片 (Value Preference Cards - 基於文獻與 PDA 標準維度) */}
                                         {msg.activeNode === 3 && msg.preferenceQuestions && msg.preferenceQuestions.length > 0 && (
                                             <div className="p-4 sm:p-5 bg-amber-50/50 border-t border-amber-200/80 space-y-4 animate-soft">
-                                                {msg.preferenceQuestions.map((pq: any) => {
+                                                {msg.preferenceQuestions.map((pq: PreferenceQuestion) => {
                                                     const msgId = msg.id || index.toString();
                                                     const pqSelections = selectedPreferenceOptions[msgId]?.[pq.id] || {};
                                                     const otherActive = isOtherSelected[msgId]?.[pq.id] || false;
@@ -283,7 +284,7 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                                                                 )}
                                                             </div>
                                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                                                                {pq.options.map((opt: any, optIdx: number) => {
+                                                                {pq.options.map((opt: PreferenceOption, optIdx: number) => {
                                                                     const iconMap: Record<string, string> = {
                                                                         Effectiveness: "⚡",
                                                                         Safety: "🛡️",
@@ -430,13 +431,13 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                                                             const parts = ["我已選擇我的個人偏好（決策考量維度）："];
                                                             let submittedCount = 0;
                                                             
-                                                            msg.preferenceQuestions.forEach((pq: any) => {
+                                                            msg.preferenceQuestions.forEach((pq: PreferenceQuestion) => {
                                                                 const pqSelections = msgSelections[pq.id] || {};
                                                                 const isOther = msgOthers[pq.id];
                                                                 const customTxt = (msgTexts[pq.id] || "").trim();
                                                                 
                                                                 // Add selected standard options
-                                                                Object.values(pqSelections).forEach((sel: any) => {
+                                                                Object.values(pqSelections).forEach((sel: PreferenceSelection) => {
                                                                     parts.push(`- 針對「${sel.questionText}」，我最看重：【${sel.label}】（價值維度：${sel.valueCategory}）`);
                                                                     submittedCount++;
                                                                 });
@@ -460,7 +461,7 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                                                             const msgTexts = otherCustomText[msgId] || {};
                                                             
                                                             let validCount = 0;
-                                                            msg.preferenceQuestions.forEach((pq: any) => {
+                                                            msg.preferenceQuestions.forEach((pq: PreferenceQuestion) => {
                                                                 const pqSelections = msgSelections[pq.id] || {};
                                                                 const isOther = msgOthers[pq.id];
                                                                 const customTxt = (msgTexts[pq.id] || "").trim();
@@ -478,7 +479,7 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                                                                 const msgOthers = isOtherSelected[msgId] || {};
                                                                 const msgTexts = otherCustomText[msgId] || {};
                                                                 let validCount = 0;
-                                                                msg.preferenceQuestions.forEach((pq: any) => {
+                                                                msg.preferenceQuestions.forEach((pq: PreferenceQuestion) => {
                                                                     validCount += Object.keys(msgSelections[pq.id] || {}).length;
                                                                     if (msgOthers[pq.id] && (msgTexts[pq.id] || "").trim().length > 0) validCount++;
                                                                 });
@@ -515,7 +516,7 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                                                         </span>
                                                     </p>
                                                     <div className="space-y-2">
-                                                        {comparisonItems.map((opt: any, optIdx: number) => (
+                                                        {comparisonItems.map((opt: ChatOptionComparison, optIdx: number) => (
                                                             <div key={optIdx} className="bg-white border border-slate-200/80 p-3 rounded-xl shadow-2xs space-y-2">
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="w-5 h-5 bg-[#4A6E85] text-white text-[11px] font-black flex items-center justify-center rounded-full shrink-0">
@@ -693,7 +694,7 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                                         {msg.activeNode !== 3 && (!msg.briefVersion && !msg.detailedVersion) && msg.optionsComparison && msg.optionsComparison.length > 0 && (
                                             <div className="p-4 bg-slate-50 border-t border-slate-200 space-y-2">
                                                 <p className="text-xs font-black text-slate-700">方案利弊對照盤：</p>
-                                                {msg.optionsComparison.map((opt: any, optIdx: number) => (
+                                                {msg.optionsComparison.map((opt: ChatOptionComparison, optIdx: number) => (
                                                     <div key={optIdx} className="bg-white p-3 rounded-xl border border-slate-200 space-y-1">
                                                         <p className="font-extrabold text-xs text-slate-900">{opt.option}</p>
                                                         <div className="grid grid-cols-2 gap-2 text-xs">

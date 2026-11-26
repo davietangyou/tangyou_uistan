@@ -1,3 +1,4 @@
+import type {ChangeEvent} from 'react';
 import type { MedicationRemindersViewModel } from './useMedicationReminders';
 
 export function ManageModal({vm}: {vm: MedicationRemindersViewModel}) {
@@ -118,7 +119,7 @@ export function ManageModal({vm}: {vm: MedicationRemindersViewModel}) {
                                             <label className="text-[9px] font-black text-slate-400 block mb-1">服用時段：</label>
                                             <select
                                                 value={newPeriod}
-                                                onChange={(e: any) => setNewPeriod(e.target.value)}
+                                                onChange={(e: ChangeEvent<HTMLSelectElement>) => setNewPeriod(e.target.value as typeof newPeriod)}
                                                 className="w-full bg-slate-50 p-2.5 rounded-xl font-bold text-xs text-slate-700 outline-none border border-slate-200 cursor-pointer"
                                             >
                                                 <option value="morning">🌄 早上/早餐後</option>

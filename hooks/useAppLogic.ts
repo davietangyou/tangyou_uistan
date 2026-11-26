@@ -131,3 +131,5 @@ export const useAppLogic = () => {
         ...speechLogic
     };
 };
+
+export type AppLogic = ReturnType<typeof useAppLogic>;

@@ -8,5 +8,4 @@ export interface ConsultViewProps {
     setView: (view: View) => void;
     saveDoctorQuestions: (qs: string[]) => void;
     isLargeFont?: boolean;
-    [key: string]: any;
 }

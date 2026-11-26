@@ -1,10 +1,11 @@
 /**
  * Consult chat persistence. Image base64 is stripped before write to avoid overflowing localStorage.
  */
+import type { ChatMessage } from '../utils/types';
 import { STORAGE_KEYS } from './storageKeys';
 import { readString, writeJson, removeKey } from './storage';
 
-export function loadChatMessages<T>(fallback: T[]): T[] {
+export function loadChatMessages<T = ChatMessage>(fallback: T[]): T[] {
     try {
         const saved = readString(STORAGE_KEYS.chatMessages);
         if (saved) {
@@ -19,7 +20,7 @@ export function loadChatMessages<T>(fallback: T[]): T[] {
     return fallback;
 }
 
-export function persistChatMessages(chatMessages: any[]): void {
+export function persistChatMessages(chatMessages: ChatMessage[]): void {
     try {
         const messagesToStore = chatMessages.map(msg => {
             if (msg.imageAttachment) {

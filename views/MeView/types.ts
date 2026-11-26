@@ -5,5 +5,4 @@ export interface MeViewProps {
     setProfile: (profile: UserProfile) => void;
     setView: (view: View) => void;
     isLargeFont?: boolean;
-    [key: string]: any;
 }

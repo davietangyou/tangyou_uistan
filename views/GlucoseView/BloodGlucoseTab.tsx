@@ -220,7 +220,7 @@ export function BloodGlucoseTab({vm}: {vm: GlucoseViewModel}) {
                                 {newGlucose.value && (
                                     <button
                                         type="button"
-                                        onClick={() => setNewGlucose((prev: any) => ({ ...prev, value: '' }))}
+                                        onClick={() => setNewGlucose((prev) => ({ ...prev, value: '' }))}
                                         className="text-xs font-bold text-slate-400 hover:text-rose-500 px-2 py-1 rounded-lg hover:bg-rose-50 transition-all cursor-pointer"
                                     >
                                         ✕ 清除
@@ -245,13 +245,13 @@ export function BloodGlucoseTab({vm}: {vm: GlucoseViewModel}) {
                                         onChange={(e) => {
                                             const val = e.target.value;
                                             if (val === '') {
-                                                setNewGlucose((prev: any) => ({ ...prev, value: '' }));
+                                                setNewGlucose((prev) => ({ ...prev, value: '' }));
                                             } else {
                                                 const num = parseFloat(val);
                                                 if (!isNaN(num) && num < 0) {
-                                                    setNewGlucose((prev: any) => ({ ...prev, value: '0' }));
+                                                    setNewGlucose((prev) => ({ ...prev, value: '0' }));
                                                 } else {
-                                                    setNewGlucose((prev: any) => ({ ...prev, value: val }));
+                                                    setNewGlucose((prev) => ({ ...prev, value: val }));
                                                 }
                                             }
                                         }}
@@ -354,7 +354,7 @@ export function BloodGlucoseTab({vm}: {vm: GlucoseViewModel}) {
                                                         key={tag}
                                                         type="button"
                                                         onClick={() => {
-                                                            setNewGlucose((prev: any) => ({
+                                                            setNewGlucose((prev) => ({
                                                                 ...prev,
                                                                 dietNote: prev.dietNote ? `${prev.dietNote}、${tag}` : tag
                                                             }));
@@ -371,7 +371,7 @@ export function BloodGlucoseTab({vm}: {vm: GlucoseViewModel}) {
                                                     type="text"
                                                     placeholder="例如：半碗糙米飯、蒸肉餅、少油菜心"
                                                     value={newGlucose.dietNote || ''}
-                                                    onChange={(e) => setNewGlucose((prev: any) => ({ ...prev, dietNote: e.target.value }))}
+                                                    onChange={(e) => setNewGlucose((prev) => ({ ...prev, dietNote: e.target.value }))}
                                                     className="w-full bg-slate-50 border border-slate-200 focus:border-[#2A9D8F] focus:bg-white rounded-xl py-2.5 pl-3 pr-10 text-xs font-bold text-slate-800 outline-none transition-all"
                                                 />
                                                 <button
@@ -430,7 +430,7 @@ export function BloodGlucoseTab({vm}: {vm: GlucoseViewModel}) {
                                                         key={tag}
                                                         type="button"
                                                         onClick={() => {
-                                                            setNewGlucose((prev: any) => ({
+                                                            setNewGlucose((prev) => ({
                                                                 ...prev,
                                                                 exerciseNote: prev.exerciseNote ? `${prev.exerciseNote}、${tag}` : tag
                                                             }));
@@ -447,7 +447,7 @@ export function BloodGlucoseTab({vm}: {vm: GlucoseViewModel}) {
                                                     type="text"
                                                     placeholder="例如：飯後公園散步 25 分鐘"
                                                     value={newGlucose.exerciseNote || ''}
-                                                    onChange={(e) => setNewGlucose((prev: any) => ({ ...prev, exerciseNote: e.target.value }))}
+                                                    onChange={(e) => setNewGlucose((prev) => ({ ...prev, exerciseNote: e.target.value }))}
                                                     className="w-full bg-slate-50 border border-slate-200 focus:border-[#2A9D8F] focus:bg-white rounded-xl py-2.5 pl-3 pr-10 text-xs font-bold text-slate-800 outline-none transition-all"
                                                 />
                                                 <button
@@ -514,7 +514,7 @@ export function BloodGlucoseTab({vm}: {vm: GlucoseViewModel}) {
                                                                 } else {
                                                                   next.push(symptomId);
                                                                 }
-                                                                setNewGlucose((prev: any) => ({ ...prev, symptoms: next }));
+                                                                setNewGlucose((prev) => ({ ...prev, symptoms: next }));
                                                             }}
                                                             className={`p-2 rounded-xl border font-black transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 text-xs ${
                                                                 isSelected
@@ -617,7 +617,7 @@ export function BloodGlucoseTab({vm}: {vm: GlucoseViewModel}) {
                                         return;
                                     }
                                     if (!newGlucose.timeType) {
-                                        setNewGlucose((prev: any) => ({ ...prev, timeType: '空腹' }));
+                                        setNewGlucose((prev) => ({ ...prev, timeType: '空腹' }));
                                     }
                                     addGlucoseRecord();
                                     setSaveSuccessMessage('🎉 血糖紀錄已成功儲存！');

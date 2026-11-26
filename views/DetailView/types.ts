@@ -22,7 +22,4 @@ export interface DetailViewProps {
     isUploading: boolean;
     handleUploadData: () => Promise<void>;
     uploadLogs: string[];
-
-    // 允許傳入其他來自 useAppLogic 的 props
-    [key: string]: any;
 }

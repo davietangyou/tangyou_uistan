@@ -5,5 +5,4 @@ export interface SavedQuestionsViewProps {
     setProfile: (profile: UserProfile) => void;
     setView: (view: View) => void;
     isLargeFont?: boolean;
-    [key: string]: any;
 }

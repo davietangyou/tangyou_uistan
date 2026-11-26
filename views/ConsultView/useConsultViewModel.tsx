@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
 import type {ConsultViewProps} from './types';
-import type { ChatTurn } from '../../utils/types';
+import type { ChatTurn, ChatMessage, ChatImageAttachment } from '../../utils/types';
 import {getConversationalChatResponse} from '../../services/geminiService';
 import {loadChatMessages, persistChatMessages, clearChatMessages} from '../../domain';
 
@@ -14,7 +14,7 @@ export function useConsultViewModel(props: ConsultViewProps) {
     } = props;
 
     // 預設歡迎訊息
-    const DEFAULT_CHAT_MESSAGES = [
+    const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
         {
             id: 'welcome',
             role: 'assistant',
@@ -25,7 +25,7 @@ export function useConsultViewModel(props: ConsultViewProps) {
 
     // AI 聊天室狀態 (支援 LocalStorage 自動保存)
     const [chatInput, setChatInput] = useState('');
-    const [chatMessages, setChatMessages] = useState<any[]>(() => loadChatMessages(DEFAULT_CHAT_MESSAGES));
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => loadChatMessages(DEFAULT_CHAT_MESSAGES));
 
     // 當對話訊息更新時自動持久化保存
     // 存入 localStorage 前剝離圖片 base64 和 previewUrl，防止 localStorage 溢出
@@ -206,7 +206,7 @@ export function useConsultViewModel(props: ConsultViewProps) {
         );
     };
 
-    const handleSendChatMessage = async (text: string, customImage?: { base64: string, mimeType: string, previewUrl?: string }) => {
+    const handleSendChatMessage = async (text: string, customImage?: ChatImageAttachment) => {
         const imgToSend = customImage || (attachedImage ? { base64: attachedImage.base64, mimeType: attachedImage.mimeType, previewUrl: attachedImage.previewUrl } : undefined);
         const trimmedText = text.trim();
 
@@ -214,7 +214,7 @@ export function useConsultViewModel(props: ConsultViewProps) {
 
         const effectiveText = trimmedText || (imgToSend ? "請幫我分析這張藥物相片或處方標籤，說明藥物名稱、用法、注意事項及覆診問醫生的問題。" : "");
 
-        const userMsg = {
+        const userMsg: ChatMessage = {
             id: Date.now().toString(),
             role: 'user',
             content: effectiveText,
@@ -237,7 +237,7 @@ export function useConsultViewModel(props: ConsultViewProps) {
                 if (m.role === 'assistant' && text.startsWith('⚠️ 唔好意思，系統暫時未能完成回覆')) return false;
                 return true;
             })
-            .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content.trim() }));
+            .map(m => ({ role: m.role, content: m.content.trim() }));
 
         const recentTurnsReversed: ChatTurn[] = [];
         let userRoundCount = 0;
@@ -272,7 +272,7 @@ export function useConsultViewModel(props: ConsultViewProps) {
                 preferenceAlreadySubmitted
             );
 
-            const aiMsg = {
+            const aiMsg: ChatMessage = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
                 content: res.reply,
@@ -292,12 +292,13 @@ export function useConsultViewModel(props: ConsultViewProps) {
             setChatMessages(prev => [...prev, aiMsg]);
         } catch (e) {
             console.error("Chat mode error:", e);
-            setChatMessages(prev => [...prev, {
+            const errorMsg: ChatMessage = {
                 id: (Date.now() + 2).toString(),
                 role: 'assistant',
                 content: "⚠️ 唔好意思，系統暫時未能完成回覆，請稍等幾秒再試一次。",
                 isError: true
-            }]);
+            };
+            setChatMessages(prev => [...prev, errorMsg]);
         } finally {
             setChatLoading(false);
         }

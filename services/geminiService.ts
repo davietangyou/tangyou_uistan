@@ -1,4 +1,4 @@
-import type { ChatTurn, GlucoseRecord, HbA1cRecord, UserProfile } from "../utils/types";
+import type { ChatTurn, ChatApiResponse, GlucoseRecord, HbA1cRecord, UserProfile } from "../utils/types";
 
 async function postGeminiApi<T>(endpoint: string, payload: Record<string, unknown>): Promise<T> {
     const response = await fetch(endpoint, {
@@ -61,8 +61,8 @@ export async function getConversationalChatResponse(
     imageAttachment?: { data: string; mimeType: string },
     hba1cRecords: HbA1cRecord[] = [],
     preferenceAlreadySubmitted: boolean = false
-): Promise<any> {
-    return postGeminiApi<any>("/api/gemini/chat", {
+): Promise<ChatApiResponse> {
+    return postGeminiApi<ChatApiResponse>("/api/gemini/chat", {
         profile,
         glucoseRecords,
         hba1cRecords,

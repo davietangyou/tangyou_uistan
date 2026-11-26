@@ -35,12 +35,35 @@ export function normalizeDom(html) {
     s = s.replace(/url\(#recharts-[^)]+\)/g, 'url(#recharts-id)');
     s = s.replace(/\sid="clipPath-[^"]+"/g, ' id="clipPath-id"');
     s = s.replace(/\sd="[Mm][^"]*"/g, ' d="<path>"');
+    // Recharts patch-level presentation churn (not visible copy or geometry).
+    // Some 3.x builds add outline style, default fill-opacity, tooltip name=,
+    // a duplicate CSS fill, and empty z-index layers; others omit them.
+    s = s.replace(/\sstyle="outline:\s*none;?"/g, '');
+    s = s.replace(/\sfill-opacity="1"/g, '');
+    s = s.replace(/<(circle|path|g|text)\b([^>]*\brecharts-[^>]*)>/g, (m, tag, rest) => {
+        return '<' + tag + rest.replace(/\sname="[^"]*"/g, '') + '>';
+    });
+    s = s.replace(/\sstyle="fill:\s*rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\);?"/g, '');
+    s = s.replace(/<g tabindex="-1" class="recharts-zIndex-layer_[^"]*"\s*>\s*<\/g>/g, '');
     // React / vite noise if any leaked in
     s = s.replace(/\sdata-reactroot(?:="")?/g, '');
     s = normalizeText(s);
+    s = canonicalizeAttributes(s);
     // Collapse runs of whitespace between tags to make diffs readable
     s = s.replace(/>\s+</g, '>\n<');
     return s.trim() + '\n';
+}
+
+/** Sort attributes so Recharts/React attr order is not a false mismatch. */
+function canonicalizeAttributes(html) {
+    return html.replace(/<([a-zA-Z][\w:-]*)(\s[^>]*?)(\s*\/?)>/g, (all, tag, rawAttrs, close) => {
+        const attrs = [];
+        const re = /\s+([a-zA-Z_:][\w:.-]*)(?:=(?:"[^"]*"|'[^']*'|[^\s>]+))?/g;
+        let m;
+        while ((m = re.exec(rawAttrs))) attrs.push(m[0].trim());
+        attrs.sort((a, b) => a.split('=')[0].localeCompare(b.split('=')[0]));
+        return '<' + tag + (attrs.length ? ' ' + attrs.join(' ') : '') + close + '>';
+    });
 }
 
 export function stableStringify(value) {

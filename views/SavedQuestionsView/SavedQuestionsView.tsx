@@ -16,10 +16,9 @@ import { SavedListSection } from './SavedListSection';
 
 export const SavedQuestionsView: React.FC<SavedQuestionsViewProps> = (props) => {
     const vm = useSavedQuestionsViewModel(props);
-    const { isLargeFont } = vm;
 
     return (
-        <div className={`space-y-4 animate-soft pb-20 ${isLargeFont ? 'spacy-container !px-0' : ''}`}>
+        <div className="ds-root ds-questions">
             <PageHeader vm={vm} />
 
             <AnalysisSection vm={vm} />

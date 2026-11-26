@@ -1,6 +1,6 @@
 # 設計基座（`components/ui`）
 
-階段二只落地令牌與基礎組件，**沒有改任何現有視圖的外觀**。請不要把這裡的組件提早接進 `views/`、`Navigation`、`Layout`、`GlobalMic` 或 `FocusToast`，直到該階段明確開始換殼或換頁。
+階段二落地令牌與基礎組件；階段三到九已把外殼（`Navigation`、`Layout`、`GlobalMic`、`FocusToast`）與所有可到達的視圖遷到這套組件與 `ds-*` / `t-*` 樣式。未接線的 `DetailView`、`MedicationReminders` 仍用舊 Tailwind 樣式，未經換皮階段不要給它們加 `.ds-root`。
 
 ## 令牌在哪裡
 

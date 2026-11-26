@@ -7,7 +7,7 @@
  */
 export { STORAGE_KEYS, storage, readJson, readJsonSafe, writeJson, readString, writeString, removeKey, clearAllStorage } from './storage';
 export type { StorageKey } from './storageKeys';
-export { emptyProfile, loadProfileFromStorage, persistProfile, toggleConditionOnProfile, mergeSavedDoctorQuestions } from './profile';
+export { emptyProfile, loadProfileFromStorage, persistProfile, toggleConditionOnProfile, mergeSavedDoctorQuestions, profileWithHeight, profileWithWeight, profileWithWeightUnit, updateConditionDetail } from './profile';
 export { emptyGlucoseDraft, loadGlucoseRecords, persistGlucoseRecords, sortGlucoseRecords, buildGlucoseRecord } from './glucose';
 export type { NewGlucoseDraft, BuildGlucoseResult } from './glucose';
 export { loadHbA1cRecords, persistHbA1cRecords, sortHbA1cRecords, buildHbA1cRecord } from './hba1c';
@@ -16,3 +16,4 @@ export { EXERCISE_TYPE_OPTIONS, calculateExerciseFromHabits } from './exercise';
 export { loadLargeFontPreference, persistLargeFontPreference } from './font';
 export { loadChatMessages, persistChatMessages, clearChatMessages } from './chatMessages';
 export { loadReminders, persistReminders, loadTakenLogs, persistTakenLogs } from './reminders';
+export { toggleNextClinicQuestionOnProfile, addSavedDoctorQuestion, deleteSavedDoctorQuestion, editSavedDoctorQuestion, saveNextClinicDate, addNextClinicQuestion } from './questions';

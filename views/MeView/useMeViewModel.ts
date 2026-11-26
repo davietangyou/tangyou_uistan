@@ -2,7 +2,7 @@ import {useRef, useState} from 'react';
 import type {UserProfile} from '../../utils/types';
 import type {MeViewProps} from './types';
 import {recognizeMedicationsFromImage} from '../../services/geminiService';
-import {calculateBmi, calculateExerciseFromHabits} from './helpers';
+import {calculateBmi, calculateExerciseFromHabits, profileWithHeight, profileWithWeight, profileWithWeightUnit, updateConditionDetail} from '../../domain';
 
 export function useMeViewModel({ profile, setProfile, setView, isLargeFont = false }: MeViewProps) {
     // 自訂藥物輸入狀態
@@ -97,58 +97,19 @@ export function useMeViewModel({ profile, setProfile, setView, isLargeFont = fal
     // 計算 BMI
 
     const handleHeightChange = (val: string) => {
-        const nextBmi = calculateBmi(val, profile.weight || '', profile.weightUnit || 'kg');
-        setProfile({
-            ...profile,
-            height: val,
-            bmi: nextBmi
-        });
+        setProfile(profileWithHeight(profile, val));
     };
 
     const handleWeightChange = (val: string) => {
-        const nextBmi = calculateBmi(profile.height || '', val, profile.weightUnit || 'kg');
-        setProfile({
-            ...profile,
-            weight: val,
-            bmi: nextBmi
-        });
+        setProfile(profileWithWeight(profile, val));
     };
 
     const handleWeightUnitChange = (unit: 'kg' | 'lb') => {
-        const nextBmi = calculateBmi(profile.height || '', profile.weight || '', unit);
-        setProfile({
-            ...profile,
-            weightUnit: unit,
-            bmi: nextBmi
-        });
+        setProfile(profileWithWeightUnit(profile, unit));
     };
 
     const handleUpdateConditionDetail = (conditionId: string, field: 'years' | 'specificName', value: string) => {
-        const prevDetails = profile.conditionDetails || {};
-        const currentDetail = prevDetails[conditionId] || {};
-        const nextDetails = {
-            ...prevDetails,
-            [conditionId]: {
-                ...currentDetail,
-                [field]: value
-            }
-        };
-
-        const updates: Partial<UserProfile> = { conditionDetails: nextDetails };
-        if (conditionId === 'DM' && field === 'years') {
-            updates.yearsWithDiabetes = value;
-        }
-        if (conditionId === 'HT' && field === 'years') {
-            updates.hypertensionYears = value;
-        }
-        if (conditionId === 'OT' && field === 'specificName') {
-            updates.otherConditions = value;
-        }
-
-        setProfile({
-            ...profile,
-            ...updates
-        });
+        setProfile(updateConditionDetail(profile, conditionId, field, value));
     };
 
     const toggleConditionLocal = (id: string) => {

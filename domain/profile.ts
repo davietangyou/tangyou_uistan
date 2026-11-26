@@ -5,6 +5,7 @@
 import type { UserProfile } from '../utils/types';
 import { STORAGE_KEYS } from './storageKeys';
 import { readString, writeJson } from './storage';
+import { calculateBmi } from './bmi';
 
 export function emptyProfile(): UserProfile {
     return {
@@ -99,4 +100,56 @@ export function mergeSavedDoctorQuestions(profile: UserProfile, questions: strin
     // 合併並去重，保持最新
     const updated = [...new Set([...questions, ...current])];
     return {...profile, savedDoctorQuestions: updated};
+}
+
+export function profileWithHeight(profile: UserProfile, height: string): UserProfile {
+    return {
+        ...profile,
+        height,
+        bmi: calculateBmi(height, profile.weight || '', profile.weightUnit || 'kg')
+    };
+}
+
+export function profileWithWeight(profile: UserProfile, weight: string): UserProfile {
+    return {
+        ...profile,
+        weight,
+        bmi: calculateBmi(profile.height || '', weight, profile.weightUnit || 'kg')
+    };
+}
+
+export function profileWithWeightUnit(profile: UserProfile, unit: 'kg' | 'lb'): UserProfile {
+    return {
+        ...profile,
+        weightUnit: unit,
+        bmi: calculateBmi(profile.height || '', profile.weight || '', unit)
+    };
+}
+
+export function updateConditionDetail(profile: UserProfile, conditionId: string, field: 'years' | 'specificName', value: string): UserProfile {
+    const prevDetails = profile.conditionDetails || {};
+    const currentDetail = prevDetails[conditionId] || {};
+    const nextDetails = {
+        ...prevDetails,
+        [conditionId]: {
+            ...currentDetail,
+            [field]: value
+        }
+    };
+
+    const updates: Partial<UserProfile> = { conditionDetails: nextDetails };
+    if (conditionId === 'DM' && field === 'years') {
+        updates.yearsWithDiabetes = value;
+    }
+    if (conditionId === 'HT' && field === 'years') {
+        updates.hypertensionYears = value;
+    }
+    if (conditionId === 'OT' && field === 'specificName') {
+        updates.otherConditions = value;
+    }
+
+    return {
+        ...profile,
+        ...updates
+    };
 }

@@ -1,59 +1,63 @@
 /**
  * Locked-tier copy and the source locations it must be extracted from.
  * Changing any of these strings is a product decision, not a restyle.
+ *
+ * Stage 5 moved the AI-bound texts (welcome, shortcuts, preference submit)
+ * verbatim into views/ConsultView/consultText.ts. Patterns are unchanged;
+ * only `file` points at the new module.
  */
 export const LOCKED_COPY_SOURCES = [
     {
         id: 'welcome_message',
-        file: 'views/ConsultView/useConsultViewModel.tsx',
+        file: 'views/ConsultView/consultText.ts',
         pattern: /content:\s*"關於糖尿病管理，\\n您目前最關心什麼？"/,
         value: '關於糖尿病管理，\n您目前最關心什麼？',
     },
     {
         id: 'shortcut_data',
-        file: 'views/ConsultView/ChatPanel.tsx',
+        file: 'views/ConsultView/consultText.ts',
         pattern: /text: '📊 我的血糖數據合格嗎？幫我分析指標與健康檔案的關係'/,
         value: '📊 我的血糖數據合格嗎？幫我分析指標與健康檔案的關係',
     },
     {
         id: 'shortcut_emergency',
-        file: 'views/ConsultView/ChatPanel.tsx',
+        file: 'views/ConsultView/consultText.ts',
         pattern: /text: '⚠️ 出現手震、心慌、冒冷汗等症狀，我該如何緊急處理？'/,
         value: '⚠️ 出現手震、心慌、冒冷汗等症狀，我該如何緊急處理？',
     },
     {
         id: 'shortcut_diet',
-        file: 'views/ConsultView/ChatPanel.tsx',
+        file: 'views/ConsultView/consultText.ts',
         pattern: /text: '🥗 糖尿病患者一日三餐或外出用餐有什麼飲食控糖建議？'/,
         value: '🥗 糖尿病患者一日三餐或外出用餐有什麼飲食控糖建議？',
     },
     {
         id: 'shortcut_meds',
-        file: 'views/ConsultView/ChatPanel.tsx',
+        file: 'views/ConsultView/consultText.ts',
         pattern: /text: '💊 二甲雙胍\(Metformin\)等控糖藥物會有什麼常見副作用？'/,
         value: '💊 二甲雙胍(Metformin)等控糖藥物會有什麼常見副作用？',
     },
     {
         id: 'shortcut_complications',
-        file: 'views/ConsultView/ChatPanel.tsx',
+        file: 'views/ConsultView/consultText.ts',
         pattern: /text: '👁️ 糖尿病會引致哪些常見併發症（如眼底或腎病變）？該如何預防？'/,
         value: '👁️ 糖尿病會引致哪些常見併發症（如眼底或腎病變）？該如何預防？',
     },
     {
         id: 'preference_submit_header',
-        file: 'views/ConsultView/ChatPanel.tsx',
+        file: 'views/ConsultView/consultText.ts',
         pattern: /"我已選擇我的個人偏好（決策考量維度）："/,
         value: '我已選擇我的個人偏好（決策考量維度）：',
     },
     {
         id: 'preference_submit_option_template',
-        file: 'views/ConsultView/ChatPanel.tsx',
+        file: 'views/ConsultView/consultText.ts',
         pattern: /我最看重：【\$\{sel\.label\}】（價值維度：\$\{sel\.valueCategory\}）/,
         value: '- 針對「${sel.questionText}」，我最看重：【${sel.label}】（價值維度：${sel.valueCategory}）',
     },
     {
         id: 'preference_submit_other_template',
-        file: 'views/ConsultView/ChatPanel.tsx',
+        file: 'views/ConsultView/consultText.ts',
         pattern: /我有其他考量：【\$\{customTxt\}】（價值維度：其他）/,
         value: '- 針對「${pq.questionText}」，我有其他考量：【${customTxt}】（價值維度：其他）',
     },

@@ -1,6 +1,13 @@
 import type {ConsultViewModel} from './useConsultViewModel';
 import type {PreferenceQuestion, PreferenceOption, PreferenceSelection, ChatOptionComparison} from '../../utils/types';
 import ReactMarkdown from 'react-markdown';
+import {
+    SHORTCUT_QUESTIONS,
+    PREFERENCE_SUBMITTED_MARKER,
+    buildPreferenceSubmitMessage,
+    countPreferenceAnswers,
+    followUpMessage,
+} from './consultText';
 
 export function ChatPanel({vm}: {vm: ConsultViewModel}) {
     const {
@@ -75,7 +82,7 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                                             </div>
                                         )}
 
-                                        {msg.content.includes("我已選擇我的個人偏好") ? (
+                                        {msg.content.includes(PREFERENCE_SUBMITTED_MARKER) ? (
                                             <div className="space-y-2">
                                                 <div className="flex items-center gap-1.5 border-b border-white/20 pb-1.5 mb-2">
                                                     <span className="text-base">🎯</span>
@@ -424,65 +431,33 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                                                     <button
                                                         onClick={() => {
                                                             const msgId = msg.id || index.toString();
-                                                            const msgSelections = selectedPreferenceOptions[msgId] || {};
-                                                            const msgOthers = isOtherSelected[msgId] || {};
-                                                            const msgTexts = otherCustomText[msgId] || {};
-                                                            
-                                                            const parts = ["我已選擇我的個人偏好（決策考量維度）："];
-                                                            let submittedCount = 0;
-                                                            
-                                                            msg.preferenceQuestions.forEach((pq: PreferenceQuestion) => {
-                                                                const pqSelections = msgSelections[pq.id] || {};
-                                                                const isOther = msgOthers[pq.id];
-                                                                const customTxt = (msgTexts[pq.id] || "").trim();
-                                                                
-                                                                // Add selected standard options
-                                                                Object.values(pqSelections).forEach((sel: PreferenceSelection) => {
-                                                                    parts.push(`- 針對「${sel.questionText}」，我最看重：【${sel.label}】（價值維度：${sel.valueCategory}）`);
-                                                                    submittedCount++;
-                                                                });
-
-                                                                // Add custom "other" option
-                                                                if (isOther && customTxt.length > 0) {
-                                                                    parts.push(`- 針對「${pq.questionText}」，我有其他考量：【${customTxt}】（價值維度：其他）`);
-                                                                    submittedCount++;
-                                                                }
-                                                            });
-                                                            
-                                                            if (submittedCount === 0) return;
-                                                            
-                                                            const combinedMessage = parts.join("\n");
+                                                            const combinedMessage = buildPreferenceSubmitMessage(
+                                                                msg.preferenceQuestions,
+                                                                selectedPreferenceOptions[msgId] || {},
+                                                                isOtherSelected[msgId] || {},
+                                                                otherCustomText[msgId] || {}
+                                                            );
+                                                            if (combinedMessage === null) return;
                                                             handleSendChatMessage(combinedMessage);
                                                         }}
                                                         disabled={(() => {
                                                             const msgId = msg.id || index.toString();
-                                                            const msgSelections = selectedPreferenceOptions[msgId] || {};
-                                                            const msgOthers = isOtherSelected[msgId] || {};
-                                                            const msgTexts = otherCustomText[msgId] || {};
-                                                            
-                                                            let validCount = 0;
-                                                            msg.preferenceQuestions.forEach((pq: PreferenceQuestion) => {
-                                                                const pqSelections = msgSelections[pq.id] || {};
-                                                                const isOther = msgOthers[pq.id];
-                                                                const customTxt = (msgTexts[pq.id] || "").trim();
-                                                                validCount += Object.keys(pqSelections).length;
-                                                                if (isOther && customTxt.length > 0) {
-                                                                    validCount++;
-                                                                }
-                                                            });
-                                                            return validCount === 0;
+                                                            return countPreferenceAnswers(
+                                                                msg.preferenceQuestions,
+                                                                selectedPreferenceOptions[msgId] || {},
+                                                                isOtherSelected[msgId] || {},
+                                                                otherCustomText[msgId] || {}
+                                                            ) === 0;
                                                         })()}
                                                         className={`w-full sm:w-auto px-6 py-2.5 font-black text-xs rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                                                             (() => {
                                                                 const msgId = msg.id || index.toString();
-                                                                const msgSelections = selectedPreferenceOptions[msgId] || {};
-                                                                const msgOthers = isOtherSelected[msgId] || {};
-                                                                const msgTexts = otherCustomText[msgId] || {};
-                                                                let validCount = 0;
-                                                                msg.preferenceQuestions.forEach((pq: PreferenceQuestion) => {
-                                                                    validCount += Object.keys(msgSelections[pq.id] || {}).length;
-                                                                    if (msgOthers[pq.id] && (msgTexts[pq.id] || "").trim().length > 0) validCount++;
-                                                                });
+                                                                const validCount = countPreferenceAnswers(
+                                                                    msg.preferenceQuestions,
+                                                                    selectedPreferenceOptions[msgId] || {},
+                                                                    isOtherSelected[msgId] || {},
+                                                                    otherCustomText[msgId] || {}
+                                                                );
                                                                 return validCount > 0
                                                                     ? "bg-amber-600 hover:bg-amber-700 text-white shadow-md hover:scale-[1.01]"
                                                                     : "bg-slate-200 text-slate-400 cursor-not-allowed";
@@ -743,7 +718,7 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                                     {lastFollowUps.map((q: string, idx: number) => (
                                         <button
                                             key={idx}
-                                            onClick={() => handleSendChatMessage(q)}
+                                            onClick={() => handleSendChatMessage(followUpMessage(q))}
                                             className="px-4 py-2.5 bg-white border border-[#4A6E85]/20 hover:border-[#4A6E85]/60 text-[#4A6E85] hover:bg-[#4A6E85]/5 rounded-2xl text-[13px] font-black cursor-pointer transition-all hover:scale-[1.01] active:scale-95 shadow-xs text-left"
                                         >
                                             💬 {q}
@@ -895,13 +870,7 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                     <div className="space-y-1.5">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">快捷提問：</p>
                         <div className="flex flex-wrap gap-1.5">
-                            {[
-                                { text: '📊 我的血糖數據合格嗎？幫我分析指標與健康檔案的關係', label: '📊 數據解讀' },
-                                { text: '⚠️ 出現手震、心慌、冒冷汗等症狀，我該如何緊急處理？', label: '⚠️ 突發情況' },
-                                { text: '🥗 糖尿病患者一日三餐或外出用餐有什麼飲食控糖建議？', label: '🥗 飲食建議' },
-                                { text: '💊 二甲雙胍(Metformin)等控糖藥物會有什麼常見副作用？', label: '💊 用藥副作用' },
-                                { text: '👁️ 糖尿病會引致哪些常見併發症（如眼底或腎病變）？該如何預防？', label: '👁️ 常見併發症' }
-                            ].map((topic, i) => (
+                            {SHORTCUT_QUESTIONS.map((topic, i) => (
                                 <button
                                     key={i}
                                     onClick={() => handleSendChatMessage(topic.text)}

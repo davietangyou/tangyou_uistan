@@ -1,55 +1,55 @@
 {
   "items": [
     {
-      "file": "views/ConsultView/useConsultViewModel.tsx",
+      "file": "views/ConsultView/consultText.ts",
       "foundInSource": true,
       "id": "welcome_message",
       "value": "關於糖尿病管理，\n您目前最關心什麼？"
     },
     {
-      "file": "views/ConsultView/ChatPanel.tsx",
+      "file": "views/ConsultView/consultText.ts",
       "foundInSource": true,
       "id": "shortcut_data",
       "value": "📊 我的血糖數據合格嗎？幫我分析指標與健康檔案的關係"
     },
     {
-      "file": "views/ConsultView/ChatPanel.tsx",
+      "file": "views/ConsultView/consultText.ts",
       "foundInSource": true,
       "id": "shortcut_emergency",
       "value": "⚠️ 出現手震、心慌、冒冷汗等症狀，我該如何緊急處理？"
     },
     {
-      "file": "views/ConsultView/ChatPanel.tsx",
+      "file": "views/ConsultView/consultText.ts",
       "foundInSource": true,
       "id": "shortcut_diet",
       "value": "🥗 糖尿病患者一日三餐或外出用餐有什麼飲食控糖建議？"
     },
     {
-      "file": "views/ConsultView/ChatPanel.tsx",
+      "file": "views/ConsultView/consultText.ts",
       "foundInSource": true,
       "id": "shortcut_meds",
       "value": "💊 二甲雙胍(Metformin)等控糖藥物會有什麼常見副作用？"
     },
     {
-      "file": "views/ConsultView/ChatPanel.tsx",
+      "file": "views/ConsultView/consultText.ts",
       "foundInSource": true,
       "id": "shortcut_complications",
       "value": "👁️ 糖尿病會引致哪些常見併發症（如眼底或腎病變）？該如何預防？"
     },
     {
-      "file": "views/ConsultView/ChatPanel.tsx",
+      "file": "views/ConsultView/consultText.ts",
       "foundInSource": true,
       "id": "preference_submit_header",
       "value": "我已選擇我的個人偏好（決策考量維度）："
     },
     {
-      "file": "views/ConsultView/ChatPanel.tsx",
+      "file": "views/ConsultView/consultText.ts",
       "foundInSource": true,
       "id": "preference_submit_option_template",
       "value": "- 針對「${sel.questionText}」，我最看重：【${sel.label}】（價值維度：${sel.valueCategory}）"
     },
     {
-      "file": "views/ConsultView/ChatPanel.tsx",
+      "file": "views/ConsultView/consultText.ts",
       "foundInSource": true,
       "id": "preference_submit_other_template",
       "value": "- 針對「${pq.questionText}」，我有其他考量：【${customTxt}】（價值維度：其他）"

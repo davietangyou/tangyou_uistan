@@ -106,7 +106,9 @@ dev 模式下，Vite 把 `public/` 作为静态根目录，浏览器实际请求
 curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css
 ```
 
-预期 HTTP 200，正文与 `public/styles/app.css` 一致。若同步或解压后缺少该文件，Tailwind 工具类仍可用，但大字模式与卡片等自定义样式会丢失。
+预期 HTTP 200，正文与 `public/styles/app.css` 一致。若同步或解压后缺少该文件，Tailwind 工具类仍可用，但整套界面样式（设计令牌、`ds-*` / `t-*` 类、大字模式）会丢失，各页面基本失去版式。
+
+UI 重构合并（main `c18afb1`）后，该文件约 112 KB：前 4550 字节是重构前的原规则，保持逐字节不变（`head -c 4550 public/styles/app.css | sha256sum` 应为 `b864594f30dc4a8fcc526161c3b185e40c3cfbb84e0243c824e8ed8e7e2da29e`）；其后追加的是设计系统与各视图样式，新视图以 `.ds-root` 承载、控件加 `.ds-control` 以避开旧的 `.large-font` 强制规则。对应的 React 基础组件在 `components/ui/`。新增样式只在文件末尾追加。
 
 本文只覆盖 dev 模式。若改走 `npm run build && npm start`，构建会把该文件原样复制为 `dist/styles/app.css`，页面链接变为相对路径 `./styles/app.css`。`npm run build` 可能打印：
 
@@ -246,6 +248,8 @@ npm run verify
 ```bash
 npm run verify -- --out verify-results/phase-N --compare verify-results/baseline
 ```
+
+验证门会把浏览器时钟冻结在香港时间 `2026-11-26 09:30`，结果可重复。输出「OK: contract goldens match.」且 status 全 0 即契约无损；`--compare` 的 DOM / 截图差异在界面改动时属预期，需逐项确认来由。
 
 不要把 `verify-results/` 提交进仓库，也不必拷到线上托管目录。更细的说明见 `scripts/verify/README.md`。
 

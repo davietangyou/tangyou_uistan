@@ -529,6 +529,7 @@ wrangler.jsonc
 metadata.json
 index.html
 public/styles/app.css
+views/ConsultView/consultText.ts
 tsconfig.json
 importantdocsneedkown
 EOF
@@ -558,6 +559,15 @@ done < "$STAGE/protected.txt"
 
 若导出物删掉了这一行、把样式重新内联进 `index.html`，或改写了 `public/styles/app.css`，需要显式判断，而不是当作无关清理。该样式表是页面皮肤与大字规则的现行位置。
 
+UI 重构合并（main `c18afb1`）后，`public/styles/app.css` 由两部分组成：前 4550 字节是重构前的原文件（含 `.large-font` 的 `!important` 规则），保持逐字节不变；其后是追加的设计系统（颜色 / 字阶令牌、`ds-*` 与 `t-*` 语义类、各视图的 `.ds-root` 区块，以及让新控件逃出旧大字规则的 `.ds-control`），整份约 112 KB。评审导出物对它的改动时，可先核对前缀：
+
+```bash
+head -c 4550 public/styles/app.css | sha256sum
+# 预期：b864594f30dc4a8fcc526161c3b185e40c3cfbb84e0243c824e8ed8e7e2da29e
+```
+
+前缀变化或追加区块被删，都不属于正常的导出差异。`views/ConsultView/consultText.ts` 保存发给 AI 的前端文本（欢迎语、快捷提问、偏好提交模板等），改动会直接改变送给模型的内容，同样需要显式决定。
+
 ### 5.10 删除候选评审
 
 ```bash
@@ -572,7 +582,7 @@ grep -E '^\*deleting' "$STAGE/export_vs_base.txt" || true
 
 若导出物明显缺少大量未触碰文件，删除候选多为噪声，不据此删除。
 
-当前仓库已跟踪、导出物若给出 `*deleting` 时尤其需要停下来看一眼的路径包括：`public/styles/app.css`、`domain/`（及其既有分文件）、`scripts/verify/`（含 `fixtures/golden/`）、`.env.example`、`server/env.ts`、`server/http/`、`server/app.ts`、`cloudflare/`、`wrangler.jsonc`。对这些路径的删除，默认更接近“工具没看见”，予以保留，除非能说明这是有意删除。
+当前仓库已跟踪、导出物若给出 `*deleting` 时尤其需要停下来看一眼的路径包括：`public/styles/app.css`、`domain/`（及其既有分文件）、`scripts/verify/`（含 `fixtures/golden/`）、`.env.example`、`server/env.ts`、`server/http/`、`server/app.ts`、`cloudflare/`、`wrangler.jsonc`，以及 UI 重构新增的 `components/ui/`、`views/GlucoseView/sections/`、`views/GlucoseView/recordStatus.ts`、`views/HomeView/glucoseStatus.ts`、`views/ProfileShared/`、`views/SavedQuestionsView/questionUi.tsx`、`views/ConsultView/consultText.ts`。对这些路径的删除，默认更接近“工具没看见”，予以保留，除非能说明这是有意删除。
 
 ### 5.11 候选区验证
 
@@ -609,7 +619,7 @@ rm -f .env.local
 VERIFY_BASE_URL=http://127.0.0.1:9102/ npm run verify -- --out verify-results/candidate
 ```
 
-需要与某次基线对照时，再加上 `--compare`。产物目录 `verify-results/` 已被 `.gitignore` 忽略；提交进仓库的金样在 `scripts/verify/fixtures/golden/`。更细的说明见 `scripts/verify/README.md`。该步骤不是每次导入的必做项。
+需要与某次基线对照时，再加上 `--compare`。产物目录 `verify-results/` 已被 `.gitignore` 忽略；提交进仓库的金样在 `scripts/verify/fixtures/golden/`（逻辑、锁定文案、选项值、请求体、消息形态五份契约，以及 7 条流程）。验证门把浏览器时钟冻结在香港时间 `2026-11-26 09:30`，结果可重复；判读时以「OK: contract goldens match.」与 status 全 0 为硬门，`--compare` 的 DOM / 截图差异需逐项说明来由。更细的说明见 `scripts/verify/README.md`。该步骤不是每次导入的必做项。
 
 若 `node --import tsx` 不可用，可以改用 `PORT=9102 npm run dev`。若 9102 已被占用，可以用 `lsof -iTCP:9102 -sTCP:LISTEN` 查看。
 

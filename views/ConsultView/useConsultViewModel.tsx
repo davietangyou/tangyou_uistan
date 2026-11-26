@@ -189,17 +189,16 @@ export function useConsultViewModel(props: ConsultViewProps) {
 
         let linesToUse = cleanedLines;
 
-        const sizeClass = isLargeFont ? 'text-[19px]' : defaultTextSizeClass;
-        const weightClass = isLargeFont ? 'font-black' : defaultFontWeightClass;
+        // Stage 5: type comes from the design system (.t-body follows the
+        // large-font switch), so the size/weight arguments are no longer used
+        // for styling. Line splitting above is unchanged.
 
         return (
-            <ul className="space-y-2 list-none pl-0">
+            <ul className={`ds-consult-bullets ${isPros ? 'is-pro' : 'is-con'}`}>
                 {linesToUse.map((line, idx) => (
-                    <li key={idx} className={`flex items-start gap-2 text-slate-700 leading-relaxed ${sizeClass} ${weightClass}`}>
-                        <span className={`inline-block mt-1 shrink-0 select-none ${isPros ? 'text-emerald-600' : 'text-amber-600'} ${isLargeFont ? 'text-[22px]' : 'text-base'}`}>
-                            •
-                        </span>
-                        <span className="flex-1">{line}</span>
+                    <li key={idx} className="t-body">
+                        <span className="ds-consult-bullet-dot" aria-hidden="true"></span>
+                        <span className="ds-consult-bullet-text">{line}</span>
                     </li>
                 ))}
             </ul>

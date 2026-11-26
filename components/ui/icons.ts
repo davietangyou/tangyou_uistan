@@ -3,10 +3,11 @@
  * Icons stay lucide-react (no new dependency). Default stroke is a quiet
  * line, not a heavy fill. Decorative uses must set aria-hidden.
  *
- * Stage 3 nav suggestion (labels stay full-length, 問 AI is the fifth tab):
- *   home, glucose, askAi, savedQuestions, profile
+ * Stage 3 bottom nav (labels stay full-length, 問 AI is the centre tab):
+ *   home, glucose, consult, savedQuestions, profile
  */
 import {
+    ALargeSmall,
     Activity,
     AlertTriangle,
     ArrowDown,
@@ -30,10 +31,13 @@ import {
     MicOff,
     Pencil,
     Pill,
+    Pointer,
     Plus,
     Send,
     Settings,
+    ShieldCheck,
     Sparkles,
+    Square,
     Sun,
     Trash2,
     User,
@@ -79,6 +83,10 @@ export const uiIcons = {
     activity: Activity,
     send: Send,
     speak: Volume2,
+    stop: Square,
+    fontSize: ALargeSmall,
+    tapHint: Pointer,
+    privacy: ShieldCheck,
 } as const;
 
 export type UiIconName = keyof typeof uiIcons;

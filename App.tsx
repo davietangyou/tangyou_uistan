@@ -9,7 +9,7 @@ import {GlobalMic} from './components/GlobalMic';
 import {ViewRouter} from './components/ViewRouter';
 import {FocusToast} from './components/FocusToast';
 
-// 保留未直接使用的依賴：lucide-react 目前無 import；motion 僅被未掛載的 MedicationReminders 使用。請勿隨意移除。
+// 依賴說明：lucide-react 自階段三起由外殼（components/ui/icons.ts）使用；motion 僅被未掛載的 MedicationReminders 使用。請勿隨意移除。
 
 /**
  * App Component
@@ -37,12 +37,11 @@ const App: React.FC = () => {
 
     return (
         <Layout
-            onReset={view !== View.Home && view !== View.Onboarding ? () => setView(View.Home) : undefined}
             isLargeFont={logic.isLargeFont}
             setIsLargeFont={logic.setIsLargeFont}
             view={view}
         >
-            <div className="pb-24">
+            <div className="pb-6">
                 {/* 2. 視圖路由渲染 */}
                 {/* 將 logic 對象作為 props 展開傳遞，讓各個視圖按需獲取其需要的狀態和方法 */}
 
@@ -68,6 +67,7 @@ const App: React.FC = () => {
                 <Navigation
                     view={view}
                     setView={setView}
+                    setConsultStep={logic.setConsultStep}
                 />
             )}
         </Layout>

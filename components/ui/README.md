@@ -41,7 +41,7 @@
 | `Sheet` / `Dialog` | 焦點陷阱、Escape、遮罩關閉、滾動鎖定 |
 | `StatTile` | 關鍵數字；狀態必須有文字（如「偏高 需注意」） |
 | `Field` | 原生 `input` / `textarea` / `select`，供現有語音對焦路徑使用 |
-| `uiIcons` | 語義圖標映射（階段三底欄建議：`home` / `glucose` / `askAi` / `savedQuestions` / `profile`） |
+| `uiIcons` | 語義圖標映射（階段三底欄實際使用：`home` / `glucose` / `consult` / `savedQuestions` / `profile`） |
 
 從 `components/ui` 引入，不要引入 `UiKitPreview`。樣張頁只由 `scripts/verify/fixtures/uikit.html` 掛載。
 

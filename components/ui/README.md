@@ -14,16 +14,13 @@
 
 插畫約定（本階段無資產）：以後放 `public/illustrations/{kebab-name}@2x.png` 或 `.svg`。稀疏、安靜，只用在空狀態或問候；不可取代安全圖標或狀態文字。
 
-## 新的大字機制，何時才可採用
+## 大字機制
 
-現有頁面仍由歷史規則驅動：`.large-font .text-sm { font-size: 18px !important; font-weight: 700 !important; }` 以及 `.large-font button, input, select, textarea { min-height: 3.5rem !important; font-size: 18px !important; }`。那套規則**保持原樣**，否則今日畫面會變。
-
-新組件走另一條路：
+所有視圖都已遷移到設計系統。階段十一刪除了歷史的大字錘（`.large-font .text-*` 與 `.large-font button, input, select, textarea` 的 `!important` 規則），以及凍結的 4550 字節前綴規則；它們已不再影響任何畫面。現在的做法：
 
 1. 文案用 `.t-body`、`.t-title`、`.t-h1` 等語義類，讀取 `--t-*` 變量。
 2. 容器用 `--ds-card-pad`、`--ds-card-gap`、`--touch-min`，與字階一起在 `.large-font` 上切換。
-3. 被遷移的視圖根節點加 `.ds-root`；原生控件與按鈕加 `.ds-control`，以逃出舊的 `!important` 錘（只在 `.ds-root` / `.ds-control` 子樹生效）。
-4. **不要**在未遷移的頁面上加 `.ds-root`，也不要刪舊的 `.large-font .text-*` 規則。全部視圖遷完後，是否刪舊規則留到階段九評估。
+3. 視圖根節點加 `.ds-root`；原生控件與按鈕加 `.ds-control`。`.large-font` 根規則仍以 `!important` 設定可繼承的字距、詞距與行高，`.ds-control` 讓控件不繼承這組間距（見 `public/styles/` 中的 `.large-font` 與 `.large-font .ds-control` 規則），所以兩者都要保留。
 
 大字模式仍由 `Layout` 在根節點切換 `.large-font`（默認開啟）。新機制只是讀同一個類來換變量，不必改偏好存儲。
 

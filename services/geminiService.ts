@@ -1,4 +1,4 @@
-import type { ChatTurn, GlucoseRecord, HbA1cRecord, UserProfile } from "../utils/types";
+import type { ChatTurn, ChatApiResponse, GlucoseRecord, HbA1cRecord, UserProfile } from "../utils/types";
 
 async function postGeminiApi<T>(endpoint: string, payload: Record<string, unknown>): Promise<T> {
     const response = await fetch(endpoint, {
@@ -61,8 +61,8 @@ export async function getConversationalChatResponse(
     imageAttachment?: { data: string; mimeType: string },
     hba1cRecords: HbA1cRecord[] = [],
     preferenceAlreadySubmitted: boolean = false
-): Promise<any> {
-    return postGeminiApi<any>("/api/gemini/chat", {
+): Promise<ChatApiResponse> {
+    return postGeminiApi<ChatApiResponse>("/api/gemini/chat", {
         profile,
         glucoseRecords,
         hba1cRecords,
@@ -91,6 +91,7 @@ export async function analyzeSavedQuestions(questions: string[]): Promise<{
     });
 }
 
+/** 未接線能力：客戶端已封裝 /api/gemini/daily-tip，但目前沒有任何 UI 調用本函數。請勿刪除。 */
 export async function generateDailyTipFromHKWebsites(): Promise<{
     icon: string;
     title: string;

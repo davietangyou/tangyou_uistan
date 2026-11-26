@@ -5,9 +5,9 @@
 
 第二条：交付北极星——从 Google AI Studio 下载迭代代码到本地/线上重新发布，踩坑最少、动作最少
     * 核心目标：确保任何人从 Google AI Studio 下载迭代后的代码 ZIP 文件，同步回本地原有代码仓库与运行环境后，只需极少动作（甚至零额外排查）即可直接重启并稳定发布，不因环境差异或隐性改动报错。
-    * 保护既有运行链路：非必要不改动 `vite.config.ts`（如 `5173` 端口、`/api` 代理至 `8787`、`allowedHosts`）、`package.json` 中的既有脚本（如 `dev:ui`、`dev:api`、`lint`）以及 `server/index.ts` 与 `.env.server.local` 的既有运行约定；Google AI Studio 预览环境所需的适配代码应尽量与日常双进程链路解耦，互不干扰。
-    * AI 请求统一收口于 API 端且保持契约稳定：所有 AI 模型调用均应放在后端 API 端，禁止在前端直连或暴露密钥；非必要不改动既有 `/api/ai/*` 路由路径、请求/响应协议与环境变量名称；若确需新增或调整后端接口与配置，须保证 `server/index.ts`（`dev:api`）与 `server.ts`（AI Studio 环境）行为一致，避免发布后接口报错。
-    * 克制依赖变动并保持文档自洽：非必要不增删依赖或进行跨大版本升级；若确有依赖、环境变量或启动行为变化，必须同步更新 `.env.example` 与 `importantdocsneedkown/GoogleAIStudio迭代代码下载后本地重启服务指南.md`，确保文档与代码始终一致。
+    * 保护既有运行链路：非必要不改动 `vite.config.ts`（当前为 `port: 3000`、`host: 0.0.0.0`、`strictPort: true`、`base: ''`、`allowedHosts: true`，由根目录 `server.ts` 以 Vite middleware 方式挂载，不再使用 `5173` 或把 `/api` 代理到 `8787`）、`package.json` 中的既有脚本（`dev`、`start`、`build`、`preview`、`lint`，以及开发用 `verify`）以及单进程入口 `server.ts`（路由与环境加载分在 `server/http/*`、`server/env.ts`，入口文件名与监听 `0.0.0.0:PORT` 的约定保持稳定）和 `.env.server.local` / `.env.local` 的既有运行约定。Google AI Studio 预览与本机/线上共用同一条 `server.ts` 入口，两端差异只用环境变量解耦，避免再拆回双进程。
+    * AI 请求统一收口于 API 端且保持契约稳定：所有 AI 模型调用均应放在后端 API 端，禁止在前端直连或暴露密钥；非必要不改动既有 `/api/gemini/*` 路由路径、请求/响应协议与环境变量名称。
+    * 克制依赖变动并保持文档自洽：非必要不增删依赖或进行跨大版本升级；若确有依赖、环境变量或启动行为变化，须同步更新 `.env.example` 与 `importantdocsneedkown/手动搭建与迭代应用指南.txt`（必要时还有《仓库纯净性与AI迭代成果回灌实践.txt》《线上服务托管实例（systemd）.txt》），使文档与代码保持一致。从 AI Studio 下载的 ZIP 同步回仓库时，已跟踪的路径（至少包括 `public/styles/app.css`、`domain/`、`scripts/verify/`）应随代码一并保留；本地验证产物目录 `verify-results/` 不进入仓库。
 
 第三条：先对齐认知，再征求授权，最后才动代码
     * 第一条与第二条分别守护着代码改动的精准性与交付链路的稳定性，而它们的前提是：动手之前，参与方已经真正理解了用户想要什么。本条约束的正是这个"动手之前"的阶段。

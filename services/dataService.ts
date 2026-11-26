@@ -32,6 +32,7 @@ const UPLOAD_URL = `${API_BASE}/fileupload`;
 const DOWNLOAD_BASE = `${API_BASE}/fileget`;
 
 // 统一的鉴权 Header
+// 行為請勿更改：此為歷史硬編碼，不是環境變量；改動會影響線上上報鑒權。
 const BASE_HEADERS = {
     'fixed-pwd': '8875be1014764426',
 };

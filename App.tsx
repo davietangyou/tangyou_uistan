@@ -3,18 +3,13 @@ import {Layout} from './components/Layout';
 import {View} from './utils/types';
 import {useAppLogic} from './hooks/useAppLogic';
 
-// === Views / 頁面組件 ===
-import {OnboardingView} from './views/OnboardingView';
-import {HomeView} from './views/HomeView';
-import {GlucoseView} from './views/GlucoseView';
-import {ConsultView} from './views/ConsultView';
-import {MeView} from './views/MeView';
-import {DetailView} from './views/DetailView';
-import {SavedQuestionsView} from './views/SavedQuestionsView';
-
 // === Components / 全局組件 ===
 import {Navigation} from './components/Navigation';
 import {GlobalMic} from './components/GlobalMic';
+import {ViewRouter} from './components/ViewRouter';
+import {FocusToast} from './components/FocusToast';
+
+// 保留未直接使用的依賴：lucide-react 目前無 import；motion 僅被未掛載的 MedicationReminders 使用。請勿隨意移除。
 
 /**
  * App Component
@@ -51,30 +46,14 @@ const App: React.FC = () => {
                 {/* 2. 視圖路由渲染 */}
                 {/* 將 logic 對象作為 props 展開傳遞，讓各個視圖按需獲取其需要的狀態和方法 */}
 
-                {view === View.Onboarding && <OnboardingView {...logic} />}
-
-                {view === View.Home && <HomeView {...logic} />}
-
-                {view === View.Glucose && <GlucoseView {...logic} />}
-
-                {view === View.Consult && <ConsultView {...logic} />}
-
-                {view === View.Me && <MeView {...logic} />}
-
-                {view === View.SavedQuestions && <SavedQuestionsView {...logic} />}
-
-                {view === View.Detail && <DetailView {...logic} />}
+                <ViewRouter logic={logic} />
             </div>
 
             {/* 3. 全局組件區域 */}
 
             {/* 焦點核驗提示 UI (當用戶嘗試錄音但未聚焦輸入框時顯示) */}
             {showFocusToast && (
-                <div
-                    className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl font-bold flex items-center gap-3 animate-in slide-in-from-top-4">
-                    <span className="text-2xl">☝️</span>
-                    <span>請先點擊一下您想要輸入的空格</span>
-                </div>
+                <FocusToast />
             )}
 
             {/* 全局懸浮麥克風 */}

@@ -1,6 +1,6 @@
 # tangyou_uistan 仓库纯净性与 AI 迭代成果回灌实践
 
-版本：1.1
+版本：1.2
 适用项目：tangyou_uistan
 适用环境：macOS
 
@@ -142,7 +142,7 @@
 | | **项目内在** | **工具 / 环境特有** |
 | --- | --- | --- |
 | **持久** | **主仓库**：源码、文档、配置模板、发布手册、知识库 | **渠道归档中的工具资料**：`AGENTS.md`、工具指令、工具配置模板 |
-| **临时** | **排除**：`dist/`、`.vite/`、构建缓存、测试快照 | **排除 / 隔离**：`bun.lock`、`.idea/`、`.vscode/`、`.DS_Store`、工具缓存 |
+| **临时** | **排除**：`dist/`、`.vite/`、`verify-results/`、构建缓存、测试快照 | **排除 / 隔离**：`bun.lock`、`.idea/`、`.vscode/`、`.DS_Store`、工具缓存 |
 
 这张矩阵不依赖某个工具的名字，也不依赖某次迭代的具体文件。新工具带来的新产物，可以先按“归属 × 时间性”判断，再进入工具产物登记表。
 
@@ -151,7 +151,7 @@
 | 类别 | 例子 | 处置 |
 | --- | --- | --- |
 | **本地专属、永不导入** | `.git`、`node_modules`、`.env`、`.env.local`、`.env.server.local`、`.idea`、`.vscode`、`.npmrc`、`.DS_Store`、`__MACOSX` | 出站不提供；入站按路径排除；不进入候选区 |
-| **项目内在、但受保护** | `package.json`、`package-lock.json`、`.nvmrc`、`.env.example`、`.gitignore`、`vite.config.ts`、`server.ts`、`metadata.json`、`index.html`、`tsconfig.json`、`importantdocsneedkown/` | 入站显示 diff，由人显式决定接受、回绝或部分合并 |
+| **项目内在、但受保护** | `package.json`、`package-lock.json`、`.nvmrc`、`.env.example`、`.gitignore`、`vite.config.ts`、`server.ts`、`metadata.json`、`index.html`、`public/styles/app.css`、`tsconfig.json`、`importantdocsneedkown/` | 入站显示 diff，由人显式决定接受、回绝或部分合并 |
 | **工具产物、默认拒绝** | `bun.lock`、`bun.lockb`、`AGENTS.md`、`.aider*`、`.cursor*`、`.claude/`、`.windsurf/`、`.continue/`、`.github/copilot-instructions.md` | 出站不提供；入站排除或归档到渠道目录 |
 | **未知文件** | 新工具带来的新文件 | 进入渠道目录的 `unknown/`，人工分类后再决定 |
 
@@ -185,7 +185,7 @@
 | `AGENTS.md`、`.aider*`、`.cursor*`、`.claude/`、`.windsurf/`、`.continue/`、`.github/copilot-instructions.md` | 各类 AI 编程工具 | 排除；需要留存的放入渠道目录的 `tool_artifacts/` |
 | `.idea/`、`.vscode/`、`.DS_Store`、`__MACOSX/` | IDE / macOS | 排除；不进入候选区 |
 | `.npmrc` | npm 本地配置，可能含 token | 本地专属；不进入仓库 |
-| `node_modules/`、`dist/`、`.vite/`、`.next/`、`.turbo/`、`coverage/`、`*.log` | 依赖 / 构建 / 运行 | 排除；可复现目录不入 `export_full/` |
+| `node_modules/`、`dist/`、`.vite/`、`verify-results/`、`.next/`、`.turbo/`、`coverage/`、`*.log` | 依赖 / 构建 / 运行 / 本地验证产物 | 排除；可复现目录不入 `export_full/`，也不进入仓库 |
 | `Thumbs.db`、`*.tsbuildinfo`、`.pnp.*` | 其他工具产物 | 排除或进入 `unknown/` |
 | 未知新文件 | 新工具 | 进入渠道目录的 `unknown/`，人工分类 |
 
@@ -372,6 +372,7 @@ rsync -a \
   --exclude='.env.server.local' \
   --exclude='dist/' \
   --exclude='.vite/' \
+  --exclude='verify-results/' \
   --exclude='.next/' \
   --exclude='.turbo/' \
   --exclude='coverage/' \
@@ -414,6 +415,7 @@ node_modules/
 __MACOSX/
 dist/
 .vite/
+verify-results/
 .next/
 .turbo/
 coverage/
@@ -521,6 +523,7 @@ vite.config.ts
 server.ts
 metadata.json
 index.html
+public/styles/app.css
 tsconfig.json
 importantdocsneedkown
 EOF
@@ -542,6 +545,14 @@ done < "$STAGE/protected.txt"
 - 回滚到 HEAD：`git checkout HEAD -- package.json`；
 - 部分合并：手动编辑后 `git add`。
 
+评审 `index.html` 时，一并查看 Tailwind CDN 之后是否仍保留：
+
+```html
+<link rel="stylesheet" href="%BASE_URL%styles/app.css">
+```
+
+若导出物删掉了这一行、把样式重新内联进 `index.html`，或改写了 `public/styles/app.css`，需要显式判断，而不是当作无关清理。该样式表是页面皮肤与大字规则的现行位置。
+
 ### 5.10 删除候选评审
 
 ```bash
@@ -556,6 +567,8 @@ grep -E '^\*deleting' "$STAGE/export_vs_base.txt" || true
 
 若导出物明显缺少大量未触碰文件，删除候选多为噪声，不据此删除。
 
+当前仓库已跟踪、导出物若给出 `*deleting` 时尤其需要停下来看一眼的路径包括：`public/styles/app.css`、`domain/`（及其既有分文件）、`scripts/verify/`（含 `fixtures/golden/`）、`.env.example`、`server/env.ts`、`server/http/`。对这些路径的删除，默认更接近“工具没看见”，予以保留，除非能说明这是有意删除。
+
 ### 5.11 候选区验证
 
 ```bash
@@ -567,6 +580,8 @@ npm run build
 
 `npm ci` 严格按 `package-lock.json` 安装；若 lockfile 与 `package.json` 不同步，`npm ci` 会失败，此时可以改用 `npm install`，并把 `package-lock.json` 作为受保护文件重新评审。
 
+`npm run build` 可能打印 `./styles/app.css doesn't exist at build time, it will remain unchanged to be resolved at runtime`。这是预期现象：该文件是 `public/` 下的静态资源，构建后应出现在 `dist/styles/app.css`，与源文件一致。不必为消除这行提示而把它改成 Vite 模块导入。
+
 运行时验证（用临时 env，端口 9102，避开线上 9002）：
 
 ```bash
@@ -575,12 +590,21 @@ PORT=9102 node --import tsx server.ts > /tmp/tangyou_uistan_candidate.log 2>&1 &
 CAND_PID=$!
 sleep 5
 curl -sS -m 5 http://127.0.0.1:9102/api/health; echo
+curl -sS -m 5 -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9102/styles/app.css
 kill "$CAND_PID" 2>/dev/null || true
 wait "$CAND_PID" 2>/dev/null || true
 rm -f .env.local
 ```
 
-预期：lint 与 build 通过；health 返回 `ok:true`、`configured:true`。
+预期：lint 与 build 通过；health 返回 `ok:true`、`configured:true`；`/styles/app.css` 返回 HTTP 200。
+
+若本机有 Chrome，且候选服务仍在 9102 监听，可再跑可选验证门（默认会访问 9002，因此需要改指向）：
+
+```bash
+VERIFY_BASE_URL=http://127.0.0.1:9102/ npm run verify -- --out verify-results/candidate
+```
+
+需要与某次基线对照时，再加上 `--compare`。产物目录 `verify-results/` 已被 `.gitignore` 忽略；提交进仓库的金样在 `scripts/verify/fixtures/golden/`。更细的说明见 `scripts/verify/README.md`。该步骤不是每次导入的必做项。
 
 若 `node --import tsx` 不可用，可以改用 `PORT=9102 npm run dev`。若 9102 已被占用，可以用 `lsof -iTCP:9102 -sTCP:LISTEN` 查看。
 
@@ -606,9 +630,9 @@ git commit -m "import(<渠道名>): <一句话描述本次迭代>"
 | 变更类型 | 候选区验证 | 干净 clone 测试 |
 | --- | --- | --- |
 | 纯文档、文案、注释 | 可选 lint | 跳过 |
-| 普通源码改动 | `npm ci` + lint + build | 可选，或每周/每月一次 |
-| 依赖、lockfile、构建配置、目录结构变化 | `npm ci` + lint + build | 建议必做 |
-| 大范围重构、工具导出可疑、基线漂移 | `npm ci` + lint + build | 建议必做 |
+| 普通源码改动 | `npm ci` + lint + build；有条件时再加 `npm run verify` | 可选，或每周/每月一次 |
+| 依赖、lockfile、构建配置、目录结构变化 | `npm ci` + lint + build；有条件时再加 `npm run verify` | 建议必做 |
+| 大范围重构、工具导出可疑、基线漂移 | `npm ci` + lint + build；有条件时再加 `npm run verify` | 建议必做 |
 
 执行方式：
 
@@ -638,7 +662,7 @@ git diff "$MAIN_BRANCH".."$BRANCH" | less
 确认 diff 后，先移除候选 worktree，避免分支被占用：
 
 ```bash
-rm -rf "$CAND_WT/node_modules" "$CAND_WT/dist" "$CAND_WT/.vite"
+rm -rf "$CAND_WT/node_modules" "$CAND_WT/dist" "$CAND_WT/.vite" "$CAND_WT/verify-results"
 git worktree remove "$CAND_WT" || git worktree remove --force "$CAND_WT"
 ```
 
@@ -713,9 +737,9 @@ EOF
 - 工具产物已清扫；
 - 未知文件已隔离；
 - 受保护基线已逐项评审；
-- 删除候选已逐项判断；
-- 候选区 lint / build / health 通过；
-- 暂存 diff 中没有硬编码密钥或令牌。
+- 删除候选已逐项判断，尤其是 `public/styles/app.css`、`domain/`、`scripts/verify/` 等已跟踪路径；
+- 候选区 lint / build / health 通过，`/styles/app.css` 可访问；
+- 暂存区没有 `verify-results/`，diff 中没有硬编码密钥或令牌。
 
 ### 7.3 合并前
 
@@ -761,7 +785,7 @@ iteration_channels/
 | 预览变化 | `rsync -avn --delete --itemize-changes --exclude-from="$STAGE/exclude.txt" "$EXPORT/" "$BASE_WT/"` |
 | 叠加到候选 | `rsync -av --itemize-changes --exclude-from="$STAGE/exclude.txt" "$EXPORT/" "$CAND_WT/"` |
 | 未知文件 | `git -C "$CAND_WT" ls-files --others --exclude-standard` |
-| 候选区验证 | `npm ci --prefer-offline --no-audit --no-fund && npm run lint && npm run build` |
+| 候选区验证 | `npm ci --prefer-offline --no-audit --no-fund && npm run lint && npm run build`（确认 `dist/styles/app.css`；可选 `npm run verify`） |
 | 干净 clone 测试 | `git clone -b "$BRANCH" "$REPO" "$CLEAN_CLONE"` |
 | 移除候选 worktree | `git worktree remove "$CAND_WT"` |
 | squash 合并 | `git merge --squash "$BRANCH"` |

@@ -37,6 +37,7 @@ vite
 test-results
 playwright-report
 blob-report
+verify-results
 tsconfig.tsbuildinfo
 
 # === Python ===

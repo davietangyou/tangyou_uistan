@@ -860,3 +860,38 @@
     .ds-ob-next > svg { display: none; }
     .ds-ob-next { padding: 0 12px; }
 }
+
+/* S5 (owner t20u): identity card with 「已完成 N/5」 — sage domain card, as 被仿侧「我的」. */
+.ds-pf-identity {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    border-radius: var(--ds-radius-card);
+    background: var(--c-sage-100);
+}
+.ds-pf-identity p { margin: 0; }
+.ds-pf-identity-row { display: flex; align-items: center; gap: 16px; }
+.ds-pf-identity-avatar {
+    display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center;
+    width: 60px; height: 60px; border-radius: 999px;
+    background: var(--c-surface); color: var(--c-sage-700);
+}
+.ds-pf-identity-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ds-pf-identity-name {
+    font-size: var(--t-h2); line-height: var(--t-h2-lh); font-weight: 700; color: var(--c-ink);
+    word-break: keep-all; overflow-wrap: anywhere;
+}
+.ds-pf-identity-badge {
+    flex: 0 0 auto; align-self: flex-start;
+    padding: 4px 12px; border-radius: 999px;
+    background: var(--c-sage-200); color: var(--c-sage-700);
+    font-size: var(--t-caption); font-weight: 600; white-space: nowrap;
+}
+.ds-pf-identity-badge.is-done { background: var(--c-sage-700); color: var(--c-white); }
+.ds-pf-identity-bar { height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.8); overflow: hidden; }
+.ds-pf-identity-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--c-sage-700); transition: width var(--ds-duration) var(--ds-ease); }
+@media (max-width: 359px) {
+    .ds-pf-identity { padding: 16px; }
+    .ds-pf-identity-avatar { width: 48px; height: 48px; }
+}

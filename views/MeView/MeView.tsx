@@ -10,6 +10,7 @@ import {CaregiverCard} from './CaregiverCard';
 import {LifestyleCard} from './LifestyleCard';
 import {SaveBar} from './SaveBar';
 import {ResetBar} from './ResetBar';
+import {IdentityCard} from './IdentityCard';
 
 export type ProfileGroupId = 'personal' | 'diabetes' | 'conditions' | 'caregiver' | 'lifestyle';
 export interface GroupProps {
@@ -54,6 +55,8 @@ export const MeView: React.FC<MeViewProps> = (props) => {
                     隨時查看與直接修改您的健康資料，所有變更即時保存，為 AI 提供準確的分析基礎。
                 </p>
             </header>
+
+            <IdentityCard profile={vm.profile} />
 
             <ProfileEditorContext.Provider value={editor}>
                 <div className="ds-card ds-pf-directory">

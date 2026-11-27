@@ -13,4 +13,5 @@
 @import url('./records.css'); /* Records / 血糖紀錄 view. */
 @import url('./questions.css'); /* 問題紀錄 / Saved questions view. */
 @import url('./profile.css'); /* 個人檔案 / Profile and 首次引導 / Onboarding. */
-@import url('./polish.css'); /* Cross-view polish and accessibility (Stage 9); must load last. */
+@import url('./polish.css'); /* Cross-view polish and accessibility (Stage 9). */
+@import url('./native.css'); /* Stage 12 native-app feel: safe areas, touch, press feedback, transitions; must load last. */

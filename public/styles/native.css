@@ -1,0 +1,62 @@
+/* =============================================================================
+   Stage 12: native-app feel on phones (must load after polish.css)
+   Full-screen safe areas, no browser chrome feel, press feedback, tab
+   transitions, in-app alert/confirm sheet. Layout and copy are unchanged.
+   ============================================================================= */
+
+/* 1. Safe areas (index.html sets viewport-fit=cover, so env() is live).
+   In a normal browser tab every inset is 0 and nothing moves. */
+.ds-shell-canvas {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+}
+
+.ds-shell-header {
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+}
+
+.ds-shell-header-home {
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+}
+
+/* 2. No web feel: no grey tap flash, no double-tap zoom (pinch zoom still
+   works: touch-action manipulation keeps pan + pinch), no rubber-band bounce
+   or pull-to-refresh on the page itself. */
+html {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    overscroll-behavior-y: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    overscroll-behavior-y: none;
+}
+
+/* UI chrome is not selectable and shows no long-press callout. Inputs,
+   textareas and all reading text (AI answers, records) stay selectable. */
+button,
+[role="button"],
+[role="tab"],
+.ds-shell-header,
+.ds-shell-nav,
+.ds-shell-mic,
+.ds-shell-footer {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+}
+
+img,
+svg {
+    -webkit-touch-callout: none;
+}

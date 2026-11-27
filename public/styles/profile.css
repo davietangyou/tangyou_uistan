@@ -679,8 +679,8 @@
     font-weight: 600;
 }
 
-.ds-ob-step-title { flex: 1 1 0; min-width: 0; color: var(--c-ink); }
-.ds-ob-step-total { flex: 0 0 auto; }
+.ds-ob-step-title { flex: 1 1 0; min-width: 0; margin: 0; color: var(--c-ink); overflow-wrap: anywhere; }
+.ds-ob-step-total { flex: 0 0 auto; white-space: nowrap; align-self: flex-start; padding-top: 4px; }
 
 .ds-ob-body {
     display: flex;
@@ -746,10 +746,27 @@
     color: var(--c-mist);
 }
 
+/* S4: the step's actions stay pinned at the bottom (an app's wizard bar).
+   The bar is lower than the voice button, which floats just above it. */
 .ds-ob-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    margin: 0 calc(var(--ds-card-pad) * -1) calc(var(--ds-card-pad) * -1);
+    padding: 12px var(--ds-card-pad) calc(12px + env(safe-area-inset-bottom, 0px));
+    border-radius: 0 0 var(--ds-radius-card) var(--ds-radius-card);
+    background: var(--c-surface);
+    box-shadow: 0 -1px 0 var(--c-hairline);
+}
+
+.ds-ob-later {
+    align-self: flex-start;
+    margin-left: -8px;
+    padding: 0 8px;
+    color: var(--c-ink-2);
 }
 
 .ds-ob-actions.is-row {
@@ -757,8 +774,8 @@
     gap: 12px;
 }
 
-.ds-ob-back { flex: 1 1 0; }
-.ds-ob-finish { flex: 2 1 0; }
+.ds-ob-back { flex: 0 0 auto; white-space: nowrap; padding: 0 16px; }
+.ds-ob-finish { flex: 1 1 0; min-width: 0; }
 .ds-ob-gate-hint { text-align: center; }
 
 .ds-ob-dots {

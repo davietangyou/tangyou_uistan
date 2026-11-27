@@ -2,7 +2,7 @@ import {COMMON_CONDITIONS, OTHER_CONDITIONS, conditionsList} from '../../utils/c
 import {View, DiabetesType} from '../../utils/types';
 import type {OnboardingViewModel} from './useOnboardingViewModel';
 import {FieldBlock, OptionTile, Pill} from '../ProfileShared/formParts';
-import {Icon} from '../../components/ui';
+import {Icon, SheetSelect} from '../../components/ui';
 
 export function ConditionsStep({vm}: {vm: OnboardingViewModel}) {
     const {
@@ -27,6 +27,15 @@ export function ConditionsStep({vm}: {vm: OnboardingViewModel}) {
                 <p className="t-caption t-ink-2">
                     點選符合您的項目（可多選），如無請選擇「沒有長期疾病」。
                 </p>
+                {/* D-b2：這一步可以稍後在「個人檔案」補填；已點選的照樣保存（與「完成並進入」同一結果）。 */}
+                <button
+                    type="button"
+                    onClick={() => setView(View.Home)}
+                    className="ds-btn ds-btn-ghost ds-control ds-ob-later"
+                >
+                    <span>稍後填寫</span>
+                    <Icon name="forward" size={20} />
+                </button>
             </div>
 
             {/* 沒有長期疾病選項 */}
@@ -103,7 +112,9 @@ export function ConditionsStep({vm}: {vm: OnboardingViewModel}) {
 
                             {/* 糖尿病類型 */}
                             <FieldBlock label="1. 糖尿病類型：" htmlFor="ob-dm-type">
-                                <select
+                                <SheetSelect
+                                    sheetTitle="糖尿病類型"
+                                    mode="list"
                                     id="ob-dm-type"
                                     className="ds-field-control ds-control"
                                     value={profile.diabetesType || 'TYPE_2'}
@@ -114,7 +125,7 @@ export function ConditionsStep({vm}: {vm: OnboardingViewModel}) {
                                     <option value="PRE_DIABETES">糖尿病前期 / 血糖警戒線 (Pre-diabetes)</option>
                                     <option value="GESTATIONAL">妊娠期糖尿病 (Gestational DM)</option>
                                     <option value="OTHER">其他類型 / 未確定</option>
-                                </select>
+                                </SheetSelect>
                             </FieldBlock>
 
                             {/* 是否正在注射胰島素 */}

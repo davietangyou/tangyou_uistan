@@ -21,7 +21,7 @@ interface LayoutProps {
  */
 // S4: pages whose first heading shares the top row with the font toggle (one
 // row of chrome). Each page marks that heading with `.ds-page-lead`.
-const COMPACT_HEADER_VIEWS = new Set<View>([View.Home, View.SavedQuestions, View.Me]);
+const COMPACT_HEADER_VIEWS = new Set<View>([View.Home, View.SavedQuestions, View.Me, View.Onboarding]);
 
 export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLargeFont, view}) => {
     const isHome = view === View.Home;

@@ -325,11 +325,20 @@ html[data-subpages] .ds-shell-mic {
     color: inherit;
 }
 
+/* 首次設定: the voice button floats just above the wizard's pinned action bar. */
+html:has(.ds-onboarding) .ds-shell-mic {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 128px);
+}
+
+html:has(.ds-onboarding .large-font, .large-font .ds-onboarding) .ds-shell-mic {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 140px);
+}
+
 /* A bottom sheet (shared or the quick memo) is open: like a sub-page, the nav
    steps away and the voice button drops to the corner; the sheet's actions
    leave room for it. */
 html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop) .ds-shell-mic {
-    bottom: calc(var(--shell-nav-offset) + 8px);
+    bottom: calc(var(--shell-nav-offset) + 8px) !important; /* wins over the 首次設定 lift */
 }
 
 /* Footer disclaimer */

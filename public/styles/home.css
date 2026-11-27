@@ -349,3 +349,6 @@
         transition: none !important;
     }
 }
+
+/* S5 (07-03 C1): the greeting breaks only at its comma, never inside a name. */
+.ds-home-greeting .t-h1 { word-break: keep-all; overflow-wrap: break-word; }

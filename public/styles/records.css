@@ -954,7 +954,9 @@
 }
 .ds-rec-entry-line + .ds-rec-entry-line { border-top: 1px solid rgba(47, 97, 120, 0.14); }
 .ds-rec-entry-line .t-caption { flex: 0 0 auto; color: var(--c-ink-2); }
-.ds-rec-entry-line .t-body-strong { text-align: right; overflow-wrap: anywhere; }
+/* S5 large text: values break only at spaces (「2026年11月26日 / (週四) 09:30」, never 「小/時」). */
+.ds-rec-entry-line { flex-wrap: wrap; }
+.ds-rec-entry-line .t-body-strong { margin-left: auto; text-align: right; word-break: keep-all; overflow-wrap: break-word; }
 
 /* Inside the sub-page the form is the page: no extra card frame. */
 .ds-rec-entry-page .ds-rec-form {

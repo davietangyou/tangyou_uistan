@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useRef} from 'react';
+import React, {useEffect, useLayoutEffect, useRef} from 'react';
 import {View} from '../utils/types';
 import {uiIcons} from './ui/icons';
 
@@ -40,6 +40,28 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
         const observer = new ResizeObserver(update);
         observer.observe(header);
         return () => observer.disconnect();
+    }, []);
+
+    // S5: on-screen keyboard up → html[data-keyboard] (CSS fades the nav so it is
+    // not pushed up over the field). Read from visualViewport; pinch-zoom (scale
+    // ≠ 1) and a keyboard with no focused text field do not count.
+    useEffect(() => {
+        const vv = window.visualViewport;
+        if (!vv) return;
+        const root = document.documentElement;
+        const update = () => {
+            const el = document.activeElement as HTMLElement | null;
+            const typing = !!el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !['button', 'checkbox', 'radio', 'file', 'range', 'submit'].includes((el as HTMLInputElement).type)) || el.isContentEditable);
+            const open = typing && Math.abs(vv.scale - 1) < 0.01 && window.innerHeight - vv.height > 150;
+            root.toggleAttribute('data-keyboard', open);
+        };
+        vv.addEventListener('resize', update);
+        document.addEventListener('focusout', update);
+        return () => {
+            vv.removeEventListener('resize', update);
+            document.removeEventListener('focusout', update);
+            root.removeAttribute('data-keyboard');
+        };
     }, []);
 
     return (

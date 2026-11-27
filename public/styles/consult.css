@@ -1438,8 +1438,23 @@
     column-gap: 12px;
     row-gap: 4px;
 }
+/* S5: beside the pinned voice button the composer is narrow (≈200px at 320px
+   with large text) — the title gets its own full row there. */
+@media (max-width: 400px) {
+    .ds-consult-composer .ds-consult-attach {
+        grid-template-areas: "img . remove" "title title title" "text text text";
+    }
+}
 .ds-consult-composer .ds-consult-attach img { grid-area: img; width: 48px; height: 48px; }
 .ds-consult-composer .ds-consult-attach-remove { grid-area: remove; }
 .ds-consult-composer .ds-consult-attach-text { display: contents; }
 .ds-consult-composer .ds-consult-attach-text .t-body-strong { grid-area: title; }
 .ds-consult-composer .ds-consult-attach-text .t-caption { grid-area: text; padding: 0 2px 2px; }
+
+/* S5 narrow phones (320–359px): beside the pinned voice button the composer
+   is ~200px wide, so 語音輸入 keeps its icon and its name moves to the
+   accessible label (title/aria are unchanged). */
+@media (max-width: 359px) {
+    .ds-consult-voice .t-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .ds-consult-voice { width: var(--touch-min); padding: 0; }
+}

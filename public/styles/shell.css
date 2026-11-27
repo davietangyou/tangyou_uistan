@@ -243,6 +243,7 @@
 
 /* Sub-page open: the nav steps out of the way (one task, one way back). */
 html[data-subpages] .ds-shell-nav,
+html[data-keyboard] .ds-shell-nav,
 html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop) .ds-shell-nav {
     transform: translateY(calc(100% + 24px));
     opacity: 0;
@@ -470,6 +471,10 @@ html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop) .ds-shell-mic {
     color: var(--c-ink);
     word-break: keep-all;
     line-break: strict;
+    /* S5 large text at 320px: an unspaced title (糖尿病相關信息) may still break
+       rather than run off the screen. */
+    overflow-wrap: anywhere;
+    min-width: 0;
 }
 
 .ds-subpage-body {
@@ -523,4 +528,11 @@ html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop) .ds-shell-mic {
     .ds-shell-nav-bar {
         --shell-nav-pad: 4px;
     }
+}
+
+/* S5: on-screen keyboard up (Layout sets html[data-keyboard] from
+   visualViewport): the nav fades away like for a sub-page so it is not pushed
+   up over the field, and the voice button takes the nav's corner. */
+html[data-keyboard] .ds-shell-mic {
+    bottom: calc(var(--shell-nav-offset) + 8px) !important;
 }

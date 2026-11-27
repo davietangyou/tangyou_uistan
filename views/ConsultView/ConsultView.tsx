@@ -1,6 +1,6 @@
 import React from 'react';
 import {View} from '../../utils/types';
-import {UI_ICON_DEFAULTS, uiIcons} from '../../components/ui';
+import {Toast, UI_ICON_DEFAULTS, uiIcons} from '../../components/ui';
 import type {ConsultViewProps} from './types';
 import {useConsultViewModel} from './useConsultViewModel';
 import {ChatPanel} from './ChatPanel';
@@ -38,17 +38,22 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
 
             {/* 浮動提示 Toast (存入問題清單成功反饋) */}
             {toastMessage && (
-                <div className="ds-consult-toast" role="status" aria-live="polite">
+                <Toast
+                    tone="success"
+                    className="ds-consult-toast"
+                    action={
+                        <button
+                            type="button"
+                            onClick={() => setView(View.SavedQuestions)}
+                            className="ds-consult-toast-action ds-control"
+                        >
+                            <span>查看清單</span>
+                            <Chevron size={18} strokeWidth={UI_ICON_DEFAULTS.strokeWidth} aria-hidden="true" />
+                        </button>
+                    }
+                >
                     <span className="t-body-strong">{toastMessage}</span>
-                    <button
-                        type="button"
-                        onClick={() => setView(View.SavedQuestions)}
-                        className="ds-consult-toast-action ds-control"
-                    >
-                        <span>查看清單</span>
-                        <Chevron size={18} strokeWidth={UI_ICON_DEFAULTS.strokeWidth} aria-hidden="true" />
-                    </button>
-                </div>
+                </Toast>
             )}
 
             {/* 頂部操作列：隨手記問診備忘 + 開啟新對話 */}

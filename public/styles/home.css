@@ -17,17 +17,19 @@
     color: var(--c-ink);
 }
 
+/* Ask AI: the sky domain card (AI / glucose family), not a charcoal slab —
+   charcoal is kept for "do it now" buttons. Icon and arrow in white circles. */
 .ds-home-ask {
     display: flex;
     align-items: center;
     gap: 16px;
     width: 100%;
-    min-height: 88px;
-    padding: 20px 20px 20px 16px;
+    min-height: 96px;
+    padding: 20px 18px 20px 18px;
     border: 0;
     border-radius: var(--ds-radius-card);
-    background: var(--c-action);
-    color: var(--c-white);
+    background: var(--c-sky-100);
+    color: var(--c-ink);
     box-shadow: var(--ds-e1);
     font-family: var(--ds-font);
     text-align: left;
@@ -40,7 +42,7 @@
 }
 
 .large-font .ds-home-ask.ds-control {
-    min-height: 96px !important;
+    min-height: 108px !important;
     font-size: var(--t-title) !important;
     font-weight: 600;
 }
@@ -52,9 +54,9 @@
     justify-content: center;
     width: 56px;
     height: 56px;
-    border-radius: var(--ds-radius-inner);
-    background: rgba(255, 255, 255, 0.12);
-    color: var(--c-white);
+    border-radius: 50%;
+    background: var(--c-surface);
+    color: var(--c-sky-700);
 }
 
 .ds-home-ask-text {
@@ -66,16 +68,32 @@
 }
 
 .ds-home-ask-title {
-    font-size: var(--t-title);
-    line-height: var(--t-title-lh);
+    font-size: var(--t-h2);
+    line-height: 1.25;
     font-weight: 600;
     letter-spacing: 0;
+    word-break: keep-all;
+    color: var(--c-ink);
+}
+
+.ds-home-ask-sub {
+    font-size: var(--t-caption);
+    line-height: var(--t-caption-lh);
+    font-weight: 500;
+    color: var(--c-sky-700);
     word-break: keep-all;
 }
 
 .ds-home-ask-chevron {
     flex: 0 0 auto;
-    opacity: 0.8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--c-surface);
+    color: var(--c-ink);
 }
 
 /* Today visit banner: urgent, but no continuous pulse (hard on elders). */

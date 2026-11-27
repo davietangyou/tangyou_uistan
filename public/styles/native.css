@@ -78,59 +78,7 @@ button:not(:disabled):not(.ds-shell-mic):not(.ds-subpage-back):active,
     }
 }
 
-/* 5. In-app alert / confirm bottom sheet (components/ui/AppDialog.tsx). */
-.ds-app-sheet-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 110;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    background: var(--c-backdrop);
-    animation: ds-app-fade 0.18s ease-out both;
-}
-
-.ds-app-sheet {
-    width: 100%;
-    max-width: var(--shell-column);
-    padding: 24px max(20px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
-    border-radius: var(--ds-radius-sheet) var(--ds-radius-sheet) 0 0;
-    background: var(--c-surface);
-    color: var(--c-ink);
-    box-shadow: var(--ds-e2);
-    animation: ds-app-sheet-up 0.22s ease-out both;
-}
-
-.ds-app-sheet-message {
-    margin: 0 0 20px;
-    white-space: pre-wrap;
-}
-
-.ds-app-sheet-actions {
-    display: flex;
-    gap: var(--ds-target-gap);
-}
-
-.ds-app-sheet-actions .ds-btn {
-    flex: 1 1 0;
-}
-
-@keyframes ds-app-fade {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes ds-app-sheet-up {
-    from { transform: translateY(24px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .ds-app-sheet-backdrop,
-    .ds-app-sheet {
-        animation: none;
-    }
-}
+/* 5. In-app alert / confirm: moved to components.css (S3 centred dialog recipe). */
 
 /* 4. Tabs: the bottom nav stays fixed and the quiet header scrolls away with
    the content (S2: main tabs have no title bar). Each tab fades in — a level

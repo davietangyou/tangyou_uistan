@@ -343,3 +343,310 @@ textarea.ds-field-control {
    public/illustrations/{kebab-name}@2x.png or .svg
    Sparse, 3D-but-quiet, one illustration per major empty state / greeting.
    Never replace a safety icon or a status label. */
+
+/* =============================================================================
+   S3 shared components: dialog, bottom sheet, wheel picker, toast, empty state
+   Motion from the designer's table only: things "land" (y 24 → 0, 240ms),
+   leave quicker (200ms); scrim fades in 120ms; no springs, no flight.
+   ============================================================================= */
+
+@keyframes ds-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ds-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes ds-land { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes ds-lift-off { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(24px); } }
+
+/* Centred dialog — "deciding happens in the middle". */
+.ds-app-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: var(--c-backdrop);
+    animation: ds-fade-in var(--ds-duration-fast) ease-out both;
+}
+
+.ds-app-dialog {
+    width: 100%;
+    max-width: calc(var(--shell-column, 32rem) - 36px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 24px 20px 20px;
+    border-radius: var(--ds-radius-card);
+    background: var(--c-surface);
+    color: var(--c-ink);
+    box-shadow: var(--ds-e2);
+    animation: ds-land var(--ds-duration-slow) var(--ds-ease) both;
+}
+
+.ds-app-dialog-title {
+    margin: 0 0 8px;
+    color: var(--c-ink);
+}
+
+.ds-app-dialog-message {
+    margin: 0 0 24px;
+    white-space: pre-wrap;
+    color: var(--c-ink);
+}
+
+.ds-app-dialog-message.is-secondary {
+    color: var(--c-ink-2);
+}
+
+.ds-app-dialog-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ds-app-dialog-actions .ds-btn {
+    min-height: var(--touch-primary);
+}
+
+.large-font .ds-app-dialog-actions .ds-btn.ds-control {
+    min-height: var(--touch-primary) !important;
+}
+
+/* Bottom sheet — "choosing happens at the bottom". The scrim sits under the
+   global voice button (z 60) so fields inside stay voice-reachable. */
+.ds-sheet-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: var(--c-backdrop);
+    animation: ds-fade-in var(--ds-duration-fast) ease-out both;
+}
+
+.ds-sheet-scrim.is-leaving {
+    animation: ds-fade-out var(--ds-duration) var(--ds-ease-exit) both;
+}
+
+.ds-sheet {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: min(100vw, var(--shell-column, 32rem));
+    max-height: min(88vh, calc(100vh - 32px - env(safe-area-inset-top, 0px)));
+    border-radius: var(--ds-radius-sheet) var(--ds-radius-sheet) 0 0;
+    background: var(--c-surface);
+    color: var(--c-ink);
+    box-shadow: var(--ds-e2);
+    outline: none;
+    animation: ds-land var(--ds-duration-slow) var(--ds-ease) both;
+    transition: transform var(--ds-duration) var(--ds-ease);
+}
+
+.ds-sheet.is-dragging {
+    transition: none;
+}
+
+.ds-sheet.is-leaving {
+    animation: ds-lift-off var(--ds-duration) var(--ds-ease-exit) both;
+}
+
+.ds-sheet-grab {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0 6px;
+    cursor: grab;
+    touch-action: none;
+}
+
+.ds-sheet-grabber {
+    width: 40px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--c-hairline);
+}
+
+.ds-sheet-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 4px 20px 12px;
+}
+
+.ds-sheet-titles {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ds-sheet-title {
+    margin: 0;
+}
+
+.ds-sheet-hint {
+    margin: 4px 0 0;
+    color: var(--c-ink-3);
+}
+
+.ds-sheet-close {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--touch-min);
+    height: var(--touch-min);
+    margin: -4px -8px 0 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--c-surface-muted);
+    color: var(--c-ink-2);
+    cursor: pointer;
+}
+
+.ds-sheet-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 20px 16px;
+}
+
+/* Actions clear the voice button on the right. */
+.ds-sheet-footer {
+    display: flex;
+    gap: var(--ds-target-gap);
+    padding: 12px calc(20px + var(--shell-mic, 60px) + 8px) calc(16px + env(safe-area-inset-bottom, 0px)) 20px;
+}
+
+.ds-sheet-footer > * {
+    flex: 1 1 0;
+}
+
+/* Wheel picker */
+.ds-wheel {
+    position: relative;
+    height: calc(var(--wheel-row) * var(--wheel-rows));
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+}
+
+.ds-wheel-band {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(50% - var(--wheel-row) / 2);
+    height: var(--wheel-row);
+    border-radius: var(--ds-radius-inner);
+    background: rgba(55, 53, 49, 0.05);
+    pointer-events: none;
+}
+
+.ds-wheel-scroller {
+    position: relative;
+    height: 100%;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    outline: none;
+}
+
+.ds-wheel-scroller::-webkit-scrollbar { display: none; }
+
+.ds-wheel-scroller:focus-visible + .ds-wheel-band,
+.ds-wheel:focus-within .ds-wheel-band {
+    box-shadow: inset 0 0 0 2px var(--c-focus);
+}
+
+.ds-wheel-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--wheel-row);
+    padding: 0 12px;
+    scroll-snap-align: center;
+    font-family: var(--ds-font);
+    font-size: var(--t-body);
+    font-weight: 400;
+    color: var(--c-ink-4);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color var(--ds-duration-fast) linear;
+}
+
+.ds-wheel-item.is-near { color: var(--c-ink-3); }
+.ds-wheel-item.is-centre { color: var(--c-ink); font-weight: 600; font-size: var(--t-title); }
+.ds-wheel-item[aria-disabled="true"] { opacity: 0.4; cursor: default; }
+
+/* Toast — one quiet sentence near the top. */
+.ds-toast {
+    position: fixed;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    left: 50%;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: max-content;
+    max-width: calc(min(100vw, var(--shell-column, 32rem)) - 32px);
+    min-height: var(--touch-min);
+    padding: 8px 8px 8px 16px;
+    border-radius: var(--ds-radius-inner);
+    box-shadow: var(--ds-e2);
+    transform: translateX(-50%);
+    animation: ds-toast-land var(--ds-duration-slow) var(--ds-ease) both;
+    font-family: var(--ds-font);
+    font-size: var(--t-label);
+    line-height: var(--t-label-lh);
+    font-weight: 600;
+}
+
+@keyframes ds-toast-land {
+    from { opacity: 0; transform: translate(-50%, -8px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.ds-toast-success { background: var(--c-ok-bg); color: var(--c-glucose-target); box-shadow: var(--ds-e2), inset 0 0 0 1px rgba(37, 98, 57, 0.25); }
+.ds-toast-info { background: var(--c-action); color: var(--c-on-action); }
+.ds-toast-warn { background: var(--c-warn-bg); color: var(--c-warn); box-shadow: var(--ds-e2), inset 0 0 0 1px rgba(119, 68, 8, 0.2); }
+.ds-toast-icon { display: inline-flex; flex: 0 0 auto; }
+.ds-toast-text { flex: 1 1 auto; min-width: 0; padding-right: 8px; text-wrap: balance; }
+
+/* Empty state */
+.ds-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 24px 16px;
+    text-align: center;
+}
+
+.ds-empty-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    height: 76px;
+    margin-bottom: 4px;
+    border-radius: 50%;
+    background: var(--c-surface);
+    color: var(--c-ink-2);
+}
+
+.ds-empty-plain .ds-empty-mark { background: var(--c-surface-muted); }
+.ds-empty-sage .ds-empty-mark { color: var(--c-sage-700); }
+.ds-empty-sky .ds-empty-mark { color: var(--c-sky-700); }
+.ds-empty-lilac .ds-empty-mark { color: var(--c-lilac-700); }
+.ds-empty-sun .ds-empty-mark { color: var(--c-sun-700); }
+
+.ds-empty-title { margin: 0; color: var(--c-ink); }
+.ds-empty-text { margin: 0; color: var(--c-ink-2); }
+.ds-empty-action { width: 100%; margin-top: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .ds-app-dialog-backdrop, .ds-app-dialog, .ds-sheet-scrim, .ds-sheet, .ds-toast {
+        animation: none !important;
+        transition: none !important;
+    }
+}

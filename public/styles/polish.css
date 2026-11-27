@@ -24,20 +24,8 @@ html {
     outline-offset: 2px;
 }
 
-/* Quick memo dialog: stays clear of the floating mic (which keeps working
-   for voice input) and of the device safe areas; its content scrolls inside. */
-.ds-consult-memo-backdrop {
-    padding:
-        max(16px, env(safe-area-inset-top, 0px))
-        max(16px, env(safe-area-inset-right, 0px))
-        calc(var(--shell-clearance) - 4px)
-        max(16px, env(safe-area-inset-left, 0px));
-}
-
-.ds-consult-memo-dialog {
-    max-height: 100%;
-}
-
+/* Quick memo: since S3 a bottom sheet (consult.css) that keeps clear of the
+   floating mic itself (bottom padding); its content scrolls inside. */
 .ds-consult-memo-dialog:focus {
     outline: none;
 }

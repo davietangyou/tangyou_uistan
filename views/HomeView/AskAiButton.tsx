@@ -22,6 +22,7 @@ export function AskAiButton({vm}: {vm: HomeViewModel}) {
             </span>
             <span className="ds-home-ask-text">
                 <span className="ds-home-ask-title">問問 AI</span>
+                <span className="ds-home-ask-sub">整理疑問，準備覆診</span>
             </span>
             <span className="ds-home-ask-chevron" aria-hidden>
                 <Chevron size={UI_ICON_DEFAULTS.size} strokeWidth={UI_ICON_DEFAULTS.strokeWidth} />

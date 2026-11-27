@@ -18,7 +18,9 @@
 
 .large-font {
     --shell-tab-h: 72px;
-    --shell-tab-font: 16px;
+    /* Big enough to read, small enough that a 4-character label fits a fifth
+       of a 375–390px column: ~16–17px. */
+    --shell-tab-font: min(17px, calc((min(100vw, var(--shell-column)) - 40px) / 21));
     --shell-mic: 64px;
 }
 
@@ -68,6 +70,30 @@
 
 .ds-shell-title {
     color: var(--c-ink-2);
+}
+
+/* Home: brand eyebrow, then the greeting; the font toggle sits at the top
+   right beside them (one row of chrome, not two). */
+.ds-shell-header-home {
+    position: relative;
+    display: block;
+    padding-bottom: 0;
+}
+
+.ds-shell-header-home .ds-shell-font-toggle {
+    position: absolute;
+    z-index: 1;
+    top: 18px;
+    right: var(--ds-page-pad);
+}
+
+.ds-shell-column:has(.ds-shell-header-home) .ds-home-greeting {
+    margin-top: 2px;
+    padding-right: 128px;
+}
+
+.large-font.ds-shell-column:has(.ds-shell-header-home) .ds-home-greeting {
+    padding-right: 148px;
 }
 
 /* Font size toggle: a white capsule that names what it will do. */
@@ -214,7 +240,8 @@
 }
 
 /* Sub-page open: the nav steps out of the way (one task, one way back). */
-html[data-subpages] .ds-shell-nav {
+html[data-subpages] .ds-shell-nav,
+html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop) .ds-shell-nav {
     transform: translateY(calc(100% + 24px));
     opacity: 0;
     visibility: hidden;
@@ -291,34 +318,16 @@ html[data-subpages] .ds-shell-mic {
     to { transform: rotate(360deg); }
 }
 
-/* Focus toast: a quiet sentence near the top. */
-.ds-shell-toast {
-    position: fixed;
-    top: calc(12px + env(safe-area-inset-top, 0px));
-    left: 50%;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: max-content;
-    max-width: calc(min(100vw, var(--shell-column)) - 32px);
-    padding: 14px 20px;
-    border-radius: 20px;
-    background: var(--c-action);
-    color: var(--c-on-action);
-    box-shadow: var(--ds-e2);
-    transform: translateX(-50%);
-    animation: ds-toast-in var(--ds-duration-fast) var(--ds-ease);
-}
-
+/* Focus toast: the shared Toast (components.css), info tone. */
 .ds-shell-toast .t-label {
-    color: var(--c-on-action);
-    text-wrap: balance;
+    color: inherit;
 }
 
-@keyframes ds-toast-in {
-    from { opacity: 0; transform: translate(-50%, -6px); }
-    to { opacity: 1; transform: translate(-50%, 0); }
+/* A bottom sheet (shared or the quick memo) is open: like a sub-page, the nav
+   steps away and the voice button drops to the corner; the sheet's actions
+   leave room for it. */
+html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop) .ds-shell-mic {
+    bottom: calc(var(--shell-nav-offset) + 8px);
 }
 
 /* Footer disclaimer */

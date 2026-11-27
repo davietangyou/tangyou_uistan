@@ -104,28 +104,13 @@
     color: var(--c-ink);
 }
 
-/* Toast (saved to question list) */
+/* Toast (saved to question list): the shared Toast, success tone. */
 .ds-consult-toast {
-    position: fixed;
-    top: calc(16px + env(safe-area-inset-top, 0px));
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 50;
     width: min(calc(100vw - 32px), 30rem);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 8px 8px 20px;
-    border-radius: var(--ds-radius-inner);
-    background: var(--c-action);
-    color: var(--c-white);
-    box-shadow: var(--ds-e2);
 }
 
-.ds-consult-toast > .t-body-strong {
-    flex: 1 1 auto;
-    min-width: 0;
-    text-wrap: balance;
+.ds-consult-toast .t-body-strong {
+    color: inherit;
 }
 
 .ds-consult-toast-action {
@@ -137,8 +122,9 @@
     padding: 0 12px;
     border: 0;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.14);
-    color: var(--c-white);
+    background: var(--c-surface);
+    color: var(--c-glucose-target);
+    box-shadow: inset 0 0 0 1px rgba(37, 98, 57, 0.25);
     font-size: var(--t-label);
     font-weight: 600;
     cursor: pointer;
@@ -1114,31 +1100,49 @@
     color: var(--c-ink-3);
 }
 
-/* Quick memo dialog */
+/* Quick memo: a bottom sheet (S3) — jotting is a light, "beside your hand"
+   task. Same DOM, ids and behaviour; only the presentation moved down. */
 .ds-consult-memo-backdrop {
     position: fixed;
     inset: 0;
     z-index: 50;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
-    padding: 16px;
+    padding: 0;
     background: var(--c-backdrop);
+    animation: ds-fade-in var(--ds-duration-fast) ease-out both;
 }
 
 .ds-consult-memo-dialog {
-    width: 100%;
-    max-width: 32rem;
-    max-height: 90vh;
+    position: relative;
+    width: min(100vw, var(--shell-column, 32rem));
+    max-height: min(90vh, calc(100vh - 24px - env(safe-area-inset-top, 0px)));
     overflow-y: auto;
+    overscroll-behavior: contain;
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: var(--ds-card-pad);
-    border-radius: var(--ds-radius-sheet);
+    padding: 28px 20px calc(var(--shell-mic) + var(--shell-nav-offset) + 20px);
+    border-radius: var(--ds-radius-sheet) var(--ds-radius-sheet) 0 0;
     background: var(--c-surface);
     color: var(--c-ink);
     box-shadow: var(--ds-e2);
+    outline: none;
+    animation: ds-land var(--ds-duration-slow) var(--ds-ease) both;
+}
+
+/* The grabber: the sheet's "I came from below" mark. */
+.ds-consult-memo-dialog::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    width: 40px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--c-hairline);
+    transform: translateX(-50%);
 }
 
 .ds-consult-memo-head {
@@ -1154,9 +1158,9 @@
     justify-content: center;
     width: 44px;
     height: 44px;
-    border-radius: 14px;
-    background: var(--c-lavender-100);
-    color: var(--c-lavender);
+    border-radius: 50%;
+    background: var(--c-lilac-100);
+    color: var(--c-lilac-700);
 }
 
 .ds-consult-memo-titles {

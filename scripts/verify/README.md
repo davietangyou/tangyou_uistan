@@ -90,9 +90,12 @@ in DOM / flow traces, so older captures taken on a different day can be compared
 for structure. New captures should be taken with the frozen clock so screenshots
 are also deterministic.
 
-Unreachable UI (`DetailView`, `View.Result`, unmounted `MedicationReminders`) is
-not DOM-captured; those modules are retained and annotated in source, and still
-counted in the source-contract snapshot.
+`View.Result` and `View.Detail` have no page and are not DOM-captured; the enum
+values and the `useAppLogic` keys (including `handleDownload` /
+`handleUploadData`) stay in the logic contract. The unwired `DetailView` and
+`MedicationReminders` components were deleted in Stage 11 (owner decision);
+the note string in `capture-dom.mjs` is left as is so DOM captures stay
+comparable with earlier baselines.
 
 The Stage 2 design-system specimen (`capture-uikit.mjs`, `fixtures/uikit*`) was
 removed in Stage 11 together with `UiKitPreview`; it was never part of

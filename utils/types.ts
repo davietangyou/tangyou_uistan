@@ -5,7 +5,7 @@ export enum View {
     Consult = 'CONSULT',
     Me = 'ME',
     Result = 'RESULT', // 未接線：無任何 setView(View.Result) 或對應頁面分支，請勿刪除
-    Detail = 'DETAIL', // 已在 App 註冊 DetailView，但無入口調用 setView(View.Detail)，請勿刪除
+    Detail = 'DETAIL', // 無頁面：DetailView 已於階段十一刪除；枚舉值屬邏輯合同，請勿刪除
     SavedQuestions = 'SAVED_QUESTIONS'
 }
 

@@ -9,7 +9,7 @@ import {GlobalMic} from './components/GlobalMic';
 import {ViewRouter} from './components/ViewRouter';
 import {FocusToast} from './components/FocusToast';
 
-// 依賴說明：lucide-react 自階段三起由外殼（components/ui/icons.ts）使用；motion 僅被未掛載的 MedicationReminders 使用。請勿隨意移除。
+// 依賴說明：lucide-react 自階段三起由外殼（components/ui/icons.ts）使用。motion 原只被未掛載的 MedicationReminders 使用，該組件已於階段十一刪除；依賴仍列在 package.json（未改動）。
 
 /**
  * App Component

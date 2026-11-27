@@ -72,27 +72,6 @@ export function QuickMemoModal({vm}: {vm: ConsultViewModel}) {
                         </button>
                     </div>
 
-                    {/* 常用提問靈感 Chips */}
-                    <div className="ds-consult-memo-presets">
-                        <p className="t-body-strong t-ink-2">常見問診靈感（點擊填入）：</p>
-                        {[
-                            "想向醫生請教服藥時間可否配合生活作息調整？",
-                            "最近服藥後有些腸胃不適，是否有替代方案？",
-                            "想諮詢下次化驗是否需要加驗糖化血色素或腎功能？",
-                            "平時血糖波動較大，是否適合使用連續血糖儀 (CGM)？"
-                        ].map((preset, pIdx) => (
-                            <button
-                                key={pIdx}
-                                type="button"
-                                onClick={() => setQuickMemoInput(preset)}
-                                className="ds-consult-memo-preset ds-control"
-                            >
-                                <AddIcon {...icon} size={18} />
-                                <span className="t-body">{preset}</span>
-                            </button>
-                        ))}
-                    </div>
-
                     {/* 輸入框與語音按鈕（按鈕放在框下，不再壓住文字） */}
                     <div className="ds-consult-memo-input">
                         <label htmlFor="quick-memo-input" className="ds-sr-only">想問醫生的問題</label>
@@ -152,6 +131,36 @@ export function QuickMemoModal({vm}: {vm: ConsultViewModel}) {
                                 <Chevron {...icon} size={18} />
                             </button>
                         </div>
+                    </div>
+
+                    {/* 常用提問靈感 Chips — R2-6: below the input and 保存 (as on 被仿侧, the
+                        field and its save come first); a tap still fills the field above. */}
+                    <div className="ds-consult-memo-presets">
+                        <p className="t-body-strong t-ink-2">常見問診靈感（點擊填入）：</p>
+                        {[
+                            "想向醫生請教服藥時間可否配合生活作息調整？",
+                            "最近服藥後有些腸胃不適，是否有替代方案？",
+                            "想諮詢下次化驗是否需要加驗糖化血色素或腎功能？",
+                            "平時血糖波動較大，是否適合使用連續血糖儀 (CGM)？"
+                        ].map((preset, pIdx) => (
+                            <button
+                                key={pIdx}
+                                type="button"
+                                onClick={() => {
+                                    setQuickMemoInput(preset);
+                                    // R2-6: the field sits above the inspiration list — bring it
+                                    // (and 保存 under it) back into view so the filled text is seen.
+                                    requestAnimationFrame(() => {
+                                        const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+                                        document.getElementById('quick-memo-input')?.scrollIntoView({block: 'nearest', behavior: reduce ? 'auto' : 'smooth'});
+                                    });
+                                }}
+                                className="ds-consult-memo-preset ds-control"
+                            >
+                                <AddIcon {...icon} size={18} />
+                                <span className="t-body">{preset}</span>
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>

@@ -114,11 +114,13 @@ export function BmiScale({segments, markerPercent, labels}: {
 }
 
 /** Collapsible profile group: a full-width header button with title + summary, content below. */
-export function ProfileGroup({id, icon, tone, title, summary, open, onToggle, children}: {
+export function ProfileGroup({id, icon, tone, title, pageTitle, summary, open, onToggle, children}: {
     id: string;
     icon: UiIconName;
     tone: 'sage' | 'mist' | 'lavender' | 'butter';
     title: string;
+    /** R2-6: the sub-page title when it needs a word-break hint (<wbr />); same text as title. */
+    pageTitle?: React.ReactNode;
     summary: string;
     open: boolean;
     onToggle: () => void;
@@ -146,7 +148,7 @@ export function ProfileGroup({id, icon, tone, title, summary, open, onToggle, ch
             </button>
             <SubPage
                 open={open}
-                title={title}
+                title={pageTitle ?? title}
                 onBack={close}
                 className="ds-pf-editor"
                 footer={

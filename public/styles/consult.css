@@ -1469,3 +1469,9 @@ html[data-keyboard] .ds-consult-composer {
 /* R2-5: 再試一次 under the newest failed reply (same as 問題紀錄's AI 總結 error). */
 .ds-consult-retry { padding: 0 16px 16px; }
 .ds-consult-card > .ds-consult-retry:first-child { padding-top: 16px; }
+
+/* R2-6: 隨手記 — inspiration now follows the field and its save, set off by a hairline. */
+.ds-consult-memo-actions + .ds-consult-memo-presets {
+    padding-top: 16px;
+    border-top: 1px solid var(--c-hairline);
+}

@@ -19,11 +19,17 @@ html {
 }
 
 /* Round 2: the 問題紀錄 / 個人檔案 page intros ended on a lone 「單！」 /
-   「礎。」 at large text, the first-setup step title on a lone 「詳情」. Same
-   scoped rule (none of these lines hold dates). */
+   「礎。」 at large text, the first-setup step title on a lone 「詳情」. R2-6
+   adds sub-page titles 「…信 / 息」, option labels 「…胰島 / 素」, the 隨手記
+   intro and picked values in sheet selects. Same scoped rule (none of these
+   lines hold dates). */
 .ds-sq-header-text > p,
 .ds-pf-header > p,
-.ds-ob-step-title {
+.ds-ob-step-title,
+.ds-consult-memo-titles > p,
+.ds-subpage-title,
+.ds-pf-options,
+.ds-sheet-select-value {
     text-wrap: pretty;
 }
 
@@ -37,4 +43,14 @@ html {
    floating mic itself (bottom padding); its content scrolls inside. */
 .ds-consult-memo-dialog:focus {
     outline: none;
+}
+
+/* R2-6: a picked value in a sheet select (e.g. 「第 2 型糖尿病 (常見糖尿 / Type 2)」)
+   was cut to 「第 2 型糖尿病 (常…」 at 320px large; it now wraps so the whole
+   choice can be read before saving. */
+.ds-sheet-select-value {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }

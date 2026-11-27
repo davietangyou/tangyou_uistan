@@ -36,7 +36,7 @@ export function DiabetesCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProp
     };
 
     return (
-        <ProfileGroup id="diabetes" icon="glucose" tone="mist" title="糖尿病相關信息" summary={summary} open={open} onToggle={onToggle}>
+        <ProfileGroup id="diabetes" icon="glucose" tone="mist" title="糖尿病相關信息" pageTitle={<>糖尿病<wbr />相關信息</>} summary={summary} open={open} onToggle={onToggle}>
             {/* 2. 糖尿病相關信息 */}
 
             {/* 糖尿病類型 */}

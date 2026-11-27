@@ -94,7 +94,7 @@ dev 模式下：
 
 ### 1.4 页面样式资源
 
-页面皮肤与大字规则写在仓库内的 `public/styles/` 目录：入口是 `app.css`，它按层叠顺序 @import 同目录的 11 个分文件。`index.html` 在 Tailwind CDN 之后引入：
+页面皮肤与大字规则写在仓库内的 `public/styles/` 目录：入口是 `app.css`，它按层叠顺序 @import 同目录的分文件（`public/styles/*.css`）。`index.html` 在 Tailwind CDN 之后引入：
 
 ```html
 <link rel="stylesheet" href="%BASE_URL%styles/app.css">
@@ -108,22 +108,9 @@ curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css
 
 预期 HTTP 200，正文与 `public/styles/app.css` 一致；分文件同理可查，例如 `/styles/consult.css`。若同步或解压后缺少入口或任一分文件，Tailwind 工具类仍可用，但整套界面样式（设计令牌、`ds-*` / `t-*` 类、大字模式）会丢失，各页面基本失去版式。
 
-阶段十一（分支 `chore/ui-cleanup`）之后的结构，`app.css` 只含 Google 字体与以下 @import，顺序即层叠顺序，不可调换：
+`app.css` 只含字体引入与 `@import`，顺序即层叠顺序，不可调换。分文件大致按“基础与原生控件 → 大字根规则 → 设计令牌 → 共用组件 → 外壳 → 各视图 → 跨视图修饰 → 移动端原生手感”的层次排列，后面的文件覆盖前面的文件，与合成一个文件时的效果相同；实际列表与顺序以 `app.css` 为准。新增样式写进所属分文件；新增分文件时，同时在 `app.css` 中按层次加上对应的 `@import`。`.large-font` 根规则（可继承的字距、词距与行高）与 `.ds-control`（控件不继承这组间距）共同构成大字机制。对应的 React 基础组件在 `components/ui/`。
 
-| 分文件 | 内容 |
-|---|---|
-| `base.css` | body、原生控件、页头淡入 `.animate-soft`、滚动条 |
-| `large-font.css` | `.large-font` 根规则（可继承的字距 / 词距 / 行高） |
-| `tokens.css` | 设计令牌（颜色、字阶、间距、动效）与 `.t-*` 字阶类 |
-| `components.css` | `.ds-root` 子树与共用 `.ds-*` 组件，含 `.ds-control` |
-| `shell.css` | 外壳：页头、底部导航、全局麦克风、焦点提示、页脚 |
-| `home.css` / `consult.css` / `records.css` / `questions.css` / `profile.css` | 各视图（`profile.css` 含首次引导） |
-| `polish.css` | 跨视图修饰与无障碍（阶段九） |
-| `native.css` | 原生手感（阶段十二）：安全区、触控、按下回馈、页头固定、分页淡入、应用内提示弹层；必须最后载入 |
-
-`index.html` 另引入 `public/manifest.webmanifest` 与 `public/icons/apple-touch-icon.png`（主画面安装、全屏），并设 `viewport-fit=cover`；同步 ZIP 时这两个路径须一并保留。
-
-原先“前 4550 字节保持逐字节不变”的规则已有意退役：重构前前缀里已不影响任何画面的规则（`.premium-card`、`.nav-blur`、`.spacy-container`、`.large-font .text-*` 与 `.large-font button, input, select, textarea` 强制规则等）被删除，仍生效的部分并入 `base.css` 与 `large-font.css`。`.large-font` 根规则与 `.ds-control` 仍然需要，不要删。新增样式写进所属分文件，新增分文件须同时在 `app.css` 里按顺序加 @import。对应的 React 基础组件在 `components/ui/`。
+`index.html` 另引入 `public/manifest.webmanifest` 与 `public/icons/` 下的图标（主画面安装、全屏），并设 `viewport-fit=cover`；同步 ZIP 时这些静态资源与样式目录一样需要保留。
 
 本文只覆盖 dev 模式。若改走 `npm run build && npm start`，构建会把整个 `public/styles/` 原样复制为 `dist/styles/`（入口 `app.css` 与全部分文件），页面链接变为相对路径 `./styles/app.css`。`npm run build` 可能打印：
 
@@ -264,7 +251,7 @@ npm run verify
 npm run verify -- --out verify-results/phase-N --compare verify-results/baseline
 ```
 
-验证门会把浏览器时钟冻结在香港时间 `2026-11-26 09:30`，结果可重复。输出「OK: contract goldens match.」且 status 全 0 即契约无损；`--compare` 的 DOM / 截图差异在界面改动时属预期，需逐项确认来由。
+验证门会把浏览器时钟冻结在一个固定的香港时间（见 `scripts/verify/lib/clock.mjs`），结果可重复。输出「OK: contract goldens match.」且 status 全 0 即契约无损；`--compare` 的 DOM / 截图差异在界面改动时属预期，需逐项确认来由。
 
 不要把 `verify-results/` 提交进仓库，也不必拷到线上托管目录。更细的说明见 `scripts/verify/README.md`。
 
@@ -761,7 +748,7 @@ sudo ss -ltnp | grep 9002
 
 ### 7.4 Node 24 的同步提示
 
-若线上按本文档安装 Node 24，`/usr/bin/node` 会变为 24。systemd 实例文档当前记录的 Node 22 说明会过时；后续同步 systemd 实例文档时，可以一起校准。
+若线上按本文档安装 Node 24，`/usr/bin/node` 会变为 24。systemd 托管读取的是系统级 Node，`/usr/bin/node -v` 的实际输出即服务所用版本；它与 `.nvmrc` 是否一致，可在升级后顺带核对。
 
 ---
 

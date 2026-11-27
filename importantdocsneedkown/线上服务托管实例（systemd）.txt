@@ -1,7 +1,6 @@
 # 线上服务托管实例（systemd）
 
-版本：1.0  
-验收记录时间：2026-11-25
+版本：1.1
 
 ---
 
@@ -407,7 +406,7 @@ tail -8 /da04/webser/logs/pro/tangyou_uistan_0.log
 | 受控重启 | `sudo systemctl restart tangyou_uistan` | PID 变化，health 恢复 |
 | 开机自启 | `systemctl is-enabled tangyou_uistan` | `enabled`；必要时重启机器验证 |
 
-当前已记录的参考结果：前五项在迁移时通过；`is-enabled` 为 `enabled`；实际 reboot 与迁移后浏览器冒烟属于建议在复现时补齐的补充项。
+实际 reboot 与浏览器冒烟属于容易省略的两项，复现或迁移时值得一并补齐。每次具体的验收结果属于时间点事实，记录在《历史迭代阶段/》对应归档中。
 
 ### 7.2 常见故障与判读
 
@@ -486,12 +485,12 @@ ls -lh /da04/webser/logs/pro/tangyou_uistan_0.log
 | 日志轮转 | 未配置 | `append:` 文件持续增长，需要关注磁盘 |
 | 挂载依赖 | unit 未显式 `RequiresMountsFor` | 依赖 systemd 对 `WorkingDirectory` 的自动挂载依赖；必要时可显式加入 |
 | unit 仓库源 | 当前仅 `/etc/systemd/system` 一份 | 新机器复现可直接使用本文档第 5 节全文 |
-| Node 版本 | `/usr/bin/node` v22.21.0 | `.nvmrc` 为 24；systemd 不读取 `.bash_profile` 的 nvm |
+| Node 版本 | 系统级 `/usr/bin/node`，实际版本以 `/usr/bin/node -v` 为准 | 与 `.nvmrc` 是否一致需核对；systemd 不读取 `.bash_profile` 的 nvm |
 | 资源限制 | 未配置 | 无 `MemoryMax`、`CPUQuota`、`TasksMax`、`LimitNOFILE` |
 | 沙箱 | 未配置 | 无 `NoNewPrivileges`、`ProtectSystem` 等 |
-| `.env.local` 权限 | 当前未记录精确值 | 复现时确认 600、属主 `webser:webgp` |
-| reboot 验证 | 当前验收记录未包含实际 reboot | `is-enabled` 已为 `enabled`；复现时可在第 10 节补齐 |
-| 迁移后浏览器冒烟 | 当前验收记录未包含 | health 已通过；复现时可在第 10 节补齐 |
+| `.env.local` 权限 | 以第 4.3 节为准 | 复现时确认 600、属主 `webser:webgp` |
+| reboot 验证 | `is-enabled` 为 `enabled` 不等于已实际重启验证 | 复现时可在第 10 节补齐 |
+| 迁移后浏览器冒烟 | health 通过不等于页面可用 | 复现时可在第 10 节补齐 |
 | 反向代理/TLS/DNS | 不在本文范围 | 由上层设施负责 |
 | AI Studio 预览环境 | 不在本文范围 | 平台托管，与本 unit 无关 |
 
@@ -605,5 +604,4 @@ ls -lh /da04/webser/logs/pro/tangyou_uistan_0.log
 | 项 | 值 |
 | --- | --- |
 | 本文档版本 | 1.1 |
-| 验收记录时间 | 2026-11-25 |
 | 当前 unit 版本 | 与第 5 节全文一致 |

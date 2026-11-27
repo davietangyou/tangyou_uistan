@@ -559,7 +559,7 @@ done < "$STAGE/protected.txt"
 
 若导出物删掉了这一行、把样式重新内联进 `index.html`，或改写了 `public/styles/` 下的入口与分文件，需要显式判断，而不是当作无关清理。这组样式表是页面皮肤与大字规则的现行位置。
 
-阶段十一（分支 `chore/ui-cleanup`）之后，`public/styles/app.css` 只含 Google 字体与按层叠顺序排列的 @import：`base.css`、`large-font.css`、`tokens.css`、`components.css`、`shell.css`、`home.css`、`consult.css`、`records.css`、`questions.css`、`profile.css`、`polish.css`、`native.css`（均在 `public/styles/`）。原先“前 4550 字节保持不变、只在末尾追加”的规则与前缀 SHA 核对已有意退役：前缀中已不影响画面的规则被删除，仍生效的部分并入 `base.css` 与 `large-font.css`；`.large-font` 根规则与 `.ds-control` 仍然需要。评审导出物对样式的改动时，重点看：@import 是否被删或调换顺序、分文件是否缺失、整块视图样式是否被删。核对 @import 列表：
+`public/styles/app.css` 是样式入口，只含字体引入与按层叠顺序排列的 `@import`，各分文件（`public/styles/*.css`）承载具体规则；实际列表与顺序以 `app.css` 为准。`.large-font` 根规则与 `.ds-control` 是大字机制的组成部分。评审导出物对样式的改动时，重点看：@import 是否被删或调换顺序、被引用的分文件是否缺失、整块视图样式是否被删。核对 @import 列表：
 
 ```bash
 grep -n '@import' public/styles/app.css
@@ -582,7 +582,7 @@ grep -E '^\*deleting' "$STAGE/export_vs_base.txt" || true
 
 若导出物明显缺少大量未触碰文件，删除候选多为噪声，不据此删除。
 
-当前仓库已跟踪、导出物若给出 `*deleting` 时尤其需要停下来看一眼的路径包括：`public/styles/`（`app.css` 与全部分文件）、`public/manifest.webmanifest`、`public/icons/`、`components/useTabScrollMemory.ts`、`domain/`（及其既有分文件）、`scripts/verify/`（含 `fixtures/golden/`）、`.env.example`、`server/env.ts`、`server/http/`、`server/app.ts`、`cloudflare/`、`wrangler.jsonc`，以及 UI 重构新增的 `components/ui/`（含 `Icon.tsx`、`AppDialog.tsx`）、`views/GlucoseView/sections/`（含 `GlucoseDetails.tsx`）、`views/GlucoseView/recordStatus.ts`、`views/HomeView/glucoseStatus.ts`、`views/ProfileShared/`、`views/SavedQuestionsView/questionUi.tsx`、`views/ConsultView/consultText.ts`，以及从 `ChatPanel.tsx` 拆出的 `views/ConsultView/UserBubble.tsx`、`PreferenceCard.tsx`、`AnswerDetails.tsx`、`FollowUps.tsx`、`Composer.tsx`、`Shortcuts.tsx`。对这些路径的删除，默认更接近“工具没看见”，予以保留，除非能说明这是有意删除。
+导出物给出 `*deleting` 时，任何当前仓库已跟踪的路径都值得停下来看一眼，其中分量较重的几类是：`public/`（`styles/*.css`、`manifest.webmanifest`、`icons/` 等静态资源）、`components/` 与 `views/` 下的源码目录（含 `components/ui/`、各视图的分文件与 `views/ConsultView/consultText.ts`）、`domain/`、`scripts/verify/`（含 `fixtures/golden/`）、`.env.example`、`server/`、`cloudflare/`、`wrangler.jsonc`。AI Studio 的导出物常常只是没有看见近期新增或拆分出的文件，所以对已跟踪路径的删除默认更接近“工具没看见”，予以保留，除非能说明这是有意删除；某一轮具体新增了哪些文件，可在《历史迭代阶段/》对应归档中查到。
 
 ### 5.11 候选区验证
 

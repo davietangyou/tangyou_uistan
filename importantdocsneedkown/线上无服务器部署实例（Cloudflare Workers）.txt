@@ -1,8 +1,7 @@
 # 线上无服务器部署实例（Cloudflare Workers）
 
-版本：1.4
-记录时间：2026-11-27
-当前状态：本渠道已在生产启用。测试地址 `https://tangyou-app.davie12580.workers.dev` 与正式域名 `https://tangyou-app.alphathought.org` 均由 Worker「tangyou-app」承接（Route 已启用）。DNS 橙云 A 记录未改，上报路径仍回源旧伺服器。线上代码为 main `c18afb1`（UI 重构合并），Worker 版本 `33ef2296-18fd-4844-8b92-7a1da855d38f`；上一版本 `983f97ec-00ca-423c-8fb0-81b4a5e45dab` 为回滚目标（见第 9、10 节）。
+版本：1.5
+渠道状态：本渠道已在生产启用。测试地址 `https://tangyou-app.davie12580.workers.dev` 与正式域名 `https://tangyou-app.alphathought.org` 均由 Worker「tangyou-app」承接（Route 已启用）。DNS 橙云 A 记录未改，上报路径仍回源旧伺服器（配置见第 9 节，回滚见第 10 节）。线上当前运行哪个提交、哪个 Worker 版本，以 `npx --yes wrangler@4.168.0 deployments list` 的实时结果为准；每次发布的提交、版本 ID 与回滚目标属于时间点事实，沉淀在《历史迭代阶段/》对应归档中。
 
 ---
 
@@ -13,10 +12,10 @@
 它可以用于三种场景：
 
 - 尚未接触过本项目的执行者（人或 AI），在已持有本仓库代码的前提下，与资源拥有者沟通所需的账号、域名、套餐与密钥，将应用发布到对方**指定的 Cloudflare 账号**与**指定的域名**；
-- 核对应前生产实例的配置、域名与验收状态；
+- 核对生产实例的配置、域名与验收要点；
 - 日常迭代、故障排查与回滚时作为事实来源。
 
-本文档是自足的：渠道定位、必须先向资源拥有者对齐的事项、架构与理由、文件分工、本地验证、参数化发布步骤、当前生产实例的工作样例、回滚、日常迭代与从零复现清单都在本文档内。不要求阅读者事先知道当前生产账号或域名；那些只作为第 9 节的工作样例出现。
+本文档是自足的：渠道定位、必须先向资源拥有者对齐的事项、架构与理由、文件分工、本地验证、参数化发布步骤、生产实例的配置样例、回滚、日常迭代与从零复现清单都在本文档内。不要求阅读者事先知道当前生产账号或域名；那些只作为第 9 节的工作样例出现。
 
 Node 单进程入口 `server.ts`、`npm run dev` / `npm start`，以及 Google AI Studio 的 ZIP 下载、回灌、重启流程保持原样，不读取本文档涉及的 Workers 配置。两种渠道共用 `server/app.ts` 组装的 `/api/health` 与 `/api/gemini/*`。
 
@@ -30,7 +29,7 @@ Node 单进程入口 `server.ts`、`npm run dev` / `npm start`，以及 Google A
 
 | 发布渠道 | 依据文档 | 运行位置 | 适用情况 |
 | --- | --- | --- | --- |
-| 自托管 Linux（systemd） | 《线上服务托管实例（systemd）.txt》 | 资源拥有者的伺服器（当前生产曾用此形态提供页面与 API） | 需要长期跑在已有机器上，或尚未开通 Cloudflare Workers 付费套餐 |
+| 自托管 Linux（systemd） | 《线上服务托管实例（systemd）.txt》 | 资源拥有者的伺服器（旧源站即此形态，提供页面与 API） | 需要长期跑在已有机器上，或尚未开通 Cloudflare Workers 付费套餐 |
 | Cloudflare Workers（本文档） | 本文档 | Cloudflare 全球网络；Gemini 出站固定从美西 | 希望不再依托应用伺服器提供页面与 `/api/gemini/*`，由拥有者指定的 Cloudflare 账号与域名对外提供服务 |
 
 两条渠道可以同时存在：例如正式域名切到 Workers 后，旧伺服器继续提供 `/chtatain-datacent/*` 数据上报，并作为删除 Route 后的即时回滚后备。它们不是互斥的“只能留一条”，但同一主机名在同一时刻只应有一种方式承接浏览器流量。
@@ -251,7 +250,7 @@ VERIFY_BASE_URL=http://127.0.0.1:8799/ npm run verify -- --out verify-results/cf
 
 阅读现行 `wrangler.jsonc` 的 `name`、`vars.UPLOAD_ORIGIN` 与 `routes`。
 
-- 若拥有者指定的就是第 9 节的当前生产账号与域名，且 Worker 名保持 `tangyou-app`：不要改 `name` / `routes`，按第 11 节做日常部署，或在拥有者明确要求重新发布时直接 `npm run cf:deploy`。
+- 若拥有者指定的就是第 9 节的生产账号与域名，且 Worker 名保持 `tangyou-app`：不要改 `name` / `routes`，按第 11 节做日常部署，或在拥有者明确要求重新发布时直接 `npm run cf:deploy`。
 - 若指定的是**同一账号下的另一个环境**（例如预发域名）：必须先确认另取一个 Worker `name`，再写该环境自己的 `routes` 与 `UPLOAD_ORIGIN`。未经确认，不得覆盖生产用的 `tangyou-app`。
 - 若指定的是**另一个 Cloudflare 账号**：用该账号的 token 与 `CLOUDFLARE_ACCOUNT_ID` 部署；`routes` 的 `zone_name` 必须是该账号下的 zone；不要把生产账号的 token 用到别的账号，也不要把别的账号的 Route 写进尚未隔离的生产配置就直接部署。
 
@@ -334,9 +333,9 @@ curl -s https://<指定域名>/api/health    # configured:true
 
 ---
 
-## 9. 当前生产实例（工作样例）
+## 9. 生产实例配置（工作样例）
 
-以下是 2026-11-26（香港时间）经项目主人确认后落地的生产实例，供对照，不是唯一允许的账号或域名。
+以下是经项目主人确认的生产实例配置，供对照，不是唯一允许的账号或域名。这里只记录相对稳定的配置；某次发布的时间、提交、版本 ID、产物体积与验收数据见《历史迭代阶段/》。
 
 | 项 | 值 |
 | --- | --- |
@@ -349,30 +348,18 @@ curl -s https://<指定域名>/api/health    # configured:true
 | `UPLOAD_ORIGIN` | `https://tangyou-app.alphathought.org` |
 | 上报探活 | `https://tangyou-app.alphathought.org/chtatain-datacent/client-api/tangserv/newyshwo/vidoquse/fileget/probe/probe.json` |
 
-切换前探活基准：HTTP 200、空响应体（`Content-Length: 0`），并可能带 `alphathought_anon_id` cookie。切换后相同，说明上报路径已回源旧伺服器。`/api/health` 为 `configured:true`。正式域名上的真实咨询返回 200（约 2 秒，粤语回复正常）。首页改为正式构建产物（切换前旧伺服器跑的是 `npm run dev`，首页体积约 5386 字节；切换后约 771 字节，含 `index-0b9LbGji.js`）。
+上报探活的已知基准：HTTP 200、空响应体（`Content-Length: 0`），并可能带 `alphathought_anon_id` cookie。Worker 承接正式域名后结果应保持相同，这说明上报路径仍回源旧伺服器；`/api/health` 应为 `configured:true`，正式域名上的一次真实咨询应正常返回。
 
-测试地址在正式切换后仍然可用。旧伺服器上的 `tangyou_uistan.service` 当时保持运行，作为删除 Route 后的即时承接方。
+旧伺服器上的 `tangyou_uistan.service` 保持运行，作为删除 Route 后的即时承接方与上报源站；它的代码不随 Worker 发布自动更新。测试地址在启用 Route 后仍然可用。
 
-2026-11-27 01:10（香港时间）把 UI 重构合并后的 main `c18afb1` 以 `npm run cf:deploy` 发布到同一 Worker，`name`、`routes`、Secret 与 DNS 均未改：
-
-| 项 | 值 |
-| --- | --- |
-| 部署前版本 | `983f97ec-00ca-423c-8fb0-81b4a5e45dab`（2026-11-26 16:23 部署，重构前界面） |
-| 部署后版本 | `33ef2296-18fd-4844-8b92-7a1da855d38f`（100% 流量） |
-| 首页 | 200，约 771 字节，引用 `index-BB7Fj4eY.js`（898,497 字节） |
-| `/styles/app.css` | 200，112,055 字节，与仓库文件逐字节相同（部署前为 4,550 字节） |
-| `/api/health` | 200，`configured:true` |
-| SPA 回落 / 未知 `/api` | 200（内容同首页）/ 404 |
-| 一次最小的真实 `/api/gemini/*` 请求 | 200，经美西 Durable Object 正常返回 |
-
-这次发布未触碰旧伺服器，它继续作为删除 Route 后的后备与上报源站（其代码不随 Worker 发布自动更新）。
+日常发布按第 11 节执行，`name`、`routes`、Secret 与 DNS 通常都不需要变动。
 
 ---
 
 ## 10. 回滚
 
 - 正式域名回到旧源站：在 Cloudflare 控制台删除该主机名的 Route（或把 `wrangler.jsonc` 中对应的 `routes` 去掉后再部署，并在控制台确认 Route 已移除）。Route 模式下 DNS 未改动，流量立即回到旧源站。
-- Worker 版本回滚：`npx --yes wrangler@4.168.0 rollback`，或在控制台 Deployments 中选择上一版本。这不会回滚 Durable Object 的存储或已创建的 Route，除非另行处理。回到 UI 重构前的界面：`npx --yes wrangler@4.168.0 rollback 983f97ec-00ca-423c-8fb0-81b4a5e45dab`；也可以在 main 上 `git revert -m 1 c18afb1` 后重新 `npm run cf:deploy`。`dia_*` 本地存储键与形状在重构前后一致，回滚不影响用户数据。
+- Worker 版本回滚：`npx --yes wrangler@4.168.0 rollback`（回到上一版本），或 `npx --yes wrangler@4.168.0 rollback <版本 ID>` 回到指定版本，也可在控制台 Deployments 中选择。版本 ID 来自发布前用 `deployments list` 记下的结果，或对应的历史归档。这不会回滚 Durable Object 的存储或已创建的 Route，除非另行处理。也可以在 main 上 `git revert`（合并提交用 `git revert -m 1 <提交>`）后重新 `npm run cf:deploy`。只要 `dia_*` 本地存储键与形状没有变化，版本回滚就不影响用户数据；若某次发布改动了它们，回滚前需要单独评估。
 - 代码层面：Node 形态不受 Workers 文件影响，`git` 回退方式与其他文档一致。
 
 ---
@@ -408,7 +395,7 @@ npm run cf:deploy
 | 9 | 正式域名验收 | health、香港网络三项操作、探活与基准一致 | §8.6 |
 | 10 | 提交与线上一致的 `wrangler.jsonc`；旧源站按约定保留 | 仓库与线上 Route、vars 一致 | §8.6、§9、§11 |
 
-### 12.2 最小路径（目标即当前生产实例）
+### 12.2 最小路径（目标即第 9 节的生产实例）
 
 在第 9 节所述生产账号、Worker 名与域名均已对齐、Secret 已存在的前提下：
 
@@ -425,18 +412,18 @@ npm ci →（涉及 Workers 代码时先 npm run cf:dev 冒烟）→ npm run cf:
 
 ---
 
-## 13. 本地与设计验收记录（2026-11-26，香港时间）
+## 13. 本地与设计验收基准
 
-环境：Node 24.22.1，wrangler 4.168.0，分支 `feat/cloudflare-workers`，`wrangler dev` 监听 `127.0.0.1:8799`，上报源站指向本地桩服务 `127.0.0.1:8002`。线上切换验收见第 9 节。
+下表是 Workers 形态应有的行为，可作为本地 `npm run cf:dev`（`wrangler dev`，上报源站可指向本地桩服务）与线上验收的对照基准。首次落地时的完整验收记录（环境、分支、耗时、体积）见《历史迭代阶段/20261126-1644_…》。
 
-| 项 | 结果 |
+| 项 | 预期 |
 | --- | --- |
 | `npm ci` / `npm run lint` / `npm run build` | 通过 |
-| Node 端 `npm run verify`（对比既有基线） | 通过；差异仅为 `package.json` 新增两个脚本与按时段变化的问候表情 |
-| `wrangler deploy --dry-run` | 通过；上传体积 2378.79 KiB（gzip 476.94 KiB）；生产打包中 Express 环境为 `production` |
+| Node 端 `npm run verify`（对比既有基线） | 通过；差异都能逐项说明来由 |
+| `wrangler deploy --dry-run` | 通过；生产打包中 Express 环境为 `production` |
 | `/api/health` | 200，`configured:true`，`Cache-Control: no-store` |
 | DO 路径 | 日志出现 `[gemini-egress] Express app started inside Durable Object (gemini-egress-v1).` |
-| 真实 `/api/gemini/chat` | 200，约 2.4 s，返回字段结构与 Node 端一致 |
+| 真实 `/api/gemini/chat` | 200，返回字段结构与 Node 端一致 |
 | 真实 `/api/gemini/analyze-saved-questions` | 200 |
 | 12 MB 请求体（`recognize-medications` 9 MB 图片） | 200；Node 端同样 200 |
 | 28 MB 请求体 | 413；Node 端同样 413 |
@@ -446,4 +433,4 @@ npm ci →（涉及 Workers 代码时先 npm run cf:dev 冒烟）→ npm run cf:
 | 上报代理（POST multipart、GET、OPTIONS、302） | 路径、查询串、`fixed-pwd`、`check-same-md5`、请求体均原样到达桩服务；302 原样返回 |
 | DO 故障模拟（临时测试配置，DO 的 fetch 直接抛错） | 503 `{"error":"AI 服務暫時無法處理請求，請稍後再試。"}`，`Cache-Control: no-store`，日志 `[gemini-egress] Durable Object request failed` |
 | 上报代理请求头过滤 | 桩服务收到 `fixed-pwd`、`check-same-md5`、`authorization`、`content-type`、`content-length`、自定义头；未收到任何 `cf-*`（运行时自带的 `cf-worker` 除外）、客户端自带 `x-forwarded-*`、`x-real-ip`、`forwarded`、`connection`、`keep-alive`、`upgrade`；`x-forwarded-for` 为 `CF-Connecting-IP` 的值 |
-| 验证门指向 Worker（`VERIFY_BASE_URL`） | DOM 与 7 条流程全部通过；与 Node 端对比差异仅为 baseUrl、recharts 自增 id 与两处数像素的光标区域 |
+| 验证门指向 Worker（`VERIFY_BASE_URL`） | DOM 与 7 条流程全部通过；与 Node 端对比差异只来自 baseUrl、图表自增 id 等与环境相关的细节 |

@@ -54,7 +54,7 @@ export function RecordCard({record: r, showDetails, onDelete}: {record: GlucoseR
                     </dl>
                 )}
             </div>
-            <DeleteRecordButton onClick={onDelete} />
+            <DeleteRecordButton onClick={onDelete} recordId={r.id} />
         </article>
     );
 }

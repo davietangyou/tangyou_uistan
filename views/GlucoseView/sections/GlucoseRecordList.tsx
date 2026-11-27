@@ -25,7 +25,7 @@ export function GlucoseRecordList({vm}: {vm: GlucoseViewModel}) {
                 <h2 id="glucose-records-title" className="t-h2">最近紀錄報告</h2>
                 <p className="t-caption t-ink-2">(共 {glucoseRecords.length} 筆)</p>
             </div>
-            <DisclosureButton expanded={isRecentRecordsVisible} onClick={() => setIsRecentRecordsVisible(!isRecentRecordsVisible)}>
+            <DisclosureButton verify="rec-expand-glucose" expanded={isRecentRecordsVisible} onClick={() => setIsRecentRecordsVisible(!isRecentRecordsVisible)}>
                 {isRecentRecordsVisible ? '收起隱藏' : '展開顯示'}
             </DisclosureButton>
 

@@ -30,6 +30,7 @@ export function PersonalInfoCard({vm, open, onToggle}: {vm: MeViewModel} & Group
             <FieldBlock label="姓名 / 點樣稱呼您？" htmlFor="me-name">
                 <input
                     id="me-name"
+                    data-verify="me-name"
                     type="text"
                     placeholder="例如：陳生、張太"
                     className="ds-field-control ds-control"

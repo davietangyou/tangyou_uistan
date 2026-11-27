@@ -14,6 +14,7 @@ export function SaveBar({vm}: {vm: MeViewModel}) {
             {/* 保存修改按鈕 */}
             <button
                 type="button"
+                data-verify="me-save"
                 onClick={() => {
                     persistProfile(profile);
                     setSaveSuccess(true);

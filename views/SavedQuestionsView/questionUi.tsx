@@ -10,9 +10,9 @@ export function CountPill({children, tone = 'sage'}: {children: React.ReactNode;
 }
 
 /** 展開 / 收起 toggle with a chevron; keeps the original 展開 / 收起 wording. */
-export function ExpandToggle({expanded, onClick, label}: {expanded: boolean; onClick: () => void; label: string}) {
+export function ExpandToggle({expanded, onClick, label, verify}: {expanded: boolean; onClick: () => void; label: string; verify?: string}) {
     return (
-        <button type="button" onClick={onClick} aria-expanded={expanded} aria-label={`${expanded ? '收起' : '展開'}${label}`} className="ds-btn ds-btn-ghost ds-control ds-sq-toggle">
+        <button type="button" onClick={onClick} aria-expanded={expanded} data-verify={verify} aria-label={`${expanded ? '收起' : '展開'}${label}`} className="ds-btn ds-btn-ghost ds-control ds-sq-toggle">
             <span>{expanded ? '收起' : '展開'}</span>
             <Icon name="expand" className={cx('ds-sq-chevron', expanded && 'is-open')} />
         </button>

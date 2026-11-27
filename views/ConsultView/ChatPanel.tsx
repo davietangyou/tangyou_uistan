@@ -28,7 +28,7 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                 </p>
 
                 {/* 歡迎與對話歷史 */}
-                <div className="ds-consult-thread">
+                <div className="ds-consult-thread" data-verify="chat-thread">
                     {chatMessages.map((msg, index) => {
                         const isUser = msg.role === 'user';
                         

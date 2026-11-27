@@ -56,9 +56,9 @@ export function StatusPill({tone, children}: {tone: PillTone; children: React.Re
     return <span className={cx('ds-rec-pill', `is-${tone}`)}>{children}</span>;
 }
 
-export function DisclosureButton({expanded, onClick, children, className}: {expanded: boolean; onClick: () => void; children: React.ReactNode; className?: string}) {
+export function DisclosureButton({expanded, onClick, children, className, verify}: {expanded: boolean; onClick: () => void; children: React.ReactNode; className?: string; verify?: string}) {
     return (
-        <button type="button" onClick={onClick} aria-expanded={expanded} className={cx('ds-btn ds-btn-secondary ds-control ds-rec-disclosure', className)}>
+        <button type="button" onClick={onClick} aria-expanded={expanded} data-verify={verify} className={cx('ds-btn ds-btn-secondary ds-control ds-rec-disclosure', className)}>
             <span>{children}</span>
             <Icon name="expand" className={cx('ds-rec-chevron', expanded && 'is-open')} />
         </button>
@@ -83,9 +83,9 @@ export function EmptyState({children, action}: {children: React.ReactNode; actio
     );
 }
 
-export function DeleteRecordButton({onClick}: {onClick: () => void}) {
+export function DeleteRecordButton({onClick, recordId}: {onClick: () => void; recordId?: string}) {
     return (
-        <button type="button" onClick={onClick} title="刪除紀錄" aria-label="刪除紀錄" className="ds-icon-btn ds-icon-btn-plain ds-control ds-rec-delete">
+        <button type="button" onClick={onClick} data-verify="rec-delete" data-verify-id={recordId} title="刪除紀錄" aria-label="刪除紀錄" className="ds-icon-btn ds-icon-btn-plain ds-control ds-rec-delete">
             <Icon name="trash" />
         </button>
     );

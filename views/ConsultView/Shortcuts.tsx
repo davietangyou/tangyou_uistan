@@ -27,6 +27,7 @@ export function Shortcuts({vm}: {vm: ConsultViewModel}) {
                                 type="button"
                                 key={i}
                                 onClick={() => handleSendChatMessage(topic.text)}
+                                data-verify={`shortcut-${i}`}
                                 className={`ds-consult-shortcut ds-control is-${SHORTCUT_TONES[i] || 'sky'}`}
                             >
                                 <span className="ds-consult-shortcut-mark" aria-hidden="true"><Icon name={SHORTCUT_ICONS[i] || 'consult'} /></span>

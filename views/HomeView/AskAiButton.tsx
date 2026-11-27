@@ -11,6 +11,7 @@ export function AskAiButton({vm}: {vm: HomeViewModel}) {
         <button
             type="button"
             id="btn-home-ask-ai"
+            data-verify="consult-open"
             className="ds-home-ask ds-control"
             onClick={() => {
                 setView(View.Consult);

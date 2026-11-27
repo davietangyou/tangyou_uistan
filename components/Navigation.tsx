@@ -52,6 +52,7 @@ export const Navigation: React.FC<NavigationProps> = ({view, setView, setConsult
                         <button
                             key={item.v}
                             type="button"
+                            data-verify={`nav-${item.v}`}
                             onClick={() => {
                                 // Round 2: tapping the tab you are already on takes the page
                                 // back to its resting place, as in native apps: the top of

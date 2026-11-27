@@ -20,6 +20,7 @@ export function BasicsStep({vm}: {vm: OnboardingViewModel}) {
             <FieldBlock label="如何稱呼您？" htmlFor="ob-name">
                 <input
                     id="ob-name"
+                    data-verify="ob-name"
                     type="text"
                     placeholder="例如：陳生、張太、Uncle John"
                     className="ds-field-control ds-control ds-ob-big-input"
@@ -37,6 +38,7 @@ export function BasicsStep({vm}: {vm: OnboardingViewModel}) {
                 >
                     <input
                         id="ob-age"
+                        data-verify="ob-age"
                         type="number"
                         inputMode="numeric"
                         placeholder="例如：68"
@@ -58,6 +60,7 @@ export function BasicsStep({vm}: {vm: OnboardingViewModel}) {
                                 selected={profile.gender === g}
                                 onClick={() => setProfile({...profile, gender: g})}
                                 className="ds-ob-gender"
+                                verify={`ob-gender-${g}`}
                             >
                                 {g}
                             </OptionTile>
@@ -182,6 +185,7 @@ export function BasicsStep({vm}: {vm: OnboardingViewModel}) {
                     type="button"
                     disabled={!profile.age || !profile.gender}
                     onClick={() => setOnboardingStep(2)}
+                    data-verify="ob-next"
                     className="ds-btn ds-btn-primary ds-btn-block ds-control ds-ob-next"
                 >
                     <span>下一步：長期疾病狀況</span>

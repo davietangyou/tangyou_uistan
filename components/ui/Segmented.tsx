@@ -38,6 +38,7 @@ export function Segmented<T extends string = string>({
                         role="radio"
                         name={name}
                         className="ds-seg-btn ds-control"
+                        data-verify={name ? `${name}-${option.value}` : undefined}
                         aria-checked={checked}
                         disabled={option.disabled}
                         onClick={() => onChange(option.value)}

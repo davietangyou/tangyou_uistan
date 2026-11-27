@@ -1,0 +1,203 @@
+{
+  "chatRequest": {
+    "history": [
+      {
+        "content": "早餐食咗白粥",
+        "role": "user"
+      },
+      {
+        "content": "白粥升糖較快。",
+        "role": "assistant"
+      },
+      {
+        "content": "咁應該點？",
+        "role": "user"
+      }
+    ],
+    "keys": [
+      "glucoseRecords",
+      "hba1cRecords",
+      "history",
+      "message",
+      "preferenceAlreadySubmitted",
+      "profile"
+    ],
+    "message": "午餐食咗叉燒飯，血糖會唔會太高？",
+    "preferenceAlreadySubmitted": false
+  },
+  "gemini": "all /api/gemini/* calls answered in-page (window.fetch patched); none left the browser",
+  "results": {
+    "consult": {
+      "glucose sent = stored records": true,
+      "hba1c sent = stored records": true,
+      "new chat: cancel keeps": true,
+      "new chat: confirm clears to welcome": true,
+      "one chat request": true,
+      "profile sent = stored profile": true,
+      "user + reply persisted": true
+    },
+    "font": {
+      "seeded on": true,
+      "toggled off then on": true
+    },
+    "glucose": {
+      "added +1": true,
+      "cancel keeps record": true,
+      "confirm removes that record": true,
+      "default period stored": true,
+      "timestamp = frozen now": true
+    },
+    "hba1c": {
+      "added +1 (value 6.9)": true,
+      "cancel keeps record": true,
+      "confirm removes that record": true
+    },
+    "me": {
+      "HA medication added": true,
+      "name persists after reload": true
+    },
+    "onboarding": {
+      "age": true,
+      "gender": true,
+      "name": true,
+      "profile saved": true
+    },
+    "questions": {
+      "added first, others kept": true,
+      "cancel keeps question": true,
+      "confirm deletes it only": true
+    },
+    "requests": {
+      "follow_up sent": true,
+      "preference_submit sent": true,
+      "shortcut_data_reading sent": true
+    },
+    "shapes": {
+      "comparison-decision": true,
+      "comparison-knowledge": true,
+      "followups-hidden-blockllm": true,
+      "preference": true,
+      "safety-caution": true,
+      "safety-emergency": true,
+      "safety-mental": true,
+      "safety-urgent": true
+    },
+    "storage": {
+      "dia_glucose survives reload": true,
+      "dia_glucose unchanged by navigating": true,
+      "dia_hba1c survives reload": true,
+      "dia_hba1c unchanged by navigating": true,
+      "dia_large_font survives reload": true,
+      "dia_large_font unchanged by navigating": true,
+      "dia_profile survives reload": true,
+      "dia_profile unchanged by navigating": true,
+      "dia_reminders_v2 survives reload": true,
+      "dia_reminders_v2 unchanged by navigating": true,
+      "dia_taken_logs_v2 survives reload": true,
+      "dia_taken_logs_v2 unchanged by navigating": true
+    },
+    "touch": {
+      "consult: controls >= 56px": true,
+      "glucose-entry: controls >= 56px": true,
+      "hba1c-entry: controls >= 56px": true,
+      "home: controls >= 56px": true,
+      "me-personal: controls >= 56px": true,
+      "me: controls >= 56px": true,
+      "onboarding-1: controls >= 56px": true,
+      "onboarding-2: controls >= 56px": true,
+      "questions-adding: controls >= 56px": true,
+      "questions: controls >= 56px": true,
+      "records: controls >= 56px": true,
+      "std-GLUCOSE: controls >= 48px": true,
+      "std-HOME: controls >= 48px": true,
+      "std-ME: controls >= 48px": true,
+      "std-SAVED_QUESTIONS: controls >= 48px": true
+    }
+  },
+  "storageKeys": [
+    "dia_chat_messages",
+    "dia_glucose",
+    "dia_hba1c",
+    "dia_large_font",
+    "dia_profile",
+    "dia_reminders_v2",
+    "dia_taken_logs_v2"
+  ],
+  "touch": {
+    "consult": {
+      "below": 0,
+      "large": true,
+      "min": 56
+    },
+    "glucose-entry": {
+      "below": 0,
+      "large": true,
+      "min": 56
+    },
+    "hba1c-entry": {
+      "below": 0,
+      "large": true,
+      "min": 56
+    },
+    "home": {
+      "below": 0,
+      "large": true,
+      "min": 56
+    },
+    "me": {
+      "below": 0,
+      "large": true,
+      "min": 56
+    },
+    "me-personal": {
+      "below": 0,
+      "large": true,
+      "min": 56
+    },
+    "onboarding-1": {
+      "below": 0,
+      "large": true,
+      "min": 56
+    },
+    "onboarding-2": {
+      "below": 0,
+      "large": true,
+      "min": 56
+    },
+    "questions": {
+      "below": 0,
+      "large": true,
+      "min": 56
+    },
+    "questions-adding": {
+      "below": 0,
+      "large": true,
+      "min": 56
+    },
+    "records": {
+      "below": 0,
+      "large": true,
+      "min": 56
+    },
+    "std-GLUCOSE": {
+      "below": 0,
+      "large": false,
+      "min": 48
+    },
+    "std-HOME": {
+      "below": 0,
+      "large": false,
+      "min": 48
+    },
+    "std-ME": {
+      "below": 0,
+      "large": false,
+      "min": 48
+    },
+    "std-SAVED_QUESTIONS": {
+      "below": 0,
+      "large": false,
+      "min": 48
+    }
+  }
+}

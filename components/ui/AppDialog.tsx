@@ -155,13 +155,14 @@ export function AppDialogHost() {
                     <button
                         ref={primaryRef}
                         type="button"
+                        data-verify="confirm-ok"
                         className={`ds-btn ds-control ds-btn-block ${isDanger ? 'ds-btn-danger' : 'ds-btn-primary'}`}
                         onClick={() => close(true)}
                     >
                         {isConfirm ? (confirmLabel ?? '確定') : (confirmLabel ?? '知道了')}
                     </button>
                     {isConfirm && (
-                        <button ref={cancelRef} type="button" className="ds-btn ds-btn-secondary ds-btn-block ds-control" onClick={() => close(false)}>
+                        <button ref={cancelRef} type="button" data-verify="confirm-cancel" className="ds-btn ds-btn-secondary ds-btn-block ds-control" onClick={() => close(false)}>
                             {cancelLabel ?? '取消'}
                         </button>
                     )}

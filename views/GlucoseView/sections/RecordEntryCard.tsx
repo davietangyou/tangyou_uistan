@@ -13,7 +13,7 @@ export function RecordEntryCard({id, title, icon, lines, onOpen}: {
     onOpen: () => void;
 }) {
     return (
-        <button type="button" id={id} className="ds-rec-entry ds-control" onClick={onOpen} aria-haspopup="dialog">
+        <button type="button" id={id} data-verify={`rec-open-${id.replace(/^btn-rec-entry-/, '')}`} className="ds-rec-entry ds-control" onClick={onOpen} aria-haspopup="dialog">
             <span className="ds-rec-entry-head">
                 <span className="ds-rec-entry-mark" aria-hidden><Icon name={icon} /></span>
                 <span className="ds-rec-entry-title">{title}</span>

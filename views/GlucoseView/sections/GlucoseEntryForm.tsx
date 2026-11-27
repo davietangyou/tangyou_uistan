@@ -43,6 +43,7 @@ export function GlucoseEntryForm({vm, onSaved}: {vm: GlucoseViewModel; onSaved?:
                 <div className="ds-rec-number">
                     <input
                         id="glucose-value-input"
+                        data-verify="glucose-value"
                         type="number"
                         step="0.1"
                         min="0"
@@ -99,6 +100,7 @@ export function GlucoseEntryForm({vm, onSaved}: {vm: GlucoseViewModel; onSaved?:
             <div className="ds-rec-actions">
                 <button
                     type="button"
+                    data-verify="glucose-save"
                     onClick={() => {
                         if (!newGlucose.value) {
                             alert('請先輸入測量的血糖值（例如：5.5）噢！');

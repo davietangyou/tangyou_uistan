@@ -69,6 +69,7 @@ export function Composer({vm}: {vm: ConsultViewModel}) {
                 <label htmlFor="chat-input-box" className="ds-sr-only">輸入您的控糖疑問</label>
                 <textarea
                     id="chat-input-box"
+                    data-verify="chat-input"
                     className="ds-consult-input t-body ds-control"
                     rows={2}
                     placeholder={attachedImage ? "可補充您的提問（例如：我食呢隻藥成日胃唔舒服，有冇影響？）..." : "請在此輸入或直接使用語音，詢問您的控糖疑問..."}
@@ -110,6 +111,7 @@ export function Composer({vm}: {vm: ConsultViewModel}) {
                     <button
                         type="button"
                         onClick={() => handleSendChatMessage(chatInput)}
+                        data-verify="chat-send"
                         disabled={(!chatInput.trim() && !attachedImage) || chatLoading}
                         className={`ds-consult-send ds-control${canSend ? '' : ' is-idle'}`}
                         title="發送提問"

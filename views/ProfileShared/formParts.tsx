@@ -23,18 +23,21 @@ export interface ProfileEditorControls {
 export const ProfileEditorContext = createContext<ProfileEditorControls | null>(null);
 
 /** Big tappable choice tile. `multi` shows a check box, otherwise a radio dot. */
-export function OptionTile({selected, onClick, children, multi = false, className, tone = 'sage'}: {
+export function OptionTile({selected, onClick, children, multi = false, className, tone = 'sage', verify}: {
     selected: boolean;
     onClick: () => void;
     children: React.ReactNode;
     multi?: boolean;
     className?: string;
     tone?: 'sage' | 'ink';
+    /** Stable data-verify hook (scripts/verify smoke); UI-agnostic. */
+    verify?: string;
 }) {
     return (
         <button
             type="button"
             onClick={onClick}
+            data-verify={verify}
             aria-pressed={selected}
             className={cx('ds-pf-option ds-control', multi ? 'is-multi' : 'is-single', selected && 'is-selected', tone === 'ink' && 'is-ink', className)}
         >
@@ -136,7 +139,7 @@ export function ProfileGroup({id, icon, tone, title, pageTitle, summary, open, o
     const titleNote = noteAt > 0 ? title.slice(noteAt) : '';
     return (
         <section className="ds-pf-group" aria-labelledby={`${panelId}-title`}>
-            <button type="button" className="ds-pf-group-head ds-control" aria-haspopup="dialog" aria-expanded={open} onClick={onToggle}>
+            <button type="button" className="ds-pf-group-head ds-control" aria-haspopup="dialog" aria-expanded={open} onClick={onToggle} data-verify={`me-open-${id}`}>
                 <span className={cx('ds-pf-group-icon', `is-${tone}`)}>
                     <Icon name={icon} />
                 </span>
@@ -158,7 +161,7 @@ export function ProfileGroup({id, icon, tone, title, pageTitle, summary, open, o
                                 取消
                             </Button>
                         )}
-                        <Button onClick={close}>完成</Button>
+                        <Button onClick={close} data-verify="me-editor-done">完成</Button>
                     </>
                 }
             >

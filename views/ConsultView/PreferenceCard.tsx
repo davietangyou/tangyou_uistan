@@ -53,6 +53,8 @@ export function PreferenceCard({vm, msg, index}: {vm: ConsultViewModel; msg: Cha
                                                 type="button"
                                                 key={optIdx}
                                                 aria-pressed={isSelected}
+                                                data-verify="pref-option"
+                                                data-verify-id={opt.valueCategory}
                                                 onClick={() => {
                                                     setSelectedPreferenceOptions(prev => {
                                                         const next = { ...prev };
@@ -147,6 +149,7 @@ export function PreferenceCard({vm, msg, index}: {vm: ConsultViewModel; msg: Cha
                         </p>
                         <button
                             type="button"
+                            data-verify="pref-submit"
                             onClick={() => {
                                 const msgId = msg.id || index.toString();
                                 const combinedMessage = buildPreferenceSubmitMessage(

@@ -25,6 +25,7 @@ export function FollowUps({vm}: {vm: ConsultViewModel}) {
                                         type="button"
                                         key={idx}
                                         onClick={() => handleSendChatMessage(followUpMessage(q))}
+                                        data-verify="followup"
                                         className="ds-consult-followup ds-control"
                                     >
                                         <Icon name="consult" />

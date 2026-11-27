@@ -18,7 +18,7 @@ export function HbA1cRecordList({vm}: {vm: GlucoseViewModel}) {
                 <h2 id="hba1c-records-title" className="t-h2">最近 HbA1c 紀錄報告</h2>
                 <p className="t-caption t-ink-2">(共 {hba1cRecords.length} 筆)</p>
             </div>
-            <DisclosureButton expanded={isHba1cRecentRecordsVisible} onClick={() => setIsHba1cRecentRecordsVisible(!isHba1cRecentRecordsVisible)}>
+            <DisclosureButton verify="rec-expand-hba1c" expanded={isHba1cRecentRecordsVisible} onClick={() => setIsHba1cRecentRecordsVisible(!isHba1cRecentRecordsVisible)}>
                 {isHba1cRecentRecordsVisible ? '收起隱藏' : '展開顯示'}
             </DisclosureButton>
 
@@ -40,7 +40,7 @@ export function HbA1cRecordList({vm}: {vm: GlucoseViewModel}) {
                                         </div>
                                         <p className="t-caption t-ink-2">檢查日期: {r.date}</p>
                                     </div>
-                                    <DeleteRecordButton onClick={() => confirmThen('刪除這筆糖化血色素紀錄？', '刪除後無法復原。', '刪除', () => setHba1cRecords(hba1cRecords.filter(rec => rec.id !== r.id)))} />
+                                    <DeleteRecordButton recordId={r.id} onClick={() => confirmThen('刪除這筆糖化血色素紀錄？', '刪除後無法復原。', '刪除', () => setHba1cRecords(hba1cRecords.filter(rec => rec.id !== r.id)))} />
                                 </article>
                             );
                         })}

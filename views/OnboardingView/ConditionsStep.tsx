@@ -32,6 +32,7 @@ export function ConditionsStep({vm}: {vm: OnboardingViewModel}) {
                 <button
                     type="button"
                     onClick={() => setView(View.Home)}
+                    data-verify="ob-later"
                     className="ds-btn ds-btn-ghost ds-control ds-ob-later"
                 >
                     <span>稍後填寫</span>
@@ -262,6 +263,7 @@ export function ConditionsStep({vm}: {vm: OnboardingViewModel}) {
                 <button
                     type="button"
                     onClick={() => setView(View.Home)}
+                    data-verify="ob-finish"
                     className="ds-btn ds-btn-primary ds-control ds-ob-finish"
                 >
                     <span>完成並進入糖友導航</span>

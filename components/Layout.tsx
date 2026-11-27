@@ -139,6 +139,7 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
                         <button
                             type="button"
                             onClick={() => setIsLargeFont(!isLargeFont)}
+                            data-verify="font-toggle"
                             className="ds-shell-font-toggle ds-control"
                             title={isLargeFont ? "切換至標準字型" : "切換至老友大字"}
                         >

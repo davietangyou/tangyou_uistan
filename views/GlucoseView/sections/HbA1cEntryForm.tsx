@@ -18,6 +18,7 @@ export function HbA1cEntryForm({vm, onSaved}: {vm: GlucoseViewModel; onSaved?: (
                 <div className="ds-rec-number">
                     <input
                         id="hba1c-value-input"
+                        data-verify="hba1c-value"
                         type="number"
                         step="0.1"
                         inputMode="decimal"
@@ -62,6 +63,7 @@ export function HbA1cEntryForm({vm, onSaved}: {vm: GlucoseViewModel; onSaved?: (
                 <span className="t-label">選擇檢查/抽血日期：</span>
                 <input
                     type="date"
+                    data-verify="hba1c-date"
                     className="ds-field-control ds-control"
                     value={newHbA1c.date}
                     onChange={e => setNewHbA1c({...newHbA1c, date: e.target.value})}
@@ -71,6 +73,7 @@ export function HbA1cEntryForm({vm, onSaved}: {vm: GlucoseViewModel; onSaved?: (
             <div className="ds-rec-actions">
                 <button
                     type="button"
+                    data-verify="hba1c-save"
                     onClick={() => {
                         if (newHbA1c.value) {
                             addHbA1cRecord();

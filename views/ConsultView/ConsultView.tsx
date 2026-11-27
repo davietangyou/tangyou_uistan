@@ -75,6 +75,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                     <button
                         type="button"
                         onClick={() => confirmThen('開啟新對話？', '目前的對話紀錄會被清空，無法恢復。', '開啟新對話', handleClearChatHistory)}
+                        data-verify="chat-new"
                         className="ds-consult-newchat ds-control"
                         title="清空對話紀錄並開啟新對話"
                     >

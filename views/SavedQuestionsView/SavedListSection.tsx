@@ -23,7 +23,7 @@ export function SavedListSection({vm}: {vm: SavedQuestionsViewModel}) {
                 icon="savedQuestions"
                 tone="mist"
                 title="所有已保存的問題"
-                aside={<ExpandToggle expanded={isSavedListExpanded} onClick={() => setIsSavedListExpanded(!isSavedListExpanded)} label="所有已保存的問題" />}
+                aside={<ExpandToggle verify="q-list-expand" expanded={isSavedListExpanded} onClick={() => setIsSavedListExpanded(!isSavedListExpanded)} label="所有已保存的問題" />}
             >
                 <CountPill tone="muted">共 {savedQuestions.length} 條</CountPill>
             </SectionHead>
@@ -37,6 +37,7 @@ export function SavedListSection({vm}: {vm: SavedQuestionsViewModel}) {
                     }}
                     className="ds-btn ds-btn-secondary ds-btn-block ds-control"
                     id="btn-add-q-inline"
+                    data-verify="q-add-open"
                 >
                     <Icon name="add" />
                     <span>手動新增問題</span>
@@ -54,6 +55,7 @@ export function SavedListSection({vm}: {vm: SavedQuestionsViewModel}) {
                                 enterKeyHint="done"
                                 placeholder="請輸入想保存的問題，如「食藥後半小時頭暈正常嗎？」"
                                 aria-label="手動新增問題"
+                                data-verify="q-input"
                                 value={newQuestionText}
                                 onChange={e => setNewQuestionText(e.target.value)}
                                 onKeyDown={e => {
@@ -65,7 +67,7 @@ export function SavedListSection({vm}: {vm: SavedQuestionsViewModel}) {
                                 autoFocus
                             />
                             <div className="ds-sq-actions">
-                                <Button onClick={handleAddQuestion} disabled={!newQuestionText.trim()}>
+                                <Button onClick={handleAddQuestion} disabled={!newQuestionText.trim()} data-verify="q-add-confirm">
                                     確定新增
                                 </Button>
                                 <Button
@@ -169,6 +171,8 @@ export function SavedListSection({vm}: {vm: SavedQuestionsViewModel}) {
                                                     <button
                                                         type="button"
                                                         onClick={() => confirmThen('刪除這個問題？', '刪除後無法復原。', '刪除', () => handleDeleteQuestion(idx))}
+                                                        data-verify="q-delete"
+                                                        data-verify-id={String(idx)}
                                                         className="ds-icon-btn ds-icon-btn-plain ds-control ds-sq-delete"
                                                         title="刪除問題"
                                                         aria-label="刪除問題"

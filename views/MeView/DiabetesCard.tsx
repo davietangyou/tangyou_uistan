@@ -154,6 +154,7 @@ export function DiabetesCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProp
 
                 {/* 手動選擇香港常見糖尿專科藥物 (同步香港 HA 醫管局藥物名冊，以英文為主顯示) */}
                 <SheetSelect
+                    data-verify="me-med-pick"
                     sheetTitle="選擇香港 HA 常見糖尿專科藥物"
                     mode="list"
                     triggerClassName="ds-pf-med-picker"

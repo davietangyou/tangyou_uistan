@@ -956,6 +956,12 @@
 .ds-rec-entry-line .t-caption { flex: 0 0 auto; color: var(--c-ink-2); }
 /* S5 large text: values break only at spaces (「2026年11月26日 / (週四) 09:30」, never 「小/時」). */
 .ds-rec-entry-line .t-body-strong { flex: 1 1 auto; min-width: 0; text-align: right; word-break: keep-all; overflow-wrap: break-word; }
+/* Round 2: at 320px with large text 「2026年11月26日」 is wider than the room
+   beside its label and was split inside the number (「11月2 / 6日」). The value
+   now keeps its longest unbreakable run whole: when that does not fit beside
+   the label it moves to its own line under it (still right-aligned). */
+.ds-rec-entry-line { flex-wrap: wrap; row-gap: 2px; }
+.ds-rec-entry-line .t-body-strong { flex: 1 1 0; min-width: min-content; overflow-wrap: normal; }
 
 /* Inside the sub-page the form is the page: no extra card frame. */
 .ds-rec-entry-page .ds-rec-form {

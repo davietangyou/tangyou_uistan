@@ -18,6 +18,15 @@ html {
     text-wrap: pretty;
 }
 
+/* Round 2: the 問題紀錄 / 個人檔案 page intros ended on a lone 「單！」 /
+   「礎。」 at large text, the first-setup step title on a lone 「詳情」. Same
+   scoped rule (none of these lines hold dates). */
+.ds-sq-header-text > p,
+.ds-pf-header > p,
+.ds-ob-step-title {
+    text-wrap: pretty;
+}
+
 /* Consult composer: the same 3px focus ring as every other control. */
 .ds-consult-composer:focus-within {
     outline: 3px solid var(--c-focus);

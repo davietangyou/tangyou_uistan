@@ -28,9 +28,12 @@ export function IdentityCard({profile}: {profile: UserProfile}) {
                 <span className="ds-pf-identity-avatar" aria-hidden><Icon name="profile" size={28} /></span>
                 <div className="ds-pf-identity-text">
                     <p className="ds-pf-identity-name">{profile.name?.trim() || '未填寫稱呼'}</p>
-                    <p className="t-body t-ink-2">已完成 {done} / {total}</p>
+                    {/* Round 2: the badge sits with the count, so the name gets the full width. */}
+                    <div className="ds-pf-identity-meta">
+                        <p className="t-body t-ink-2">已完成 {done} / {total}</p>
+                        <span className={`ds-pf-identity-badge${complete ? ' is-done' : ''}`}>{complete ? '已完成' : '進行中'}</span>
+                    </div>
                 </div>
-                <span className={`ds-pf-identity-badge${complete ? ' is-done' : ''}`}>{complete ? '已完成' : '進行中'}</span>
             </div>
             <div className="ds-pf-identity-bar" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={done} aria-label={`已完成 ${done} / ${total}`}>
                 <span style={{width: `${(done / total) * 100}%`}} />

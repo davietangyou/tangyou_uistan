@@ -888,6 +888,13 @@
     background: var(--c-sage-200); color: var(--c-sage-700);
     font-size: var(--t-caption); font-weight: 600; white-space: nowrap;
 }
+/* Round 2: at 320px large the badge beside the name left ~100px for text, so
+   「未填寫稱呼」 lost its last character to a new line and 「已完成 5 / 5」 split
+   at the slash. The badge now follows the count on its own row; the count
+   never splits. */
+.ds-pf-identity-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.ds-pf-identity-meta > p { white-space: nowrap; }
+.ds-pf-identity-meta .ds-pf-identity-badge { align-self: center; }
 .ds-pf-identity-badge.is-done { background: var(--c-sage-700); color: var(--c-white); }
 .ds-pf-identity-bar { height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.8); overflow: hidden; }
 .ds-pf-identity-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--c-sage-700); transition: width var(--ds-duration) var(--ds-ease); }

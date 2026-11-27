@@ -3,6 +3,7 @@ import type {GroupProps} from './MeView';
 import { getBmiEvaluation } from '../../utils/constants';
 import {BmiScale, FieldBlock, Pill, ProfileGroup, UnitSwitch, bmiTone} from '../ProfileShared/formParts';
 import {SheetSelect} from '../../components/ui';
+import {GENDER_OPTIONS} from '../../domain/options';
 
 export function PersonalInfoCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProps) {
     const {
@@ -59,9 +60,7 @@ export function PersonalInfoCard({vm, open, onToggle}: {vm: MeViewModel} & Group
                         value={profile.gender || '男'}
                         onChange={e => setProfile({ ...profile, gender: e.target.value })}
                     >
-                        <option value="男">男</option>
-                        <option value="女">女</option>
-                        <option value="其他">其他</option>
+                        {GENDER_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
                     </SheetSelect>
                 </FieldBlock>
                 <FieldBlock label="身高 (cm)" htmlFor="me-height">

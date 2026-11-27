@@ -3,6 +3,7 @@ import {View, DiabetesType} from '../../utils/types';
 import type {OnboardingViewModel} from './useOnboardingViewModel';
 import {FieldBlock, OptionTile, Pill} from '../ProfileShared/formParts';
 import {Icon, SheetSelect} from '../../components/ui';
+import {ONBOARDING_DIABETES_TYPE_OPTIONS} from '../../domain/options';
 
 export function ConditionsStep({vm}: {vm: OnboardingViewModel}) {
     const {
@@ -120,11 +121,7 @@ export function ConditionsStep({vm}: {vm: OnboardingViewModel}) {
                                     value={profile.diabetesType || 'TYPE_2'}
                                     onChange={e => setProfile({ ...profile, diabetesType: e.target.value as DiabetesType })}
                                 >
-                                    <option value="TYPE_2">第 2 型糖尿病 (常見糖尿 / Type 2 DM)</option>
-                                    <option value="TYPE_1">第 1 型糖尿病 (胰島素依賴 / Type 1 DM)</option>
-                                    <option value="PRE_DIABETES">糖尿病前期 / 血糖警戒線 (Pre-diabetes)</option>
-                                    <option value="GESTATIONAL">妊娠期糖尿病 (Gestational DM)</option>
-                                    <option value="OTHER">其他類型 / 未確定</option>
+                                    {ONBOARDING_DIABETES_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                                 </SheetSelect>
                             </FieldBlock>
 

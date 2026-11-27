@@ -4,6 +4,7 @@ import { DiabetesType } from '../../utils/types';
 import { HK_HA_MEDICATION_GROUPS } from '../../utils/constants';
 import {confirmThen, cx, Icon, SheetSelect} from '../../components/ui';
 import {FieldBlock, OptionTile, Pill, ProfileGroup} from '../ProfileShared/formParts';
+import {DIABETES_TYPE_OPTIONS} from '../../domain/options';
 
 export function DiabetesCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProps) {
     const {
@@ -49,11 +50,7 @@ export function DiabetesCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProp
                     value={profile.diabetesType || 'TYPE_2'}
                     onChange={e => setProfile({ ...profile, diabetesType: e.target.value as DiabetesType })}
                 >
-                    <option value="TYPE_2">第 2 型糖尿病 (常見糖尿 / Type 2 DM)</option>
-                    <option value="TYPE_1">第 1 型糖尿病 (胰島素依賴 / Type 1 DM)</option>
-                    <option value="PRE_DIABETES">糖尿病前期 / 血糖警戒線 (Pre-diabetes)</option>
-                    <option value="GESTATIONAL">妊娠期糖尿病 (Gestational DM)</option>
-                    <option value="OTHER">其他類型 (Other Types)</option>
+                    {DIABETES_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </SheetSelect>
             </FieldBlock>
 

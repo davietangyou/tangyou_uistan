@@ -2,6 +2,7 @@ import {getBmiEvaluation} from '../../utils/constants';
 import type {OnboardingViewModel} from './useOnboardingViewModel';
 import {BmiScale, FieldBlock, OptionTile, Pill, UnitSwitch, bmiTone} from '../ProfileShared/formParts';
 import {Icon} from '../../components/ui';
+import {GENDER_OPTIONS} from '../../domain/options';
 
 export function BasicsStep({vm}: {vm: OnboardingViewModel}) {
     const {
@@ -51,7 +52,7 @@ export function BasicsStep({vm}: {vm: OnboardingViewModel}) {
                         性別 <span className="ds-ob-required" aria-hidden>*</span>
                     </span>
                     <div className="ds-pf-options ds-ob-genders">
-                        {['男', '女', '其他'].map(g => (
+                        {GENDER_OPTIONS.map(g => (
                             <OptionTile
                                 key={g}
                                 selected={profile.gender === g}

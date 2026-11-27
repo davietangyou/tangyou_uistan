@@ -16,13 +16,26 @@ function readRepo(rel) {
     return fs.readFileSync(path.join(repoRoot, rel), 'utf8');
 }
 
+// Verify slim P2 (owner decision 1): copy in consultText.ts (the text sent to
+// the AI) stays pinned to that file; every other locked line must still be
+// present word for word, but may live in any UI / domain source file.
+const PINNED_FILE = 'views/ConsultView/consultText.ts';
+function sourceFiles(dir, acc = []) {
+    for (const e of fs.readdirSync(path.join(repoRoot, dir), { withFileTypes: true })) {
+        const rel = path.join(dir, e.name);
+        if (e.isDirectory()) sourceFiles(rel, acc);
+        else if (/\.(ts|tsx)$/.test(e.name)) acc.push(rel);
+    }
+    return acc;
+}
 function extractLockedCopy() {
     const items = [];
     const missing = [];
+    const anywhere = ['views', 'components', 'domain'].flatMap((d) => sourceFiles(d)).map(readRepo).join('\n');
     for (const entry of LOCKED_COPY_SOURCES) {
-        const src = readRepo(entry.file);
-        const found = entry.pattern.test(src);
-        items.push({ id: entry.id, file: entry.file, value: entry.value, foundInSource: found });
+        const pinned = entry.file === PINNED_FILE;
+        const found = entry.pattern.test(pinned ? readRepo(entry.file) : anywhere);
+        items.push({ id: entry.id, value: entry.value, foundIn: pinned ? 'consultText.ts' : 'anywhere', foundInSource: found });
         if (!found) missing.push(entry.id);
     }
     return {
@@ -32,32 +45,11 @@ function extractLockedCopy() {
     };
 }
 
-function collectJsxOptions(rel, kinds) {
-    const src = readRepo(rel);
-    const out = {};
-    if (kinds.includes('id-title')) {
-        out.idTitle = [...src.matchAll(/\{\s*id:\s*'([^']+)'\s*,\s*title:\s*'([^']+)'\s*\}/g)]
-            .map((m) => ({ id: m[1], title: m[2] }));
-    }
-    if (kinds.includes('id-label')) {
-        out.idLabel = [...src.matchAll(/\{\s*id:\s*'([^']+)'\s*,\s*label:\s*'([^']+)'\s*\}/g)]
-            .map((m) => ({ id: m[1], label: m[2] }));
-    }
-    if (kinds.includes('option-value')) {
-        out.optionValues = [...src.matchAll(/<option value="([^"]*)">([^<]*)<\/option>/g)]
-            .map((m) => ({ value: m[1], label: m[2] }));
-    }
-    if (kinds.includes('gender-array')) {
-        const m = src.match(/\['男',\s*'女',\s*'其他'\]/);
-        out.genders = m ? ['男', '女', '其他'] : [];
-    }
-    return out;
-}
-
 async function collectOptionValues() {
     const glucose = await import(path.join(repoRoot, 'views/GlucoseView/constants.ts'));
     const utils = await import(path.join(repoRoot, 'utils/constants.ts'));
     const exercise = await import(path.join(repoRoot, 'domain/exercise.ts'));
+    const options = await import(path.join(repoRoot, 'domain/options.ts'));
 
     const periodOptions = glucose.PERIOD_OPTIONS.map((p) => ({
         id: p.id,
@@ -112,14 +104,17 @@ async function collectOptionValues() {
             conditions,
             medications,
             exerciseTypes: exercise.EXERCISE_TYPE_OPTIONS.map((o) => ({ id: o.id, label: o.label })),
-            dietHabits: collectJsxOptions('views/MeView/LifestyleCard.tsx', ['id-title']).idTitle.filter((x) => !['LIGHT', 'MODERATE', 'VIGOROUS'].includes(x.id)),
-            exerciseDaysPerWeek: collectJsxOptions('views/MeView/LifestyleCard.tsx', ['id-label']).idLabel.filter((x) => /日/.test(x.label)),
-            exerciseMinutesPerSession: collectJsxOptions('views/MeView/LifestyleCard.tsx', ['id-label']).idLabel.filter((x) => /分鐘/.test(x.label)),
-            exerciseIntensity: collectJsxOptions('views/MeView/LifestyleCard.tsx', ['id-title']).idTitle.filter((x) => ['LIGHT', 'MODERATE', 'VIGOROUS'].includes(x.id)),
-            diabetesTypes: collectJsxOptions('views/MeView/DiabetesCard.tsx', ['option-value']).optionValues.filter((o) => o.value),
-            onboardingDiabetesTypes: collectJsxOptions('views/OnboardingView/ConditionsStep.tsx', ['option-value']).optionValues.filter((o) => o.value),
-            genders: collectJsxOptions('views/MeView/PersonalInfoCard.tsx', ['option-value']).optionValues.filter((o) => o.value).map((o) => o.value),
-            onboardingGenders: collectJsxOptions('views/OnboardingView/BasicsStep.tsx', ['gender-array']).genders,
+            // Verify slim P2: these tables used to be parsed out of the view
+            // JSX; they now live unchanged in domain/options.ts (same output).
+            dietHabits: options.DIET_HABIT_OPTIONS.map((o) => ({ id: o.id, title: o.title })),
+            exerciseDaysPerWeek: options.EXERCISE_DAYS_OPTIONS.map((o) => ({ id: o.id, label: o.label })),
+            exerciseMinutesPerSession: options.EXERCISE_MINUTES_OPTIONS.map((o) => ({ id: o.id, label: o.label })),
+            exerciseIntensity: options.EXERCISE_INTENSITY_OPTIONS.map((o) => ({ id: o.id, title: o.title })),
+            diabetesTypes: options.DIABETES_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+            onboardingDiabetesTypes: options.ONBOARDING_DIABETES_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+            // Both pickers (我的 sheet and onboarding tiles) use the same table.
+            genders: [...options.GENDER_OPTIONS],
+            onboardingGenders: [...options.GENDER_OPTIONS],
             clinicTypeIds: clinicTypeUnion,
             clinicLabelsForAi: clinicLabels,
         },

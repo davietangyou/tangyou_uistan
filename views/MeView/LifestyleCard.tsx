@@ -3,6 +3,7 @@ import type {GroupProps} from './MeView';
 import {EXERCISE_TYPE_OPTIONS} from './constants';
 import {cx, Icon} from '../../components/ui';
 import {FieldBlock, OptionTile, Pill, ProfileGroup} from '../ProfileShared/formParts';
+import {DIET_HABIT_OPTIONS, EXERCISE_DAYS_OPTIONS, EXERCISE_INTENSITY_OPTIONS, EXERCISE_MINUTES_OPTIONS} from '../../domain/options';
 
 // 每週運動狀態顯示（只影響顯示文字，儲存值 MET_150 / UNDER_150 / NONE 不變）
 function weeklyStatus(v?: string): {text: string; tone: 'sage' | 'butter' | 'muted'} {
@@ -31,13 +32,7 @@ export function LifestyleCard({vm, open, onToggle}: {vm: MeViewModel} & GroupPro
             <div className="ds-pf-field" role="group" aria-labelledby="me-diet-label">
                 <span className="t-label" id="me-diet-label">日常飲食習慣 (可多選)：</span>
                 <div className="ds-pf-options">
-                    {[
-                        { id: 'OUTSIDE_EATING', title: '經常出街食飯 (外食為主)' },
-                        { id: 'REFINED_CARB', title: '主食偏好精製澱粉 (如白飯、麵包、河粉、粥)' },
-                        { id: 'SUGARY_DRINK', title: '習慣飲含糖飲品 (如奶茶、凍檸茶、汽水)' },
-                        { id: 'MIDNIGHT_SNACK', title: '有食宵夜或睡前點心習慣' },
-                        { id: 'HOME_COOK', title: '飲食定時定量，家中自煮為主' }
-                    ].map(opt => {
+                    {DIET_HABIT_OPTIONS.map(opt => {
                         const isSelected = (profile.dietHabits || []).includes(opt.id);
                         return (
                             <OptionTile
@@ -90,12 +85,7 @@ export function LifestyleCard({vm, open, onToggle}: {vm: MeViewModel} & GroupPro
                             </span>
                         </div>
                         <div className="ds-pf-choices">
-                            {[
-                                { id: '0', label: '0 日' },
-                                { id: '1-2', label: '1-2 日' },
-                                { id: '3-4', label: '3-4 日' },
-                                { id: '5+', label: '5 日以上' }
-                            ].map(item => {
+                            {EXERCISE_DAYS_OPTIONS.map(item => {
                                 const isSel = profile.exerciseDaysPerWeek === item.id;
                                 return (
                                     <button
@@ -134,12 +124,7 @@ export function LifestyleCard({vm, open, onToggle}: {vm: MeViewModel} & GroupPro
                                     </span>
                                 </div>
                                 <div className="ds-pf-choices">
-                                    {[
-                                        { id: '15', label: '< 20 分鐘' },
-                                        { id: '30', label: '約 30 分鐘' },
-                                        { id: '45', label: '約 45 分鐘' },
-                                        { id: '60+', label: '60 分鐘+' }
-                                    ].map(item => {
+                                    {EXERCISE_MINUTES_OPTIONS.map(item => {
                                         const isSel = profile.exerciseMinutesPerSession === item.id;
                                         return (
                                             <button
@@ -177,11 +162,7 @@ export function LifestyleCard({vm, open, onToggle}: {vm: MeViewModel} & GroupPro
                                     </span>
                                 </div>
                                 <div className="ds-pf-choices is-three">
-                                    {[
-                                        { id: 'LIGHT', title: '輕度' },
-                                        { id: 'MODERATE', title: '中等' },
-                                        { id: 'VIGOROUS', title: '高強度' }
-                                    ].map(item => {
+                                    {EXERCISE_INTENSITY_OPTIONS.map(item => {
                                         const isSel = (profile.exerciseIntensity || 'MODERATE') === item.id;
                                         return (
                                             <button

@@ -183,6 +183,15 @@
       "dia_hba1c"
     ]
   },
+  "optionsModule": [
+    "DIABETES_TYPE_OPTIONS",
+    "DIET_HABIT_OPTIONS",
+    "EXERCISE_DAYS_OPTIONS",
+    "EXERCISE_INTENSITY_OPTIONS",
+    "EXERCISE_MINUTES_OPTIONS",
+    "GENDER_OPTIONS",
+    "ONBOARDING_DIABETES_TYPE_OPTIONS"
+  ],
   "profile": {
     "bmi": {
       "heightChange": "27.3",

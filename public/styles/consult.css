@@ -1476,3 +1476,314 @@ html[data-keyboard] .ds-consult-composer {
 .ds-slow-note { animation: ds-slow-note-in var(--ds-duration-slow) var(--ds-ease) both; text-wrap: pretty; }
 @keyframes ds-slow-note-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .ds-slow-note { animation: none; } }
+
+
+/* =============================================================================
+   Phase 2 — Ask-AI topic-card matrix + bottom capsule input.
+   (Sent shortcut text, disclaimer copy, and /api/gemini/* are unchanged.)
+   ============================================================================= */
+
+.ds-consult {
+    padding-bottom: calc(var(--shell-nav-offset) + var(--shell-nav-h) + var(--shell-gap));
+}
+
+.ds-consult-welcome {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 520px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.ds-consult-guide {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 56px;
+    padding: 0 76px 0 2px;
+}
+
+.ds-consult-guide-title {
+    margin: 0;
+    color: var(--c-ink);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 36px;
+}
+
+.ds-consult-guide-desc {
+    margin: 4px 0 0;
+    color: var(--c-ink-2);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+}
+
+.ds-consult-guide-orb {
+    position: absolute;
+    top: 4px;
+    right: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 32% 28%, #fff 0 18%, transparent 19%),
+        radial-gradient(circle at 35% 30%, #cfe6d4 0 42%, #8fb89a 58%, #5e8a6c 100%);
+    box-shadow: 0 8px 18px rgba(51, 72, 56, 0.12);
+}
+
+.large-font .ds-consult-guide {
+    min-height: 88px;
+    padding-right: 84px;
+}
+.large-font .ds-consult-guide-title { font-size: 28px; line-height: 1.4; }
+.large-font .ds-consult-guide-desc { font-size: 19px; }
+
+.ds-consult-shortcuts { gap: 0; }
+.ds-consult-shortcuts-title { display: none; }
+
+.ds-consult-shortcut-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(100px, auto);
+    gap: 10px;
+}
+
+.ds-consult-shortcut {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 4px;
+    min-height: 100px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 22px;
+    box-shadow: none;
+    text-align: left;
+    color: var(--c-ink);
+}
+
+.ds-consult-shortcut.is-sky { background: #d3e7ee; --tone: var(--c-sky-700); }
+.ds-consult-shortcut.is-lilac { background: #e8dcf3; --tone: var(--c-lilac-700); }
+.ds-consult-shortcut.is-sage { background: #eaf3e2; --tone: var(--c-sage-700); }
+.ds-consult-shortcut.is-sun { background: #f7edc6; --tone: var(--c-sun-700); }
+.ds-consult-shortcut.is-rose { background: #f3e4dc; --tone: #8a5340; }
+
+/* Soft wash in the lower-right, standing in for a backdrop illustration. */
+.ds-consult-shortcut::before {
+    content: "";
+    position: absolute;
+    inset: auto -20% -30% auto;
+    width: 70%;
+    height: 70%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.55), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.ds-consult-shortcut-mark,
+.ds-consult-shortcut-go,
+.ds-consult-shortcut-label,
+.ds-consult-shortcut-desc { position: relative; z-index: 1; }
+
+.ds-consult-shortcut-mark {
+    width: 24px;
+    height: 24px;
+    margin: 0 0 8px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--tone, var(--c-ink));
+}
+
+.ds-consult-shortcut-mark svg {
+    width: 24px;
+    height: 24px;
+    color: var(--tone, var(--c-ink));
+}
+
+.ds-consult-shortcut-go {
+    position: absolute;
+    top: 15px;
+    right: 12px;
+    width: 18px;
+    height: 18px;
+    color: var(--c-ink-3);
+    background: none;
+}
+
+.ds-consult-shortcut-go svg { width: 18px; height: 18px; }
+
+.ds-consult-shortcut-label {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 27px;
+}
+
+.ds-consult-shortcut-desc {
+    margin: 0;
+    color: var(--c-ink-2);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    overflow-wrap: anywhere;
+}
+
+.ds-consult-shortcut:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 68px;
+    padding: 10px 40px 10px 12px;
+    gap: 2px 12px;
+}
+
+.ds-consult-shortcut:last-child:nth-child(odd) .ds-consult-shortcut-mark {
+    margin: 0;
+}
+
+.ds-consult-shortcut:last-child:nth-child(odd) .ds-consult-shortcut-go {
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+}
+
+.ds-consult-shortcut:last-child:nth-child(odd) .ds-consult-shortcut-label {
+    flex: 1 1 auto;
+}
+
+.ds-consult-shortcut:last-child:nth-child(odd) .ds-consult-shortcut-desc {
+    flex: 1 1 100%;
+    padding-left: 36px;
+}
+
+.large-font .ds-consult-shortcut { min-height: 128px; }
+.large-font .ds-consult-shortcut:last-child:nth-child(odd) { min-height: 80px; }
+.large-font .ds-consult-shortcut-label { font-size: 22px; line-height: 1.35; }
+.large-font .ds-consult-shortcut-desc { font-size: 19px; }
+
+/* Bottom capsule: camera | field | voice | send in one pill above the nav. */
+.ds-consult-composer {
+    position: sticky;
+    bottom: calc(var(--shell-nav-offset) + var(--shell-nav-h));
+    z-index: 3;
+    margin-right: 0;
+    padding: 8px 10px calc(var(--shell-gap) + 2px);
+    gap: 8px;
+    border: 0;
+    background: var(--c-bg, #f5f6f6);
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.ds-consult-composer:focus-within {
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.ds-consult-capsule {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 4px;
+    padding: 4px;
+    border: 1.5px solid #dce1d8;
+    border-radius: 28px;
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(51, 72, 56, 0.06);
+}
+
+.ds-consult-composer:focus-within .ds-consult-capsule {
+    border-color: var(--c-sage-700);
+    box-shadow: 0 0 0 3px rgba(56, 99, 65, 0.16);
+}
+
+.ds-consult-capsule .ds-consult-upload {
+    grid-column: 1;
+    width: 52px;
+    min-width: 52px;
+    min-height: 52px;
+    padding: 0;
+    border-radius: 26px;
+    background: transparent;
+}
+
+.ds-consult-capsule .ds-consult-input {
+    grid-column: 2;
+    min-height: 52px;
+    max-height: 140px;
+    padding: 12px 4px;
+    border: 0;
+    background: transparent;
+    resize: none;
+    line-height: 1.5;
+}
+
+.large-font .ds-consult-capsule .ds-consult-input.ds-control {
+    min-height: 56px !important;
+    font-size: 22px;
+}
+
+.ds-consult-capsule .ds-consult-tools {
+    grid-column: 3;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+}
+
+.ds-consult-capsule .ds-consult-voice {
+    width: 52px;
+    min-width: 52px;
+    min-height: 52px;
+    padding: 0;
+    border-radius: 26px;
+    background: transparent;
+}
+
+.ds-consult-capsule .ds-consult-send {
+    width: 52px;
+    min-width: 52px;
+    min-height: 52px;
+    margin: 0;
+    padding: 0;
+    border-radius: 50%;
+    background: #dce8cc;
+    color: #373531;
+}
+
+.ds-consult-capsule .ds-consult-send:not(:disabled):not(.is-idle) {
+    background: #62895a;
+    color: #fff;
+}
+
+.ds-consult-capsule .ds-consult-send:disabled,
+.ds-consult-capsule .ds-consult-send.is-idle {
+    background: #d8dfd5;
+    color: #596153;
+}
+
+.large-font .ds-consult-capsule .ds-consult-upload,
+.large-font .ds-consult-capsule .ds-consult-voice,
+.large-font .ds-consult-capsule .ds-consult-send {
+    width: 56px;
+    min-width: 56px;
+    min-height: 56px;
+}
+
+.ds-consult-composer .ds-consult-attach {
+    margin: 0 4px;
+}
+
+html[data-keyboard] .ds-consult-composer {
+    bottom: calc(var(--ds-kb-inset, 0px) + 8px);
+}

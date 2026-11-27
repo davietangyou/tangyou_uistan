@@ -66,60 +66,64 @@ export function Composer({vm}: {vm: ConsultViewModel}) {
                     </div>
                 )}
 
-                <label htmlFor="chat-input-box" className="ds-sr-only">輸入您的控糖疑問</label>
-                <textarea
-                    id="chat-input-box"
-                    data-verify="chat-input"
-                    className="ds-consult-input t-body ds-control"
-                    rows={2}
-                    placeholder={attachedImage ? "可補充您的提問（例如：我食呢隻藥成日胃唔舒服，有冇影響？）..." : "請在此輸入或直接使用語音，詢問您的控糖疑問..."}
-                    value={chatInput}
-                    onChange={e => setChatInput(e.target.value)}
-                    onKeyDown={e => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSendChatMessage(chatInput);
-                        }
-                    }}
-                />
-                <div className="ds-consult-tools">
+                <div className="ds-consult-capsule">
                     {/* 相機/相片上傳按鈕 */}
                     <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         title="拍照或上傳相片/食物/藥物包裝"
                         aria-label="拍照或上傳相片"
-                        className="ds-consult-tool ds-control"
+                        className="ds-consult-tool ds-consult-upload ds-control"
                     >
                         <Icon name="camera" />
                     </button>
 
-                    {/* 語音輸入按鈕 */}
-                    <button
-                        type="button"
-                        onClick={toggleVoiceInput}
-                        title={isListening ? "正在聆聽語音... 點擊結束" : "點擊開始語音輸入"}
-                        aria-pressed={isListening}
-                        className={`ds-consult-tool ds-consult-voice ds-control${isListening ? ' is-listening' : ''}`}
-                    >
-                        <Icon name={isListening ? 'stop' : 'mic'} />
-                        <span className="t-label">
-                            {isListening ? '錄音中... 點擊結束' : '語音輸入'}
-                        </span>
-                    </button>
+                    <label htmlFor="chat-input-box" className="ds-sr-only">輸入您的控糖疑問</label>
+                    <textarea
+                        id="chat-input-box"
+                        data-verify="chat-input"
+                        className="ds-consult-input t-body ds-control"
+                        rows={1}
+                        placeholder={attachedImage ? "可補充您的提問（例如：我食呢隻藥成日胃唔舒服，有冇影響？）..." : "輸入問題…"}
+                        value={chatInput}
+                        onChange={e => setChatInput(e.target.value)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSendChatMessage(chatInput);
+                            }
+                        }}
+                    />
 
-                    <button
-                        type="button"
-                        onClick={() => handleSendChatMessage(chatInput)}
-                        data-verify="chat-send"
-                        disabled={(!chatInput.trim() && !attachedImage) || chatLoading}
-                        className={`ds-consult-send ds-control${canSend ? '' : ' is-idle'}`}
-                        title="發送提問"
-                        aria-label="發送提問"
-                    >
-                        <Icon name="send" />
-                        <span className="ds-consult-send-label ds-sr-only">發送</span>
-                    </button>
+                    <div className="ds-consult-tools">
+                        {/* 語音輸入按鈕 */}
+                        <button
+                            type="button"
+                            onClick={toggleVoiceInput}
+                            title={isListening ? "正在聆聽語音... 點擊結束" : "點擊開始語音輸入"}
+                            aria-label={isListening ? "正在聆聽語音... 點擊結束" : "點擊開始語音輸入"}
+                            aria-pressed={isListening}
+                            className={`ds-consult-tool ds-consult-voice ds-control${isListening ? ' is-listening' : ''}`}
+                        >
+                            <Icon name={isListening ? 'stop' : 'mic'} />
+                            <span className="ds-sr-only">
+                                {isListening ? '錄音中... 點擊結束' : '語音輸入'}
+                            </span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => handleSendChatMessage(chatInput)}
+                            data-verify="chat-send"
+                            disabled={(!chatInput.trim() && !attachedImage) || chatLoading}
+                            className={`ds-consult-send ds-control${canSend ? '' : ' is-idle'}`}
+                            title="發送提問"
+                            aria-label="發送提問"
+                        >
+                            <Icon name="send" />
+                            <span className="ds-consult-send-label ds-sr-only">發送</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </>

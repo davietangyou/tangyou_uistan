@@ -21,17 +21,21 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
 
     return (
             <div ref={panelRef} className="ds-consult-panel">
-                {/* S4b: disclaimer leads the page, quiet caption (moved from below the composer). */}
-                <p className="ds-consult-disclaimer t-caption">
-                    <Icon name="privacy" size={18} />
-                    <span>專業聲明：資訊來源基於香港醫學臨床指引與 ADA 標準。所有對話僅供共同決策 (SDM) 及覆診前備忘，不作直接個體化臨床診斷。</span>
-                </p>
-
                 {/* 歡迎與對話歷史 */}
                 <div className="ds-consult-thread" data-verify="chat-thread">
                     {chatMessages.map((msg, index) => {
                         const isUser = msg.role === 'user';
-                        
+                        // The welcome bubble stays in the thread (locked copy / isWelcome
+                        // contract). On the topic-card screen it is kept for assistive
+                        // tech only; the visible guide lives in Shortcuts.
+                        if (msg.isWelcome && chatMessages.length <= 1) {
+                            return (
+                                <div key={msg.id || index} className="ds-sr-only">
+                                    {msg.content}
+                                </div>
+                            );
+                        }
+
                         return (
                             <div key={msg.id || index} className={`ds-consult-msg ${isUser ? 'is-user' : 'is-ai'}`}>
                                 <div className="ds-consult-sender t-caption">
@@ -102,6 +106,13 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                 <FollowUps vm={vm} />
 
                 <Shortcuts vm={vm} />
+
+                {/* Quiet locked disclaimer, after the topic cards so the first
+                    screen can hold the matrix and the capsule. */}
+                <p className="ds-consult-disclaimer t-caption">
+                    <Icon name="privacy" size={18} />
+                    <span>專業聲明：資訊來源基於香港醫學臨床指引與 ADA 標準。所有對話僅供共同決策 (SDM) 及覆診前備忘，不作直接個體化臨床診斷。</span>
+                </p>
 
                 {/* S4b: composer last, sticky above the bottom bar (chat-app layout). */}
                 <Composer vm={vm} />

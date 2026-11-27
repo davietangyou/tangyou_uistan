@@ -5,7 +5,7 @@ import {GlucoseEntryForm} from './sections/GlucoseEntryForm';
 import {GlucoseStatsPanel} from './sections/GlucoseStatsPanel';
 import {GlucoseTrendChart} from './sections/GlucoseTrendChart';
 import {GlucoseRecordList} from './sections/GlucoseRecordList';
-import {RecordEntryCard} from './sections/RecordEntryCard';
+import {RecordEntryCard, draftLines} from './sections/RecordEntryCard';
 import {SubPage} from '../../components/shell/SubPage';
 
 export function BloodGlucoseTab({vm}: {vm: GlucoseViewModel}) {
@@ -14,7 +14,7 @@ export function BloodGlucoseTab({vm}: {vm: GlucoseViewModel}) {
     return (
         <div className="ds-rec-tab">
             <SaveSuccessBanner vm={vm} syncHint="數據已即時同步到下方的數據看板及走勢圖中！" />
-            <RecordEntryCard vm={vm} id="btn-rec-entry-bg" icon="glucose" title="記錄血糖" timeLabel="測量時間" periodLabel="測量時段" onOpen={() => setEntryOpen(true)} />
+            <RecordEntryCard id="btn-rec-entry-bg" icon="glucose" title="記錄血糖" lines={draftLines(vm, "測量時間", "測量時段")} onOpen={() => setEntryOpen(true)} />
             <SubPage open={entryOpen} title="記錄血糖" onBack={() => setEntryOpen(false)} className="ds-rec-entry-page">
                 <GlucoseEntryForm vm={vm} onSaved={() => setEntryOpen(false)} />
             </SubPage>

@@ -58,6 +58,8 @@ const VIEWS = [
     { id: 'glucose-symptom', setup: 'seed', nav: [{ text: '紀錄', withinNav: true, expect: '症狀紀錄' }, { text: '症狀紀錄', expect: '紀錄時間' }], expect: '紀錄時間' },
     { id: 'glucose-symptom-entry', setup: 'seed', nav: [{ text: '紀錄', withinNav: true, expect: '症狀紀錄' }, { text: '症狀紀錄', expect: '紀錄時間' }, { selector: '#btn-rec-entry-symptom', expect: '儲存症狀紀錄' }], expect: '儲存症狀紀錄' },
     { id: 'glucose-hba1c', setup: 'seed', nav: [{ text: '紀錄', withinNav: true, expect: '症狀紀錄' }, { text: '糖化', expect: '糖化血紅素' }], expect: '糖化血紅素' },
+    // S5 (owner t20u): the HbA1c form is a sub-page too; audited as its own view.
+    { id: 'glucose-hba1c-entry', setup: 'seed', nav: [{ text: '紀錄', withinNav: true, expect: '症狀紀錄' }, { text: '糖化', expect: '糖化血紅素' }, { selector: '#btn-rec-entry-hba1c', expect: '儲存糖化血紅素' }], expect: '儲存糖化血紅素' },
     { id: 'saved-questions', setup: 'seed', nav: [{ text: '問題', withinNav: true, expect: 'AI 自動總結常見類別' }], expect: 'AI 自動總結常見類別' },
     { id: 'me', setup: 'seed', nav: [{ text: '我的', withinNav: true, expect: '糖尿病相關信息' }], expect: '糖尿病相關信息' },
     { id: 'consult', setup: 'seed-empty-chat', nav: [{ selector: '#btn-home-ask-ai', expect: '快捷提問' }], expect: '快捷提問' },

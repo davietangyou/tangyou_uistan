@@ -2,7 +2,7 @@ import type {GlucoseViewModel} from '../useGlucoseViewModel';
 import {hba1cEntryTier} from '../recordStatus';
 import {Icon} from '../../../components/ui';
 
-export function HbA1cEntryForm({vm}: {vm: GlucoseViewModel}) {
+export function HbA1cEntryForm({vm, onSaved}: {vm: GlucoseViewModel; onSaved?: () => void}) {
     const {addHbA1cRecord, newHbA1c, setNewHbA1c} = vm;
 
     const hasVal = Boolean(newHbA1c.value && !isNaN(parseFloat(newHbA1c.value)));
@@ -74,6 +74,8 @@ export function HbA1cEntryForm({vm}: {vm: GlucoseViewModel}) {
                     onClick={() => {
                         if (newHbA1c.value) {
                             addHbA1cRecord();
+                            // S5: back to the page (chart + list show the new value) once it was a number.
+                            if (!isNaN(parseFloat(newHbA1c.value))) onSaved?.();
                         }
                     }}
                     disabled={!newHbA1c.value}

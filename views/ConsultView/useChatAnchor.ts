@@ -18,9 +18,15 @@ import type {ChatMessage} from '../../utils/types';
 export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
     const panel = useRef<HTMLDivElement>(null);
 
+    // Has the thread been anchored at least once since it was mounted? Until
+    // then every anchor is instant (R2-5: a long history used to glide through
+    // the whole conversation on first entry).
+    const settled = useRef(false);
     const anchor = useCallback((smooth = false) => {
         const root = panel.current;
         if (!root?.isConnected) return;
+        if (!settled.current) smooth = false;
+        settled.current = true;
         const items = root.querySelectorAll<HTMLElement>('.ds-consult-msg');
         const loadingEl = root.querySelector<HTMLElement>('.ds-consult-loading');
         if (items.length <= 1 && !loadingEl) return;
@@ -49,10 +55,8 @@ export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
     // Newest message / waiting state changed → follow it (smoothly).
     const newest = messages[messages.length - 1];
     const key = `${messages.length}:${newest?.id ?? ''}:${waiting ? 1 : 0}`;
-    const firstRun = useRef(true);
     useLayoutEffect(() => {
-        if (firstRun.current) {
-            firstRun.current = false;
+        if (!settled.current) {
             anchor(false);
             return;
         }
@@ -63,10 +67,13 @@ export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
 
     // Page shown again (tab entry) → land on the newest message, no animation.
     // Its tab tapped again while here → glide back to the newest message.
-    useEffect(() => {
+    // A layout effect, so it is listening before the tab-scroll memory (a
+    // parent layout effect) announces the page on its very first mount.
+    useLayoutEffect(() => {
         const onShown = (e: Event) => {
             if ((e as CustomEvent).detail !== 'CONSULT') return;
-            requestAnimationFrame(() => anchor(false));
+            anchor(false); // before the first paint: no flash of the oldest messages
+            requestAnimationFrame(() => anchor(false)); // and once more after late layout
         };
         const onRetap = (e: Event) => {
             if ((e as CustomEvent).detail !== 'CONSULT') return;

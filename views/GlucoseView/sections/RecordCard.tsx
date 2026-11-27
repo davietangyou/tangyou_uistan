@@ -11,7 +11,7 @@ const STATUS_TEXT: Record<Exclude<GlucoseStatus, 'none'>, string> = {
 /** One glucose / symptom record. Status is always written out, never colour-only. */
 export function RecordCard({record: r, showDetails, onDelete}: {record: GlucoseRecord; showDetails: boolean; onDelete: () => void}) {
     const status = glucoseStatus(r.value, r.timeType);
-    const meta = (showDetails && r.mealTag ? [r.mealTag, r.timeType, r.date] : [r.timeType, r.date]).join(' · ');
+    const lead = (showDetails && r.mealTag ? [r.mealTag, r.timeType] : [r.timeType]).join(' · ');
     const details = showDetails && (r.dietNote || r.exerciseNote || r.illnessNote || r.medicationNote || r.bpSystolic || r.bpDiastolic || r.pulse || r.weight || r.mood);
 
     return (
@@ -28,7 +28,9 @@ export function RecordCard({record: r, showDetails, onDelete}: {record: GlucoseR
                     </div>
                 )}
 
-                <p className="t-caption t-ink-2">{meta}</p>
+                {/* R2-5: the date and its time stay on one line (「2026/11/23 / 07:30」 split
+                    in long lists); the text is unchanged. */}
+                <p className="t-caption t-ink-2">{lead} · <span className="ds-rec-when">{r.date}</span></p>
 
                 {r.symptoms && r.symptoms.length > 0 && (
                     <ul className="ds-rec-tags" aria-label="症狀">

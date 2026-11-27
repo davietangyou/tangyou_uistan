@@ -1465,3 +1465,7 @@
 html[data-keyboard] .ds-consult-composer {
     bottom: calc(var(--ds-kb-inset, 0px) + 8px);
 }
+
+/* R2-5: 再試一次 under the newest failed reply (same as 問題紀錄's AI 總結 error). */
+.ds-consult-retry { padding: 0 16px 16px; }
+.ds-consult-card > .ds-consult-retry:first-child { padding-top: 16px; }

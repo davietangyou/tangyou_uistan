@@ -1,3 +1,4 @@
+import {ErrorRetry} from './ErrorRetry';
 import type {ConsultViewModel} from './useConsultViewModel';
 import type {ChatMessage, ChatOptionComparison} from '../../utils/types';
 import ReactMarkdown from 'react-markdown';
@@ -74,6 +75,8 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                                         <AnswerSummary vm={vm} msg={msg} />
 
                                         <AnswerDetails vm={vm} msg={msg} index={index} />
+
+                                        <ErrorRetry vm={vm} msg={msg} index={index} />
                                     </div>
                                 )}
                             </div>

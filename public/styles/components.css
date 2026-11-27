@@ -510,6 +510,11 @@ textarea.ds-field-control {
     padding: 0 20px 16px;
 }
 
+/* Without a footer, the bottom band is left to the voice button. */
+.ds-sheet:not(:has(> .ds-sheet-footer)) {
+    padding-bottom: calc(var(--shell-mic) + var(--shell-nav-offset) + 16px);
+}
+
 /* Actions clear the voice button on the right. */
 .ds-sheet-footer {
     display: flex;

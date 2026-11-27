@@ -566,3 +566,14 @@
 .ds-sq-field .ds-field-control {
     max-width: 240px;
 }
+
+/* R2-9: a question is a sentence — the add / edit fields wrap it over two
+   lines (the whole question and the placeholder's example stay readable)
+   instead of scrolling it sideways out of sight. Enter still saves. */
+textarea.ds-field-control.ds-sq-textarea {
+    min-height: 0;
+    resize: none;
+    line-height: 1.5;
+    field-sizing: content;
+    max-height: 9lh;
+}

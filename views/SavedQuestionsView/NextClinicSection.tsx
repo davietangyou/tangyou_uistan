@@ -106,9 +106,10 @@ export function NextClinicSection({vm}: {vm: SavedQuestionsViewModel}) {
             {/* 自訂新增問診問題 */}
             {isAddingNextQ ? (
                 <div className="ds-sq-form" data-keyboard-reveal>
-                    <input
-                        type="text"
-                        className="ds-field-control ds-control"
+                    <textarea
+                        className="ds-field-control ds-control ds-sq-textarea"
+                        rows={2}
+                        enterKeyHint="done"
                         placeholder="輸入想加入下次問診清單的問題..."
                         aria-label="自訂加入下次問診清單的問題"
                         value={newNextQText}
@@ -119,6 +120,7 @@ export function NextClinicSection({vm}: {vm: SavedQuestionsViewModel}) {
                                 handleAddNextClinicQuestion();
                             }
                         }}
+                        autoFocus
                     />
                     <div className="ds-sq-actions">
                         <Button onClick={handleAddNextClinicQuestion} disabled={!newNextQText.trim()}>

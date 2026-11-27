@@ -94,10 +94,24 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
             lastInset = inset;
         };
         let lastInset = 0;
+        // R2-9: a growing text box (two-line question fields grow with what is
+        // typed) keeps itself and its 確定 / 取消 above the keyboard.
+        let growFrame = 0;
+        const onInput = (e: Event) => {
+            const field = e.target as HTMLElement | null;
+            if (!field || field.tagName !== 'TEXTAREA' || field.id === 'chat-input-box' || !root.hasAttribute('data-keyboard')) return;
+            cancelAnimationFrame(growFrame);
+            growFrame = requestAnimationFrame(() => {
+                if (document.activeElement === field) revealField(field, vv);
+            });
+        };
         vv.addEventListener('resize', update);
         vv.addEventListener('scroll', update);
         document.addEventListener('focusout', update);
+        document.addEventListener('input', onInput);
         return () => {
+            cancelAnimationFrame(growFrame);
+            document.removeEventListener('input', onInput);
             vv.removeEventListener('resize', update);
             vv.removeEventListener('scroll', update);
             document.removeEventListener('focusout', update);

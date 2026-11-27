@@ -48,9 +48,10 @@ export function SavedListSection({vm}: {vm: SavedQuestionsViewModel}) {
                     {/* 新增問題編輯框 */}
                     {isAdding && (
                         <div className="ds-sq-form" data-keyboard-reveal>
-                            <input
-                                type="text"
-                                className="ds-field-control ds-control"
+                            <textarea
+                                className="ds-field-control ds-control ds-sq-textarea"
+                                rows={2}
+                                enterKeyHint="done"
                                 placeholder="請輸入想保存的問題，如「食藥後半小時頭暈正常嗎？」"
                                 aria-label="手動新增問題"
                                 value={newQuestionText}
@@ -61,6 +62,7 @@ export function SavedListSection({vm}: {vm: SavedQuestionsViewModel}) {
                                         handleAddQuestion();
                                     }
                                 }}
+                                autoFocus
                             />
                             <div className="ds-sq-actions">
                                 <Button onClick={handleAddQuestion} disabled={!newQuestionText.trim()}>
@@ -95,10 +97,13 @@ export function SavedListSection({vm}: {vm: SavedQuestionsViewModel}) {
                                         <div className="ds-sq-saved-main">
                                             <IndexBadge n={idx + 1} active={isInNextList} />
                                             {isEditing ? (
-                                                <input
-                                                    type="text"
-                                                    className="ds-field-control ds-control"
+                                                <textarea
+                                                    className="ds-field-control ds-control ds-sq-textarea"
+                                                    rows={2}
+                                                    enterKeyHint="done"
                                                     aria-label="編輯問題"
+                                                    // R2-9: the cursor starts after the last word, where a fix usually goes.
+                                                    onFocus={e => { const end = e.currentTarget.value.length; e.currentTarget.setSelectionRange(end, end); }}
                                                     value={editingText}
                                                     onChange={e => setEditingText(e.target.value)}
                                                     onKeyDown={e => {

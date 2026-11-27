@@ -334,7 +334,12 @@ const outDir = process.argv.includes('--out')
     : path.join(repoRoot, 'verify-results/latest/logic');
 
 const snapshot = await captureLogic();
+// UI-structure facts (View enum, useAppLogic return keys) are reported, not gated:
+// a re-skin may rename views or hook fields without touching business behaviour.
+const { useAppLogicReturnKeys, hookMeta, viewEnumValues, ...gatedContracts } = snapshot.contracts;
+snapshot.contracts = gatedContracts;
 fs.mkdirSync(outDir, { recursive: true });
+fs.writeFileSync(path.join(outDir, 'structure-report.json'), stableStringify({ useAppLogicReturnKeys, hookMeta, viewEnumValues }));
 fs.writeFileSync(path.join(outDir, 'logic.raw.json'), JSON.stringify(snapshot, null, 2) + '\n');
 fs.writeFileSync(path.join(outDir, 'logic.normalized.json'), stableStringify(snapshot));
 console.log(`logic snapshot written to ${outDir}`);

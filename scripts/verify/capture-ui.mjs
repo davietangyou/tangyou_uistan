@@ -1,7 +1,8 @@
 /**
  * Visible-copy inventory, AI message-shape fixtures, and touch/contrast
  * audits against the local dev server. Uses the frozen Hong Kong clock.
- * Shape and locked-copy assertions fail the process; audits only report.
+ * Advisory layer (verify --ui): failures here only fail with --ui-strict.
+ * The gating shape check lives in capture-smoke.mjs.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -16,6 +17,7 @@ import { SHAPE_CASES } from './fixtures/shapes/messages.mjs';
 import { LOCKED_COPY_SOURCES, classifyVisibleLine } from './lib/lockedCopy.mjs';
 import {
     click,
+    coveredClicks,
     disableAnimations,
     navigate,
     visibleText,
@@ -217,6 +219,7 @@ async function main() {
             shapes: SHAPE_CASES.map((s) => s.id),
             ok: failures.length === 0,
             failures,
+            uxCoveredClicks: coveredClicks,
         }, null, 2) + '\n');
 
         console.log(`UI contract captures written to ${outDir}`);

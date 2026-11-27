@@ -1,11 +1,14 @@
 /**
- * Orchestrates a verification capture.
+ * verify = business hard gate (does not lock the UI). See README.md.
  *
- *   node scripts/verify/run.mjs --out verify-results/baseline
- *   node scripts/verify/run.mjs --out verify-results/phase-N --compare verify-results/baseline
+ *   npm run verify                         lint + build + node layer + browser smoke + goldens
+ *   npm run verify -- --skip-build         same without build (fast iteration)
+ *   npm run verify -- --no-browser         lint (+build) + node layer only; no dev server needed
+ *   npm run verify -- --ui [--ui-strict]   + advisory UI layer (DOM snapshots, copy inventory, audits)
+ *   ... --compare <dir>                    + DOM/screenshot diff vs an earlier --ui run (advisory)
  *
- * Steps: lint, (optional) build, logic/contract snapshot, DOM snapshot if
- * the dev server is reachable. Does not call Gemini and does not mutate app source.
+ * The smoke needs the dev server (VERIFY_BASE_URL, default :9002) and fails
+ * when it is unreachable. Gemini is mocked in the browser; no real AI call.
  */
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -42,113 +45,119 @@ async function serverUp(url) {
 }
 
 const outRoot = path.resolve(repoRoot, argValue('--out', 'verify-results/latest'));
-const compareRoot = process.argv.includes('--compare') ? path.resolve(repoRoot, argValue('--compare')) : null;
-const skipBuild = process.argv.includes('--skip-build');
-const skipDom = process.argv.includes('--skip-dom');
-const skipFlows = process.argv.includes('--skip-flows');
-const skipUi = process.argv.includes('--skip-ui');
-const skipGolden = process.argv.includes('--skip-golden');
-fs.mkdirSync(outRoot, { recursive: true });
-
-console.log(`\n=== verify lint ===`);
-const lint = await run('npm', ['run', 'lint']);
-fs.writeFileSync(path.join(outRoot, 'lint.txt'), `exit=${lint.code}\n${lint.stdout}\n${lint.stderr}`);
-if (lint.code !== 0) {
-    console.error('lint failed');
-    process.exit(lint.code);
+const has = (f) => process.argv.includes(f);
+const compareRoot = has('--compare') ? path.resolve(repoRoot, argValue('--compare')) : null;
+const skipBuild = has('--skip-build');
+const noBrowser = has('--no-browser');
+const skipSmoke = has('--skip-smoke') || has('--skip-flows');
+const uiStrict = has('--ui-strict');
+const withUi = has('--ui') || uiStrict || Boolean(compareRoot);
+const skipGolden = has('--skip-golden');
+for (const [old, note] of [['--skip-dom', 'DOM snapshots are no longer in the default gate (only with --ui)'], ['--skip-ui', 'the UI inventory/audit is no longer in the default gate (only with --ui)'], ['--skip-flows', 'renamed to --skip-smoke']]) {
+    if (has(old)) console.warn(`[deprecated] ${old}: ${note}. This flag will be removed next round.`);
 }
-
-if (!skipBuild) {
-    console.log(`\n=== verify build ===`);
-    const build = await run('npm', ['run', 'build']);
-    fs.writeFileSync(path.join(outRoot, 'build.txt'), `exit=${build.code}\n${build.stdout}\n${build.stderr}`);
-    if (build.code !== 0) {
-        console.error('build failed');
-        process.exit(build.code);
+fs.mkdirSync(outRoot, { recursive: true });
+const t0 = Date.now();
+const timings = {};
+async function step(name, fn) {
+    const t = Date.now();
+    const r = await fn();
+    timings[name] = Date.now() - t;
+    return r;
+}
+function gate(name, res) {
+    if (res.code !== 0) {
+        console.error(`verify: ${name} failed`);
+        fs.writeFileSync(path.join(outRoot, 'status.json'), JSON.stringify({ failed: name, timingsMs: timings }, null, 2) + '\n');
+        process.exit(res.code || 1);
     }
 }
 
-console.log(`\n=== verify logic ===`);
-const logicDir = path.join(outRoot, 'logic');
-const logic = await run('node', ['--import', 'tsx', 'scripts/verify/capture-logic.mjs', '--out', logicDir]);
-if (logic.code !== 0) process.exit(logic.code);
+console.log(`\n=== verify lint ===`);
+const lint = await step('lint', () => run('npm', ['run', 'lint']));
+fs.writeFileSync(path.join(outRoot, 'lint.txt'), `exit=${lint.code}\n${lint.stdout}\n${lint.stderr}`);
+gate('lint', lint);
 
-console.log(`\n=== verify contracts (source) ===`);
-const contractsDir = path.join(outRoot, 'contracts');
-const contracts = await run('node', ['--import', 'tsx', 'scripts/verify/capture-contracts.mjs', '--out', contractsDir]);
-if (contracts.code !== 0) process.exit(contracts.code);
-
-console.log(`\n=== verify domain (node: records, storage shapes, AI request contract) ===`);
-const domainDir = path.join(outRoot, 'domain');
-const domain = await run('node', ['--import', 'tsx', 'scripts/verify/capture-domain.mjs', '--out', domainDir], { env: { ...process.env, TZ: 'Asia/Hong_Kong' } });
-if (domain.code !== 0) process.exit(domain.code);
-
-console.log(`\n=== verify source hygiene ===`);
-const source = await run('node', ['scripts/verify/check-source.mjs', '--out', path.join(outRoot, 'source')]);
-if (source.code !== 0) process.exit(source.code);
-
-const healthUrl = (process.env.VERIFY_BASE_URL || 'http://127.0.0.1:9002/').replace(/\/?$/, '/api/health');
-const domDir = path.join(outRoot, 'dom');
-if (!skipDom && await serverUp(healthUrl)) {
-    console.log(`\n=== verify DOM ===`);
-    const dom = await run('node', ['scripts/verify/capture-dom.mjs', '--out', domDir]);
-    if (dom.code !== 0) process.exit(dom.code);
-} else if (!skipDom) {
-    console.warn(`Dev server not reachable at ${healthUrl}; skipping DOM capture.`);
-    fs.writeFileSync(path.join(outRoot, 'dom-skipped.txt'), `Dev server not reachable at ${healthUrl}\n`);
-} else {
-    console.log('Skipping DOM capture (--skip-dom).');
+if (!skipBuild) {
+    console.log(`\n=== verify build ===`);
+    const build = await step('build', () => run('npm', ['run', 'build']));
+    fs.writeFileSync(path.join(outRoot, 'build.txt'), `exit=${build.code}\n${build.stdout}\n${build.stderr}`);
+    gate('build', build);
 }
 
-const flowsDir = path.join(outRoot, 'flows');
-if (!skipFlows && await serverUp(healthUrl)) {
-    console.log(`\n=== verify flows ===`);
-    const flows = await run('node', ['scripts/verify/capture-flows.mjs', '--out', flowsDir]);
-    if (flows.code !== 0) process.exit(flows.code);
-} else if (!skipFlows) {
-    console.warn(`Dev server not reachable at ${healthUrl}; skipping interaction flows.`);
-    fs.writeFileSync(path.join(outRoot, 'flows-skipped.txt'), `Dev server not reachable at ${healthUrl}\n`);
-} else {
-    console.log('Skipping interaction flows (--skip-flows).');
+console.log(`\n=== verify node layer: logic, contracts, domain, source hygiene ===`);
+const tz = { env: { ...process.env, TZ: 'Asia/Hong_Kong' } };
+const [logic, contracts, domain, source] = await step('node', () => Promise.all([
+    run('node', ['--import', 'tsx', 'scripts/verify/capture-logic.mjs', '--out', path.join(outRoot, 'logic')]),
+    run('node', ['--import', 'tsx', 'scripts/verify/capture-contracts.mjs', '--out', path.join(outRoot, 'contracts')]),
+    run('node', ['--import', 'tsx', 'scripts/verify/capture-domain.mjs', '--out', path.join(outRoot, 'domain')], tz),
+    run('node', ['scripts/verify/check-source.mjs', '--out', path.join(outRoot, 'source')]),
+]));
+gate('logic', logic);
+gate('contracts', contracts);
+gate('domain', domain);
+gate('source', source);
+
+const baseUrl = process.env.VERIFY_BASE_URL || 'http://127.0.0.1:9002/';
+const healthUrl = baseUrl.replace(/\/?$/, '/api/health');
+const browserWanted = !noBrowser && (!skipSmoke || withUi);
+const up = browserWanted ? await serverUp(healthUrl) : false;
+if (browserWanted && !up) {
+    console.error(`verify: dev server not reachable at ${healthUrl}. Start it (see README) or run with --no-browser (UI wiring then NOT covered).`);
+    fs.writeFileSync(path.join(outRoot, 'status.json'), JSON.stringify({ failed: 'dev-server-unreachable', healthUrl, timingsMs: timings }, null, 2) + '\n');
+    process.exit(1);
 }
 
-const uiDir = path.join(outRoot, 'ui');
-if (!skipUi && await serverUp(healthUrl)) {
-    console.log(`\n=== verify UI contracts (copy, shapes, audit) ===`);
-    const ui = await run('node', ['scripts/verify/capture-ui.mjs', '--out', uiDir]);
-    if (ui.code !== 0) process.exit(ui.code);
-} else if (!skipUi) {
-    console.warn(`Dev server not reachable at ${healthUrl}; skipping UI contract capture.`);
-    fs.writeFileSync(path.join(outRoot, 'ui-skipped.txt'), `Dev server not reachable at ${healthUrl}\n`);
+let smoke = { code: 'skipped' };
+if (noBrowser) {
+    console.warn('\n[warning] --no-browser: the browser smoke did not run. UI wiring (does a tap reach the business layer?) is NOT covered.');
+} else if (skipSmoke) {
+    console.warn('\n[warning] --skip-smoke: the browser smoke did not run.');
 } else {
-    console.log('Skipping UI contract capture (--skip-ui).');
+    console.log(`\n=== verify smoke (browser, data-verify hooks, mocked Gemini) ===`);
+    smoke = await step('smoke', () => run('node', ['scripts/verify/capture-smoke.mjs', '--out', path.join(outRoot, 'smoke')]));
+    gate('smoke', smoke);
+}
+
+if (!skipGolden) {
+    console.log(`\n=== verify compare vs committed goldens ===`);
+    const golden = await step('golden', () => run('node', ['scripts/verify/compare-golden.mjs', outRoot, ...(noBrowser || skipSmoke ? ['--no-browser'] : [])]));
+    fs.writeFileSync(path.join(outRoot, 'golden-compare.json'), golden.stdout || '');
+    gate('golden', golden);
+}
+
+const advisory = {};
+if (withUi && up) {
+    console.log(`\n=== verify --ui (advisory: DOM snapshots, visible copy, touch/contrast audit) ===`);
+    const dom = await step('ui-dom', () => run('node', ['scripts/verify/capture-dom.mjs', '--out', path.join(outRoot, 'dom')]));
+    advisory.dom = dom.code;
+    const ui = await step('ui-audit', () => run('node', ['scripts/verify/capture-ui.mjs', '--out', path.join(outRoot, 'ui')]));
+    advisory.ui = ui.code;
+    if (compareRoot) {
+        console.log(`\n=== verify --ui compare vs ${compareRoot} ===`);
+        const cmp = await step('ui-compare', () => run('node', ['scripts/verify/compare.mjs', compareRoot, outRoot]));
+        fs.writeFileSync(path.join(outRoot, 'compare.json'), cmp.stdout || '');
+        advisory.compare = cmp.code;
+    }
+    const bad = Object.entries(advisory).filter(([, c]) => c !== 0);
+    if (bad.length) console.warn(`[advisory] --ui findings in: ${bad.map(([k]) => k).join(', ')} (see ${outRoot}/ui, dom).${uiStrict ? '' : ' Not gating.'}`);
 }
 
 const status = {
     lint: lint.code,
     build: skipBuild ? 'skipped' : 0,
     logic: logic.code,
-    dom: skipDom ? 'skipped' : (fs.existsSync(path.join(outRoot, 'dom', 'index.json')) ? 0 : 'missing'),
-    flows: skipFlows ? 'skipped' : (fs.existsSync(path.join(outRoot, 'flows', 'index.json')) ? 0 : 'missing'),
     contracts: contracts.code,
     domain: domain.code,
     source: source.code,
-    ui: skipUi ? 'skipped' : (fs.existsSync(path.join(outRoot, 'ui', 'index.json')) ? 0 : 'missing'),
+    smoke: smoke.code,
+    advisory: withUi ? advisory : 'not-run',
+    totalMs: Date.now() - t0,
+    timingsMs: timings,
 };
 fs.writeFileSync(path.join(outRoot, 'status.json'), JSON.stringify(status, null, 2) + '\n');
-
-if (!skipGolden) {
-    console.log(`\n=== verify compare vs committed goldens ===`);
-    const golden = await run('node', ['scripts/verify/compare-golden.mjs', outRoot]);
-    fs.writeFileSync(path.join(outRoot, 'golden-compare.json'), golden.stdout || '');
-    if (golden.code !== 0) process.exit(golden.code);
+if (uiStrict && Object.values(advisory).some((c) => c !== 0)) {
+    console.error('verify: --ui-strict and the advisory layer reported failures');
+    process.exit(1);
 }
-
-if (compareRoot) {
-    console.log(`\n=== verify compare vs ${compareRoot} ===`);
-    const cmp = await run('node', ['scripts/verify/compare.mjs', compareRoot, outRoot]);
-    fs.writeFileSync(path.join(outRoot, 'compare.json'), cmp.stdout || '');
-    if (cmp.code !== 0) process.exit(cmp.code);
-}
-
-console.log(`\nVerification artifacts: ${outRoot}`);
+console.log(`\nverify OK in ${((Date.now() - t0) / 1000).toFixed(1)} s${noBrowser || skipSmoke ? ' (browser smoke NOT run)' : ''}. Artifacts: ${outRoot}`);

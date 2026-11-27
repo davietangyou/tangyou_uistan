@@ -124,12 +124,14 @@ function finderExpression({ text, placeholder, title, selector, withinNav }) {
         }
         const x = r.x + r.width / 2;
         const y = r.y + r.height / 2;
-        if (!inNav && (y > safeBottom || y < headerBottom)) {
-            return { ok: false, reason: 'covered', x, y, safeBottom, headerBottom };
-        }
-        return { ok: true, x, y, w: r.width, h: r.height, tag: el.tagName, inNav };
+        // Occlusion is a UX finding (advisory --ui), not a reason to refuse the click.
+        const covered = !inNav && (y > safeBottom || y < headerBottom);
+        return { ok: true, x, y, w: r.width, h: r.height, tag: el.tagName, inNav, covered };
     })()`;
 }
+
+/** Click targets that were under fixed header/bottom bar (reported by --ui). */
+export const coveredClicks = [];
 
 export async function click(cdp, target) {
     let box = await evaluate(cdp, finderExpression(target));
@@ -139,6 +141,10 @@ export async function click(cdp, target) {
     }
     if (!box?.ok) {
         throw new Error(`click target not found: ${JSON.stringify(target)} ${JSON.stringify(box)}`);
+    }
+    if (box.covered) {
+        coveredClicks.push(target);
+        console.warn(`  [ux] click target may be covered by fixed chrome: ${JSON.stringify(target)}`);
     }
     await delay(80);
     const { x, y } = box;

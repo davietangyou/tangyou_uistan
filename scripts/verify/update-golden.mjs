@@ -18,6 +18,7 @@ const destRoot = path.join(repoRoot, 'scripts/verify/fixtures/golden');
 fs.mkdirSync(destRoot, { recursive: true });
 for (const item of GOLDEN_CONTRACTS) {
     const src = path.join(srcRoot, item.out);
+    if (!fs.existsSync(src) && item.browser && process.argv.includes('--no-browser')) continue;
     if (!fs.existsSync(src)) {
         console.error(`missing ${item.out} in ${srcRoot}`);
         process.exit(1);

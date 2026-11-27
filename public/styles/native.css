@@ -60,3 +60,19 @@ img,
 svg {
     -webkit-touch-callout: none;
 }
+
+/* 3. Press feedback: a short dim + slight shrink while a finger is down.
+   The individual `scale` property composes with any existing transform.
+   The floating mic keeps its own :active style. */
+button:not(:disabled):not(.ds-shell-mic):active,
+[role="button"]:not([aria-disabled="true"]):active {
+    scale: 0.97;
+    filter: brightness(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    button:not(:disabled):not(.ds-shell-mic):active,
+    [role="button"]:not([aria-disabled="true"]):active {
+        scale: none;
+    }
+}

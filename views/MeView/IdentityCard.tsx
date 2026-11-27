@@ -22,14 +22,13 @@ export function profileCompletion(profile: UserProfile) {
 export function IdentityCard({profile}: {profile: UserProfile}) {
     const {done, total, missing} = profileCompletion(profile);
     const complete = missing.length === 0;
-    const facts = [profile.age ? `${profile.age} 歲` : '', profile.gender || ''].filter(Boolean).join(' · ');
     return (
         <section className="ds-pf-identity" aria-label="檔案完成度">
             <div className="ds-pf-identity-row">
                 <span className="ds-pf-identity-avatar" aria-hidden><Icon name="profile" size={28} /></span>
                 <div className="ds-pf-identity-text">
                     <p className="ds-pf-identity-name">{profile.name?.trim() || '未填寫稱呼'}</p>
-                    <p className="t-body t-ink-2">{facts ? `${facts} · ` : ''}已完成 {done} / {total}</p>
+                    <p className="t-body t-ink-2">已完成 {done} / {total}</p>
                 </div>
                 <span className={`ds-pf-identity-badge${complete ? ' is-done' : ''}`}>{complete ? '已完成' : '進行中'}</span>
             </div>

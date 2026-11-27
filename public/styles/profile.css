@@ -895,3 +895,10 @@
     .ds-pf-identity { padding: 16px; }
     .ds-pf-identity-avatar { width: 48px; height: 48px; }
 }
+.ds-pf-group-title-note {
+    display: block;
+    font-size: var(--t-caption);
+    line-height: var(--t-caption-lh, 1.4);
+    font-weight: 500;
+    color: var(--c-ink-2);
+}

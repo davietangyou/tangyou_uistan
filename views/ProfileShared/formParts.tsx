@@ -127,6 +127,11 @@ export function ProfileGroup({id, icon, tone, title, summary, open, onToggle, ch
     const editor = useContext(ProfileEditorContext);
     const panelId = `ds-pf-group-${id}`;
     const close = () => { if (open) onToggle(); };
+    // S5: a bracketed note in a title (「（維持最少 6 個月）」) reads as a quieter
+    // second line in the directory, so the row title stays one line. Same text.
+    const noteAt = title.indexOf('（');
+    const titleMain = noteAt > 0 ? title.slice(0, noteAt) : title;
+    const titleNote = noteAt > 0 ? title.slice(noteAt) : '';
     return (
         <section className="ds-pf-group" aria-labelledby={`${panelId}-title`}>
             <button type="button" className="ds-pf-group-head ds-control" aria-haspopup="dialog" aria-expanded={open} onClick={onToggle}>
@@ -134,7 +139,7 @@ export function ProfileGroup({id, icon, tone, title, summary, open, onToggle, ch
                     <Icon name={icon} />
                 </span>
                 <span className="ds-pf-group-text">
-                    <span className="t-title ds-pf-group-title" id={`${panelId}-title`}>{title}</span>
+                    <span className="t-title ds-pf-group-title" id={`${panelId}-title`}>{titleMain}{titleNote && <span className="ds-pf-group-title-note">{titleNote}</span>}</span>
                     <span className="t-caption t-ink-2 ds-pf-group-summary">{summary || '待填寫'}</span>
                 </span>
                 <Icon name="forward" size={22} className="ds-pf-chevron" />

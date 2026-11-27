@@ -955,8 +955,7 @@
 .ds-rec-entry-line + .ds-rec-entry-line { border-top: 1px solid rgba(47, 97, 120, 0.14); }
 .ds-rec-entry-line .t-caption { flex: 0 0 auto; color: var(--c-ink-2); }
 /* S5 large text: values break only at spaces (「2026年11月26日 / (週四) 09:30」, never 「小/時」). */
-.ds-rec-entry-line { flex-wrap: wrap; }
-.ds-rec-entry-line .t-body-strong { margin-left: auto; text-align: right; word-break: keep-all; overflow-wrap: break-word; }
+.ds-rec-entry-line .t-body-strong { flex: 1 1 auto; min-width: 0; text-align: right; word-break: keep-all; overflow-wrap: break-word; }
 
 /* Inside the sub-page the form is the page: no extra card frame. */
 .ds-rec-entry-page .ds-rec-form {
@@ -984,3 +983,12 @@
 .ds-rec-entry-page .ds-subpage-body { flex: 1 0 auto; display: flex; flex-direction: column; padding-bottom: 0; }
 .ds-rec-entry-page .ds-rec-form { flex: 1 0 auto; }
 .ds-rec-entry-page .ds-rec-actions { margin-top: auto; }
+
+/* S5: inside a sub-page the form's own heading becomes the quiet line under
+   the sub-page title (the title already says what this page records). */
+.ds-rec-entry-page .ds-rec-form > h2.t-title {
+    font-size: var(--t-body);
+    line-height: var(--t-body-lh, 1.5);
+    font-weight: 500;
+    color: var(--c-ink-2);
+}

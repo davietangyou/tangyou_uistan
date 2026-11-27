@@ -22,13 +22,20 @@ export function GlucoseEntryForm({vm, onSaved}: {vm: GlucoseViewModel; onSaved?:
 
     return (
         <section className="ds-card ds-rec-form" aria-label="登記血糖">
-            <RecordTimeRow vm={vm} label="測量時間" />
-            <RecordPeriodRow vm={vm} label="測量時段" />
+            <div className="ds-rec-when">
+                <RecordTimeRow vm={vm} label="測量時間" />
+                <RecordPeriodRow vm={vm} label="測量時段" />
+            </div>
 
             {/* 血糖數值 */}
-            <div className="ds-rec-row ds-rec-value-row">
+            <div className="ds-rec-row ds-rec-value-row ds-rec-gauge">
+                <div className="ds-rec-gauge-arc" aria-hidden="true">
+                    <svg viewBox="0 0 200 120" className="ds-rec-gauge-svg">
+                        <path d="M20 110 A80 80 0 0 1 180 110" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" />
+                    </svg>
+                </div>
                 <div className="ds-rec-row-head">
-                    <label htmlFor="glucose-value-input" className="t-label">血糖數值</label>
+                    <label htmlFor="glucose-value-input" className="t-label">輸入血糖</label>
                     {newGlucose.value && (
                         <button
                             type="button"

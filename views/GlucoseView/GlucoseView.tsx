@@ -8,8 +8,8 @@ import {Segmented} from '../../components/ui';
 
 type TabId = 'BG' | 'SYMPTOM' | 'HBA1C';
 const TABS = [
-    {value: 'BG', label: '血糖紀錄'},
-    {value: 'SYMPTOM', label: '症狀紀錄'},
+    {value: 'BG', label: '血糖'},
+    {value: 'SYMPTOM', label: '症狀'},
     {value: 'HBA1C', label: '糖化'},
 ] as const;
 

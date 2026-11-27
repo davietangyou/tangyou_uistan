@@ -1020,3 +1020,142 @@
     color: var(--c-ink-2);
 }
 .ds-rec-list > .ds-rec-day:first-child { margin-top: 0; }
+
+/* --- North-star phase 1: quieter empty records, a centred reading, pill tabs */
+
+.ds-records .ds-rec-tabs.ds-segmented {
+    background: var(--c-surface);
+    box-shadow: var(--ds-shadow-nav);
+    padding: 4px;
+}
+
+.ds-rec-tab.is-empty {
+    gap: 16px;
+}
+
+.ds-rec-quiet {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-height: 200px;
+    padding: 28px 20px 24px;
+    border-radius: var(--ds-radius-card);
+    background: var(--c-sage-100);
+    color: var(--c-ink);
+    text-align: center;
+}
+
+.ds-rec-quiet-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--c-surface);
+    color: var(--c-sage-700);
+}
+
+.ds-rec-quiet-title {
+    margin: 0;
+    font-family: var(--ds-font);
+    font-size: var(--t-title);
+    line-height: var(--t-title-lh);
+    font-weight: 600;
+    letter-spacing: 0;
+    word-break: keep-all;
+}
+
+.ds-rec-tab.is-empty .ds-rec-entry {
+    background: var(--c-sage-200);
+    box-shadow: none;
+    border: 0;
+    min-height: 56px;
+    justify-content: center;
+}
+
+.ds-rec-tab.is-empty .ds-rec-entry-meta {
+    display: none;
+}
+
+.ds-rec-tab.is-empty .ds-rec-entry-head {
+    justify-content: center;
+}
+
+.ds-rec-tab.is-empty .ds-rec-entry-mark,
+.ds-rec-tab.is-empty .ds-rec-entry-go {
+    display: none;
+}
+
+.ds-rec-when {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 4px 4px 8px;
+    border-radius: var(--ds-radius-card);
+    background: var(--c-surface-muted);
+}
+
+.ds-rec-when .ds-rec-row {
+    padding: 8px 12px;
+}
+
+.ds-rec-when .ds-rec-row + .ds-rec-row {
+    border-top: 1px solid var(--c-hairline);
+}
+
+.ds-rec-gauge {
+    position: relative;
+    align-items: center;
+    text-align: center;
+    padding: 12px 8px 8px;
+}
+
+.ds-rec-gauge-arc {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: min(280px, 100%);
+    transform: translateX(-50%);
+    color: var(--c-sage-200);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.ds-rec-gauge-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.ds-rec-gauge .ds-rec-row-head,
+.ds-rec-gauge .ds-rec-number,
+.ds-rec-gauge .ds-rec-alert {
+    position: relative;
+    z-index: 1;
+}
+
+.ds-rec-gauge .ds-rec-row-head {
+    justify-content: center;
+}
+
+.ds-rec-gauge .ds-rec-number {
+    padding-top: 36px;
+}
+
+.ds-rec-gauge .ds-rec-number-input {
+    text-align: center;
+    font-size: var(--t-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    min-height: 72px;
+    background: transparent;
+    box-shadow: none;
+    border: 0;
+}
+
+.large-font .ds-rec-gauge .ds-rec-number-input {
+    font-size: var(--t-display);
+}

@@ -614,3 +614,17 @@ html[data-subpages]:has(.ds-subpage-footer, .ds-rec-entry-page .ds-rec-actions) 
 html[data-keyboard][data-subpages]:has(.ds-subpage-footer, .ds-rec-entry-page .ds-rec-actions) .ds-shell-mic {
     bottom: calc(var(--ds-kb-inset, 0px) + 16px + env(safe-area-inset-bottom, 0px) + (var(--touch-min) - var(--shell-mic)) / 2) !important;
 }
+
+
+/* Home is a one-screen dashboard; the locked disclaimer stays in the tree. */
+.ds-shell-footer-home {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

@@ -8,7 +8,7 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding-bottom: 8px;
+    padding-bottom: var(--shell-clearance, 120px);
 }
 
 .large-font .ds-home {
@@ -394,7 +394,7 @@
     flex-direction: column;
     align-items: stretch;
     gap: 6px;
-    min-height: 200px;
+    min-height: 0;
     padding: 18px 16px 16px;
     border-radius: var(--ds-radius-card);
     color: var(--c-ink);

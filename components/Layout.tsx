@@ -153,7 +153,7 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
                     {children}
                 </main>
 
-                <footer className="ds-root ds-shell-footer">
+                <footer className={`ds-root ds-shell-footer${isHome ? " ds-shell-footer-home" : ""}`}>
                     <p className="t-caption ds-shell-disclaimer">
                         <PrivacyIcon size={16} strokeWidth={2} aria-hidden />
                         <span>

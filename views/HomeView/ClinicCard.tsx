@@ -6,7 +6,6 @@ export function ClinicCard({vm}: {vm: HomeViewModel}) {
     const {
         setView,
         nextClinicDate,
-        nextClinicQuestions,
         isEditingDate, setIsEditingDate,
         tempDate, setTempDate,
         dateReminderStatus, daysDiff,
@@ -81,18 +80,6 @@ export function ClinicCard({vm}: {vm: HomeViewModel}) {
                     />
                 </div>
             </BottomSheet>
-
-            {nextClinicQuestions.length > 0 && (
-                <div className="ds-stack-cards ds-home-clinic-qs">
-                    {nextClinicQuestions.map((q, qIdx) => (
-                        <div key={qIdx} className="ds-home-q">
-                            <span className="ds-home-q-index">{qIdx + 1}</span>
-                            <p className="t-body-strong ds-home-q-text">{q}</p>
-                        </div>
-                    ))}
-                    <p className="t-caption ds-home-clinic-count">共挑選 {nextClinicQuestions.length} 題</p>
-                </div>
-            )}
         </section>
     );
 }

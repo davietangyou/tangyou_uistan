@@ -1145,15 +1145,24 @@
     padding-top: 36px;
 }
 
-.ds-rec-gauge .ds-rec-number-input {
-    text-align: center;
-    font-size: var(--t-display);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    min-height: 72px;
+.ds-rec-gauge .ds-rec-number {
+    justify-content: center;
     background: transparent;
     box-shadow: none;
     border: 0;
+    width: 100%;
+}
+.ds-rec-gauge .ds-rec-number-input {
+    text-align: center;
+    font-size: var(--t-display) !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.02em;
+    min-height: 72px;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    width: 8ch;
+    flex: 0 0 auto;
 }
 
 .large-font .ds-rec-gauge .ds-rec-number-input {

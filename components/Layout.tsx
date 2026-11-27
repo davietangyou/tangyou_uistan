@@ -14,9 +14,10 @@ interface LayoutProps {
 }
 
 /**
- * 應用外殼（階段三）：頁頭、主內容、頁腳聲明。
- * 只有外殼子樹帶 .ds-root；<main> 內的業務視圖仍沿用舊樣式與 .large-font 規則，直到各自的階段換皮。
- * 首頁保留品牌標題；其餘頁面只留精簡品牌列。返回首頁一律經底部導航（不再有重複的 🏠 按鈕）。
+ * 應用外殼（階段三；階段 S2 同一設計師換皮）：頁頭、主內容、頁腳聲明。
+ * 主分頁沒有可見的頁面標題（底部導航已說明「你在哪」）：頂部只留一行安靜的品牌眉標與字號切換膠囊，
+ * 跟著內容一起捲走，首屏留給內容。首頁的品牌名「糖友導航」只對讀屏可見（DOM 文字保留）。
+ * 返回首頁一律經底部導航。
  */
 export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLargeFont, view}) => {
     const isHome = view === View.Home;
@@ -24,7 +25,7 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
     const PrivacyIcon = uiIcons.privacy;
     const headerRef = useRef<HTMLElement>(null);
 
-    // 頁頭固定在頂部（階段十二）：把實際高度交給 CSS，讓 focus / scrollIntoView 不被頁頭蓋住。
+    // 把頁頭實際高度交給 CSS（階段十二起），供需要避讓頁頭的樣式使用。
     useLayoutEffect(() => {
         const header = headerRef.current;
         if (!header || typeof ResizeObserver === 'undefined') return;
@@ -38,26 +39,26 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
 
     return (
         <div className="ds-shell-canvas">
-            <div className={`min-h-screen flex flex-col max-w-lg mx-auto ${isLargeFont ? 'large-font' : ''}`}>
-                <header ref={headerRef} className={`ds-root ds-shell-header animate-soft ${isHome ? 'ds-shell-header-home' : ''}`}>
+            <div className={`ds-shell-column min-h-screen flex flex-col ${isLargeFont ? 'large-font' : ''}`}>
+                <header ref={headerRef} className={`ds-root ds-shell-header ${isHome ? 'ds-shell-header-home' : ''}`}>
                     <div className="ds-shell-brand">
                         {isHome && <p className="ds-shell-eyebrow">DiaGuide HK</p>}
-                        <h1 className={`ds-shell-title ${isHome ? 't-h1' : 't-title'}`}>糖友導航</h1>
+                        <h1 className={`ds-shell-title ${isHome ? 'ds-sr-only' : ''}`}>糖友導航</h1>
                     </div>
                     {setIsLargeFont && (
                         <button
                             type="button"
                             onClick={() => setIsLargeFont(!isLargeFont)}
-                            className={`ds-shell-font-toggle ds-control ${isLargeFont ? 'ds-shell-font-toggle-on' : ''}`}
+                            className="ds-shell-font-toggle ds-control"
                             title={isLargeFont ? "切換至標準字型" : "切換至老友大字"}
                         >
-                            <FontIcon size={22} strokeWidth={2} aria-hidden />
+                            <FontIcon size={20} strokeWidth={2} aria-hidden />
                             <span>{isLargeFont ? "標準字" : "放大字"}</span>
                         </button>
                     )}
                 </header>
 
-                <main className={`flex-grow ${isHome ? 'px-4' : 'px-6'}`}>
+                <main className="ds-shell-main flex-grow">
                     {children}
                 </main>
 

@@ -12,11 +12,7 @@
 }
 
 .ds-shell-header {
-    padding-top: calc(20px + env(safe-area-inset-top, 0px));
-}
-
-.ds-shell-header-home {
-    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
 }
 
 /* 2. No web feel: no grey tap flash, no double-tap zoom (pinch zoom still
@@ -64,14 +60,19 @@ svg {
 /* 3. Press feedback: a short dim + slight shrink while a finger is down.
    The individual `scale` property composes with any existing transform.
    The floating mic keeps its own :active style. */
-button:not(:disabled):not(.ds-shell-mic):active,
+button:not(:disabled):not(.ds-shell-mic):not(.ds-subpage-back):active,
 [role="button"]:not([aria-disabled="true"]):active {
     scale: 0.97;
-    filter: brightness(0.94);
+    filter: brightness(0.96);
+}
+
+/* Tabs in the nav dim instead of shrinking (the slider must not wobble). */
+.ds-shell-tab:active {
+    scale: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    button:not(:disabled):not(.ds-shell-mic):active,
+    button:not(:disabled):active,
     [role="button"]:not([aria-disabled="true"]):active {
         scale: none;
     }
@@ -93,7 +94,7 @@ button:not(:disabled):not(.ds-shell-mic):active,
     width: 100%;
     max-width: var(--shell-column);
     padding: 24px max(20px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
-    border-radius: 24px 24px 0 0;
+    border-radius: var(--ds-radius-sheet) var(--ds-radius-sheet) 0 0;
     background: var(--c-surface);
     color: var(--c-ink);
     box-shadow: var(--ds-e2);
@@ -131,22 +132,16 @@ button:not(:disabled):not(.ds-shell-mic):active,
     }
 }
 
-/* 4. Tabs: the header stays at the top and the bottom nav stays fixed, so
-   only the content scrolls. Its height comes from Layout (--shell-header-h)
-   so focus / scrollIntoView keep fields clear of it. Each tab fades in. */
-.ds-shell-header {
-    position: sticky;
-    top: 0;
-    z-index: 30;
-    background: var(--c-canvas);
-}
-
+/* 4. Tabs: the bottom nav stays fixed and the quiet header scrolls away with
+   the content (S2: main tabs have no title bar). Each tab fades in — a level
+   move, so no direction. */
 html {
-    scroll-padding-top: calc(var(--shell-header-h, 72px) + 16px);
+    scroll-padding-top: calc(16px + env(safe-area-inset-top, 0px));
+    scroll-padding-bottom: calc(var(--shell-nav-offset, 12px) + var(--shell-nav-h, 76px) + 16px);
 }
 
 .ds-view-stage > * {
-    animation: ds-view-in 0.18s ease-out both;
+    animation: ds-view-in var(--ds-duration-slow) var(--ds-ease) both;
 }
 
 @keyframes ds-view-in {

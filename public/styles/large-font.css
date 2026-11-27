@@ -1,8 +1,9 @@
 /* Large-font mode (default on; Layout toggles .large-font on the app column).
-   Spacing inherited by text without its own .t-* class; type sizes switch
+   Spacing inherited by text without its own .t-* class (S1: the old
+   0.04em tracking and 1.7 leading read as 'web page'; the designer keeps CJK
+   tracking near zero and lets size, not air, carry legibility); type sizes switch
    through the --t-* tokens further down. */
 .large-font {
-    letter-spacing: 0.04em !important;
-    word-spacing: 0.05em !important;
-    line-height: 1.7 !important;
+    letter-spacing: 0.01em !important;
+    line-height: 1.55 !important;
 }

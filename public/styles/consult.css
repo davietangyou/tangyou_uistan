@@ -75,7 +75,7 @@
     font-size: var(--t-label);
     font-weight: 600;
     line-height: var(--t-label-lh);
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     cursor: pointer;
     --t-font: var(--t-label);
     --t-weight: 600;
@@ -94,12 +94,12 @@
     border-radius: var(--ds-radius-pill);
     background: var(--c-surface);
     color: var(--c-lavender);
-    font-weight: 700;
+    font-weight: 600;
     text-align: center;
 }
 
 .ds-consult-newchat {
-    border: 1px solid rgba(31, 37, 34, 0.16);
+    border: var(--ds-stroke) solid var(--c-stroke);
     background: var(--c-surface);
     color: var(--c-ink);
 }
@@ -117,7 +117,7 @@
     gap: 8px;
     padding: 8px 8px 8px 20px;
     border-radius: var(--ds-radius-inner);
-    background: var(--c-ink);
+    background: var(--c-action);
     color: var(--c-white);
     box-shadow: var(--ds-e2);
 }
@@ -278,7 +278,7 @@
 }
 
 .ds-consult-md strong {
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .ds-consult-card .ds-consult-md strong {
@@ -312,7 +312,7 @@
 .ds-consult-sec + .ds-consult-fold,
 .ds-consult-fold + .ds-consult-fold,
 .ds-consult-fold + .ds-consult-sec {
-    border-top: 1px solid rgba(31, 37, 34, 0.08);
+    border-top: 1px solid var(--c-hairline);
 }
 
 .ds-consult-sec-title {
@@ -336,9 +336,9 @@
     width: 26px;
     height: 26px;
     border-radius: 999px;
-    background: var(--c-ink);
+    background: var(--c-action);
     color: var(--c-white);
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1;
 }
 
@@ -382,7 +382,7 @@
 .ds-consult-safety-badge {
     padding: 4px 12px;
     border-radius: 999px;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .ds-consult-safety-steps {
@@ -429,7 +429,7 @@
 }
 
 .ds-consult-safety-contact-label {
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .ds-consult-safety-number {
@@ -485,7 +485,7 @@
     border-radius: 999px;
     background: var(--c-sage-100);
     color: var(--c-sage-700);
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .ds-consult-pref-opts {
@@ -501,7 +501,7 @@
     width: 100%;
     min-height: var(--touch-min);
     padding: 12px 14px;
-    border: 1.5px solid rgba(31, 37, 34, 0.16);
+    border: var(--ds-stroke) solid var(--c-stroke);
     border-radius: 14px;
     background: var(--c-surface);
     color: var(--c-ink);
@@ -544,7 +544,7 @@
     height: 26px;
     margin-top: 1px;
     border-radius: 999px;
-    border: 2px solid rgba(31, 37, 34, 0.28);
+    border: var(--ds-stroke) solid var(--c-stroke);
     color: transparent;
 }
 
@@ -575,7 +575,7 @@
     display: block;
     width: 100%;
     padding: 12px 14px;
-    border: 1.5px solid rgba(31, 37, 34, 0.2);
+    border: var(--ds-stroke) solid var(--c-stroke);
     border-radius: 14px;
     background: var(--c-surface);
     color: var(--c-ink);
@@ -591,7 +591,7 @@
 .ds-consult-field:focus {
     outline: none;
     border-color: var(--c-sage-700);
-    box-shadow: 0 0 0 3px rgba(47, 90, 58, 0.18);
+    box-shadow: 0 0 0 3px rgba(56, 99, 65, 0.18);
 }
 
 .large-font .ds-consult-field.ds-control {
@@ -609,7 +609,7 @@
     padding: 0 20px;
     border: 0;
     border-radius: var(--ds-radius-btn);
-    background: var(--c-ink);
+    background: var(--c-action);
     color: var(--c-white);
     font-size: var(--t-label);
     font-weight: 600;
@@ -742,7 +742,7 @@
 }
 
 .ds-consult-brief-text strong {
-    font-weight: 700;
+    font-weight: 600;
 }
 
 /* Disclosures: detailed explanation, doctor questions */
@@ -797,7 +797,7 @@
     border-radius: 999px;
     background: var(--c-lavender-100);
     color: var(--c-lavender);
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .ds-consult-fold-body {
@@ -931,14 +931,14 @@
     gap: 4px;
     padding: 8px;
     border-radius: var(--ds-radius-card);
-    border: 1.5px solid rgba(31, 37, 34, 0.16);
+    border: var(--ds-stroke) solid var(--c-stroke);
     background: var(--c-surface);
     box-shadow: var(--ds-e1);
 }
 
 .ds-consult-composer:focus-within {
     border-color: var(--c-sage-700);
-    box-shadow: 0 0 0 3px rgba(47, 90, 58, 0.16);
+    box-shadow: 0 0 0 3px rgba(56, 99, 65, 0.16);
 }
 
 .ds-consult-input {
@@ -1009,7 +1009,7 @@
     padding: 0 18px;
     border: 0;
     border-radius: var(--ds-radius-pill);
-    background: var(--c-ink);
+    background: var(--c-action);
     color: var(--c-white);
     font-size: var(--t-label);
     font-weight: 600;
@@ -1080,7 +1080,7 @@
     gap: 8px;
     min-height: var(--touch-min);
     padding: 0 16px;
-    border: 1.5px solid rgba(31, 37, 34, 0.14);
+    border: 1px solid var(--c-hairline);
     border-radius: var(--ds-radius-pill);
     background: var(--c-surface);
     color: var(--c-ink);
@@ -1185,7 +1185,7 @@
     width: 100%;
     min-height: var(--touch-min);
     padding: 10px 14px;
-    border: 1.5px solid rgba(31, 37, 34, 0.12);
+    border: 1px solid var(--c-hairline);
     border-radius: 14px;
     background: var(--c-surface);
     color: var(--c-ink);

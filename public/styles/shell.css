@@ -73,7 +73,7 @@
     gap: 6px;
     min-height: var(--touch-min);
     padding: 0 16px;
-    border: 1px solid rgba(31, 37, 34, 0.16);
+    border: var(--ds-stroke) solid var(--c-stroke);
     border-radius: var(--ds-radius-pill);
     background: var(--c-surface);
     color: var(--c-ink);
@@ -81,7 +81,7 @@
     font-size: var(--t-label);
     font-weight: 600;
     line-height: 1.2;
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     white-space: nowrap;
     --t-font: var(--t-label);
     --t-weight: 600;
@@ -93,8 +93,8 @@
 }
 
 .ds-shell-font-toggle-on {
-    background: var(--c-ink);
-    border-color: var(--c-ink);
+    background: var(--c-action);
+    border-color: var(--c-action);
     color: var(--c-white);
 }
 
@@ -170,7 +170,7 @@
 }
 
 .ds-shell-tab[aria-current="page"] {
-    background: var(--c-ink);
+    background: var(--c-action);
     color: var(--c-white);
 }
 
@@ -254,7 +254,7 @@
     max-width: calc(min(100vw, var(--shell-column)) - 32px);
     padding: 14px 20px;
     border-radius: 20px;
-    background: var(--c-ink);
+    background: var(--c-action);
     color: var(--c-white);
     box-shadow: var(--ds-e2);
     transform: translateX(-50%);

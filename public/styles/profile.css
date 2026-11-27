@@ -79,7 +79,7 @@
     --t-font: var(--t-title);
 }
 
-.ds-pf-group-head:hover { background: rgba(31, 37, 34, 0.03); }
+.ds-pf-group-head:hover { background: rgba(55, 53, 49, 0.03); }
 
 .ds-pf-group-icon {
     display: inline-flex;
@@ -135,7 +135,7 @@
     flex-direction: column;
     gap: 20px;
     padding: 4px var(--ds-card-pad) var(--ds-card-pad);
-    border-top: 1px solid rgba(31, 37, 34, 0.08);
+    border-top: 1px solid var(--c-hairline);
     padding-top: 16px;
 }
 
@@ -220,7 +220,7 @@
     width: 100%;
     min-height: var(--touch-min);
     padding: 10px 14px;
-    border: 1.5px solid rgba(31, 37, 34, 0.18);
+    border: var(--ds-stroke) solid var(--c-stroke);
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface);
     color: var(--c-ink);
@@ -268,8 +268,8 @@
 }
 
 .ds-pf-option.is-ink.is-selected {
-    border-color: var(--c-ink);
-    background: var(--c-ink);
+    border-color: var(--c-action);
+    background: var(--c-action);
     color: var(--c-white);
 }
 
@@ -299,7 +299,7 @@
     min-width: 0;
     min-height: var(--touch-min);
     padding: 6px 8px;
-    border: 1.5px solid rgba(31, 37, 34, 0.18);
+    border: var(--ds-stroke) solid var(--c-stroke);
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface);
     color: var(--c-ink);
@@ -358,7 +358,7 @@
     padding: 2px 12px;
     border-radius: var(--ds-radius-pill);
     font-size: var(--t-caption);
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1.4;
     white-space: nowrap;
 }
@@ -368,7 +368,7 @@
 .ds-pf-pill.is-mist { background: var(--c-mist-100); color: var(--c-mist); }
 .ds-pf-pill.is-butter { background: var(--c-butter-100); color: var(--c-butter); }
 .ds-pf-pill.is-lavender { background: var(--c-lavender-100); color: var(--c-lavender); }
-.ds-pf-pill.is-low { background: #FDECEA; color: var(--c-glucose-low); }
+.ds-pf-pill.is-low { background: var(--c-danger-bg); color: var(--c-glucose-low); }
 
 /* BMI */
 .ds-pf-bmi {
@@ -376,7 +376,7 @@
     flex-direction: column;
     gap: 12px;
     padding: 16px;
-    border: 1px solid rgba(31, 37, 34, 0.1);
+    border: 1px solid var(--c-hairline);
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface);
 }
@@ -436,8 +436,8 @@
     margin-left: -3px;
     border: 2px solid var(--c-surface);
     border-radius: 3px;
-    background: var(--c-ink);
-    box-shadow: 0 1px 3px rgba(31, 37, 34, 0.35);
+    background: var(--c-action);
+    box-shadow: 0 1px 3px rgba(55, 53, 49, 0.35);
 }
 
 .ds-pf-scale-labels {
@@ -450,7 +450,7 @@
 .ds-pf-scale-labels span:nth-child(2),
 .ds-pf-scale-labels span:nth-child(3) { text-align: center; }
 .ds-pf-scale-labels span:last-child { text-align: right; }
-.ds-pf-scale-strong { color: var(--c-sage-700); font-weight: 700; }
+.ds-pf-scale-strong { color: var(--c-sage-700); font-weight: 600; }
 
 /* Medication scan + list */
 .ds-pf-scan {
@@ -520,7 +520,7 @@
     gap: 10px;
     min-height: 56px;
     padding: 4px 4px 4px 14px;
-    border: 1px solid rgba(31, 37, 34, 0.12);
+    border: 1px solid var(--c-hairline);
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface);
 }
@@ -531,7 +531,7 @@
 
 .ds-pf-empty {
     padding: 16px;
-    border: 1px dashed rgba(31, 37, 34, 0.24);
+    border: var(--ds-stroke) dashed var(--c-stroke);
     border-radius: var(--ds-radius-inner);
     text-align: center;
 }
@@ -548,7 +548,7 @@
     flex-direction: column;
     gap: 12px;
     padding: 16px;
-    border: 1px solid rgba(31, 37, 34, 0.12);
+    border: 1px solid var(--c-hairline);
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface);
 }
@@ -586,7 +586,7 @@
     gap: 2px 12px;
 }
 
-.ds-pf-step-value { color: var(--c-sage-700); font-weight: 700; }
+.ds-pf-step-value { color: var(--c-sage-700); font-weight: 600; }
 
 .ds-pf-tip {
     display: flex;
@@ -666,7 +666,7 @@
     align-items: center;
     gap: 12px;
     padding-bottom: 16px;
-    border-bottom: 1px solid rgba(31, 37, 34, 0.08);
+    border-bottom: 1px solid var(--c-hairline);
 }
 
 .ds-ob-step-num {
@@ -677,9 +677,9 @@
     width: 36px;
     height: 36px;
     border-radius: 999px;
-    background: var(--c-ink);
+    background: var(--c-action);
     color: var(--c-white);
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .ds-ob-step-title { flex: 1 1 0; min-width: 0; color: var(--c-ink); }
@@ -722,7 +722,7 @@
     padding: 12px 14px;
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface);
-    border: 1px solid rgba(31, 37, 34, 0.12);
+    border: 1px solid var(--c-hairline);
 }
 
 .ds-ob-bmi-value {
@@ -774,13 +774,13 @@
     width: 10px;
     height: 10px;
     border-radius: 999px;
-    background: rgba(31, 37, 34, 0.2);
+    background: rgba(55, 53, 49, 0.2);
     transition: width var(--ds-duration) var(--ds-ease);
 }
 
 .ds-ob-dot.is-current {
     width: 32px;
-    background: var(--c-ink);
+    background: var(--c-action);
 }
 
 @media (max-width: 359px) {

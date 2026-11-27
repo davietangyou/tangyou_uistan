@@ -1,7 +1,7 @@
 body {
-    font-family: 'Noto Sans HK', sans-serif;
-    background-color: #FBFBFA;
-    color: #2C3E50;
+    font-family: 'Noto Sans HK', 'PingFang HK', 'PingFang TC', sans-serif;
+    background-color: #F7F9F5;
+    color: #373531;
     margin: 0;
     padding: 0;
     line-height: 1.6;
@@ -30,6 +30,6 @@ input, textarea, select, button {
     background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-    background: #DEDCDA;
+    background: #DCE1D8;
     border-radius: 10px;
 }

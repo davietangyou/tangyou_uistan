@@ -1,43 +1,80 @@
 /* =============================================================================
-   Design system (Stage 2, opt-in only)
-   Direction: 溫潤紙感 · 鼠尾草綠 · 墨色錨點
-
-   Every view root carries .ds-root; components use .ds-* and type uses .t-*.
+   Design tokens — same-designer reskin, Stage S1 (2026-11-27)
+   Direction: 暖紙底 · 白卡 · 四色領域粉彩 · 炭黑只給「按這裡 / 你在這裡」.
+   Layers are told apart by ground tone, not by shadow or outline: paper
+   ground → white or pastel card → charcoal action. Shadows belong only to
+   things that float (bottom nav, voice button, sheets, toasts).
+   Existing token names are kept so every view follows the palette shift;
+   new semantic names are added for the shell and later stages.
    ============================================================================= */
 
 :root {
-    /* Colour — brand pair is sage + ink; #4A6E85 is a data/info accent. */
-    --c-canvas: #F5F5EF;
-    --c-surface: #FFFFFF;
-    --c-surface-muted: #EEF1E8;
-    --c-ink: #1F2522;
-    --c-ink-2: #4A524C;
-    --c-ink-3: #636B65;
-    --c-sage-100: #E6EEDD;
-    --c-sage-200: #D2E4C0;
-    --c-sage-700: #2F5A3A;
-    --c-lavender-100: #EEE7F6;
-    --c-lavender: #4A3D66;
-    --c-mist-100: #DDECF1;
-    --c-mist: #1F4E5F;
-    --c-butter-100: #FCF0D6;
-    --c-butter: #7A4A0C;
-    --c-brand-legacy: #4A6E85;
-    --c-glucose-low: #B42318;
-    --c-glucose-target: #2E7D4F;
-    --c-glucose-high: #B54708;
-    --c-focus: var(--c-sage-700);
-    --c-backdrop: rgba(31, 37, 34, 0.4);
+    /* Ground and surfaces */
+    --c-canvas: #F7F9F5;          /* warm paper ground */
+    --c-surface: #FFFFFF;         /* white card */
+    --c-surface-muted: #EFF1ED;   /* field / quiet inner surface */
+    --c-surface-sunk: #E9ECE6;    /* pressed / track */
+
+    /* Ink: warm charcoal-grey text family */
+    --c-ink: #373531;
+    --c-ink-2: #596153;
+    --c-ink-3: #686C66;
+    --c-ink-4: #969C94;           /* decoration only, never text that must be read */
+    --c-hairline: #DCE1D8;        /* dividers */
+    --c-stroke: #CDD4C8;          /* control outlines (a step darker than the hairline) */
+
+    /* Voice: the only "press here / you are here" colour */
+    --c-action: #2F3033;
+    --c-on-action: #FFFFFF;
+
+    /* Selection and focus: deep moss */
+    --c-selected-bg: #DCE8CC;
+    --c-selected-border: #587152;
+    --c-focus: #386341;
+
+    /* Four domain pastels (surface / deep text on that surface)
+       sage = 藥物·資料  sky = 血糖·AI  lilac = 覆診·問題  sun = 飲食·提醒 */
+    --c-sage-100: #E5EEDA;
+    --c-sage-200: #DCE8CC;
+    --c-sage-700: #446341;
+    --c-sky-100: #D7EAF0;
+    --c-sky-700: #2F6178;
+    --c-lilac-100: #E8E0F3;
+    --c-lilac-700: #5B4C6B;
+    --c-sun-100: #F7E8A7;
+    --c-sun-700: #6E4210;
+    /* legacy names → the same families */
+    --c-lavender-100: var(--c-lilac-100);
+    --c-lavender: var(--c-lilac-700);
+    --c-mist-100: var(--c-sky-100);
+    --c-mist: var(--c-sky-700);
+    --c-butter-100: #FAEFC4;      /* sun, one step softer for large tinted areas */
+    --c-butter: var(--c-sun-700);
+    --c-brand-legacy: var(--c-sky-700);
+
+    /* Status: soft ground + deep text; meaning always also carried by words */
+    --c-glucose-low: #AE344B;
+    --c-glucose-target: #256239;
+    --c-glucose-high: #8A4B0D;
+    --c-danger-bg: #FFF0F2;
+    --c-danger-border: #F5D5DA;
+    --c-ok-bg: #EAF6EC;
+    --c-warn-bg: #FFF1D6;
+    --c-warn: #774408;
+
+    --c-backdrop: rgb(30 34 28 / 42%);
     --c-white: #FFFFFF;
 
-    /* Type scale — standard. .large-font only swaps these variables. */
-    --t-caption: 14px;
+    /* Type scale — standard. .large-font (the default state) swaps these.
+       Five steps plus a numeral step; ratio ≈ 1.2. "Big = look here",
+       "weight = you can press this": titles sit at 600, body at 400. */
+    --t-caption: 16px;
     --t-caption-lh: 1.5;
-    --t-body: 16px;
-    --t-body-lh: 1.65;
-    --t-label: 17px;
+    --t-body: 18px;
+    --t-body-lh: 1.55;
+    --t-label: 18px;
     --t-label-lh: 1.4;
-    --t-title: 20px;
+    --t-title: 21px;
     --t-title-lh: 1.35;
     --t-h2: 24px;
     --t-h2-lh: 1.3;
@@ -46,42 +83,51 @@
     --t-display: 44px;
     --t-display-lh: 1.1;
 
-    /* Spacing, radius, elevation, motion, touch (standard). */
+    /* Spacing (4 / 8 / 12 / 16 / 20 / 24), radius, stroke, elevation, motion, touch */
     --ds-space: 4px;
     --ds-page-pad: 20px;
     --ds-card-pad: 20px;
     --ds-card-gap: 12px;
     --ds-section-gap: 24px;
     --ds-target-gap: 8px;
-    --ds-radius-card: 24px;
+    --ds-radius-card: 26px;
     --ds-radius-inner: 16px;
     --ds-radius-btn: 16px;
+    --ds-radius-tag: 12px;
     --ds-radius-pill: 999px;
     --ds-radius-sheet: 28px;
-    --ds-e0-border: 1px solid rgba(31, 37, 34, 0.06);
-    --ds-e1: 0 1px 2px rgba(31, 37, 34, 0.06);
-    --ds-e2: 0 8px 24px rgba(31, 37, 34, 0.12);
+    --ds-stroke: 1.5px;
+    --ds-e0-border: 1px solid transparent;   /* cards: no outline (kept as a width so nothing shifts) */
+    --ds-e1: none;                           /* cards: no shadow — ground tone does the layering */
+    --ds-e2: 0 6px 24px rgba(55, 53, 49, 0.10);  /* floating sheets / toasts */
+    --ds-shadow-nav: 0 3px 10px rgba(55, 53, 49, 0.06);
+    --ds-shadow-fab: 0 4px 14px rgba(55, 53, 49, 0.12);
+    --ds-shadow-button: 0 2px 8px rgba(55, 53, 49, 0.08);
     --ds-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-    --ds-duration-fast: 160ms;
+    --ds-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+    --ds-duration-fast: 120ms;
     --ds-duration: 200ms;
     --ds-duration-slow: 240ms;
     --touch-min: 48px;
-    --ds-font: 'Noto Sans HK', 'PingFang HK', 'Microsoft JhengHei', sans-serif;
+    --touch-primary: 56px;
+    --ds-font: 'Noto Sans HK', 'PingFang HK', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;
 }
 
-/* Large-font mode: switch tokens only. */
+/* Large-font mode (default on): switch tokens only. This is the primary
+   state the layouts are designed in; standard size is the compact variant. */
 .large-font {
-    --t-caption: 16px;
-    --t-body: 19px;
-    --t-label: 20px;
-    --t-title: 24px;
-    --t-h2: 28px;
-    --t-h1: 32px;
-    --t-display: 52px;
-    --ds-card-pad: 24px;
-    --ds-card-gap: 16px;
-    --ds-section-gap: 32px;
+    --t-caption: 18px;
+    --t-body: 22px;
+    --t-label: 21px;
+    --t-title: 25px;
+    --t-h2: 29px;
+    --t-h1: 34px;
+    --t-display: 56px;
+    --ds-card-pad: 22px;
+    --ds-card-gap: 14px;
+    --ds-section-gap: 28px;
     --touch-min: 56px;
+    --touch-primary: 64px;
 }
 
 /* -----------------------------------------------------------------------------
@@ -106,7 +152,7 @@
     font-size: var(--t-caption);
     line-height: var(--t-caption-lh);
     font-weight: 400;
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     --t-font: var(--t-caption);
     --t-weight: 400;
     --t-lh: var(--t-caption-lh);
@@ -116,7 +162,7 @@
     font-size: var(--t-body);
     line-height: var(--t-body-lh);
     font-weight: 400;
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     --t-font: var(--t-body);
     --t-weight: 400;
     --t-lh: var(--t-body-lh);
@@ -125,10 +171,10 @@
 .t-body-strong {
     font-size: var(--t-body);
     line-height: var(--t-body-lh);
-    font-weight: 700;
-    letter-spacing: 0.02em;
+    font-weight: 600;
+    letter-spacing: 0;
     --t-font: var(--t-body);
-    --t-weight: 700;
+    --t-weight: 600;
     --t-lh: var(--t-body-lh);
 }
 
@@ -136,7 +182,7 @@
     font-size: var(--t-label);
     line-height: var(--t-label-lh);
     font-weight: 600;
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     --t-font: var(--t-label);
     --t-weight: 600;
     --t-lh: var(--t-label-lh);
@@ -147,14 +193,14 @@
 .t-h1 {
     word-break: keep-all;
     line-break: strict;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .t-title {
     font-size: var(--t-title);
     line-height: var(--t-title-lh);
     --t-font: var(--t-title);
-    --t-weight: 700;
+    --t-weight: 600;
     --t-lh: var(--t-title-lh);
 }
 
@@ -162,7 +208,7 @@
     font-size: var(--t-h2);
     line-height: var(--t-h2-lh);
     --t-font: var(--t-h2);
-    --t-weight: 700;
+    --t-weight: 600;
     --t-lh: var(--t-h2-lh);
 }
 
@@ -170,13 +216,13 @@
     font-size: var(--t-h1);
     line-height: var(--t-h1-lh);
     --t-font: var(--t-h1);
-    --t-weight: 700;
+    --t-weight: 600;
     --t-lh: var(--t-h1-lh);
 }
 
 .t-display-strong {
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
     word-break: keep-all;
     line-height: var(--t-display-lh);
     font-size: var(--t-display);
@@ -184,7 +230,7 @@
     --t-lh: var(--t-display-lh);
 }
 
-.t-display-strong { font-weight: 900; --t-weight: 900; }
+.t-display-strong { font-weight: 600; --t-weight: 600; }
 
 .t-ink-2 { color: var(--c-ink-2); }
 .t-ink-3 { color: var(--c-ink-3); }

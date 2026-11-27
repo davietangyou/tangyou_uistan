@@ -26,7 +26,7 @@
     padding: 20px 20px 20px 16px;
     border: 0;
     border-radius: var(--ds-radius-card);
-    background: var(--c-ink);
+    background: var(--c-action);
     color: var(--c-white);
     box-shadow: var(--ds-e1);
     font-family: var(--ds-font);
@@ -35,14 +35,14 @@
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     --t-font: var(--t-title);
-    --t-weight: 700;
+    --t-weight: 600;
     --t-lh: var(--t-title-lh);
 }
 
 .large-font .ds-home-ask.ds-control {
     min-height: 96px !important;
     font-size: var(--t-title) !important;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .ds-home-ask-icon {
@@ -68,8 +68,8 @@
 .ds-home-ask-title {
     font-size: var(--t-title);
     line-height: var(--t-title-lh);
-    font-weight: 700;
-    letter-spacing: 0.02em;
+    font-weight: 600;
+    letter-spacing: 0;
     word-break: keep-all;
 }
 
@@ -172,7 +172,7 @@
     font-size: var(--t-caption);
     line-height: var(--t-caption-lh);
     font-weight: 600;
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
 }
 
 .ds-home-chip-today {
@@ -224,7 +224,7 @@
     background: var(--c-lavender-100);
     color: var(--c-lavender);
     font-size: var(--t-caption);
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .ds-home-q-text {
@@ -267,7 +267,7 @@
 .ds-home-glucose .ds-btn-secondary {
     background: var(--c-surface);
     color: var(--c-ink);
-    border: 1px solid rgba(31, 37, 34, 0.16);
+    border: var(--ds-stroke) solid var(--c-stroke);
 }
 
 .ds-home-glucose-meta {

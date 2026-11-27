@@ -21,7 +21,7 @@
 .ds-chip:focus-visible,
 .ds-seg-btn:focus-visible {
     outline: 3px solid var(--c-focus);
-    outline-offset: 2px;
+    outline-offset: 3px;
 }
 
 /* Large-font controls: native controls and buttons carry .ds-control so they
@@ -32,7 +32,7 @@
     font-size: var(--t-font, var(--t-label)) !important;
     font-weight: var(--t-weight, 600);
     line-height: var(--t-lh, 1.4);
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
 }
 
 .ds-stack-cards {
@@ -60,7 +60,7 @@
     border: 0;
 }
 
-/* Card — flat-to-e1, no hover lift */
+/* Card — flat: white (or pastel) on the paper ground, no outline, no shadow */
 .ds-card {
     background: var(--c-surface);
     color: var(--c-ink);
@@ -87,13 +87,13 @@
     padding: 0 1.25rem;
     border: 0;
     border-radius: var(--ds-radius-btn);
-    background: var(--c-ink);
+    background: var(--c-action);
     color: var(--c-white);
     font-family: var(--ds-font);
     font-size: var(--t-label);
     font-weight: 600;
     line-height: var(--t-label-lh);
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     --t-font: var(--t-label);
     --t-weight: 600;
     --t-lh: var(--t-label-lh);
@@ -106,10 +106,15 @@
                 opacity var(--ds-duration) var(--ds-ease);
 }
 
-.ds-btn-primary { background: var(--c-ink); color: var(--c-white); }
-.ds-btn-secondary { background: var(--c-sage-100); color: var(--c-sage-700); }
+.ds-btn-primary { background: var(--c-action); color: var(--c-on-action); }
+/* Secondary = white with a control outline (inset, so size never changes). */
+.ds-btn-secondary {
+    background: var(--c-surface);
+    color: var(--c-ink);
+    box-shadow: inset 0 0 0 var(--ds-stroke) var(--c-stroke);
+}
 .ds-btn-ghost { background: transparent; color: var(--c-ink); }
-.ds-btn-danger { background: var(--c-glucose-low); color: var(--c-white); }
+.ds-btn-danger { background: var(--c-danger-bg); color: var(--c-glucose-low); box-shadow: inset 0 0 0 var(--ds-stroke) var(--c-danger-border); }
 .ds-btn-block { width: 100%; }
 .ds-btn:disabled,
 .ds-icon-btn:disabled,
@@ -169,7 +174,7 @@
     font-size: var(--t-label);
     font-weight: 600;
     line-height: var(--t-label-lh);
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     --t-font: var(--t-label);
     --t-weight: 600;
     --t-lh: var(--t-label-lh);
@@ -181,7 +186,7 @@
 }
 
 .ds-seg-btn[aria-checked="true"] {
-    background: var(--c-ink);
+    background: var(--c-action);
     color: var(--c-white);
 }
 
@@ -193,15 +198,15 @@
     gap: 6px;
     min-height: var(--touch-min);
     padding: 0 16px;
-    border: var(--ds-e0-border);
+    border: var(--ds-stroke) solid var(--c-stroke);
     border-radius: var(--ds-radius-pill);
     background: var(--c-surface);
-    color: var(--c-ink-2);
+    color: var(--c-ink);
     font-family: var(--ds-font);
     font-size: var(--t-label);
     font-weight: 600;
     line-height: var(--t-label-lh);
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     --t-font: var(--t-label);
     --t-weight: 600;
     --t-lh: var(--t-label-lh);
@@ -214,9 +219,9 @@
 
 .ds-chip[aria-pressed="true"],
 .ds-chip-selected {
-    background: var(--c-sage-100);
-    color: var(--c-sage-700);
-    border-color: transparent;
+    background: var(--c-selected-bg);
+    color: var(--c-ink);
+    border-color: var(--c-selected-border);
 }
 
 /* Category / status tiles */
@@ -227,19 +232,18 @@
     padding: var(--ds-card-pad);
     border-radius: var(--ds-radius-card);
     background: var(--c-surface-muted);
-    border: var(--ds-e0-border);
 }
 
 .ds-stat-unit {
     margin-left: 4px;
     font-size: var(--t-caption);
     font-weight: 500;
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     color: var(--c-ink-3);
 }
 
-.ds-stat-tone-low { background: #FCECEC; }
-.ds-stat-tone-target { background: var(--c-sage-100); }
+.ds-stat-tone-low { background: var(--c-danger-bg); }
+.ds-stat-tone-target { background: var(--c-ok-bg); }
 .ds-stat-tone-high { background: var(--c-butter-100); }
 .ds-stat-tone-info { background: var(--c-mist-100); }
 
@@ -262,15 +266,22 @@
     font-size: var(--t-label);
     font-weight: 600;
     line-height: var(--t-label-lh);
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     color: var(--c-ink);
+}
+
+.ds-field-control:focus,
+.ds-field-control:focus-visible {
+    border-color: var(--c-focus);
+    outline: 3px solid rgba(56, 99, 65, 0.18);
+    outline-offset: 0;
 }
 
 .ds-field-control {
     width: 100%;
     min-height: var(--touch-min);
     padding: 10px 14px;
-    border: 1px solid rgba(31, 37, 34, 0.16);
+    border: var(--ds-stroke) solid var(--c-stroke);
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface);
     color: var(--c-ink);
@@ -278,7 +289,7 @@
     font-size: var(--t-body);
     font-weight: 400;
     line-height: var(--t-body-lh);
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     --t-font: var(--t-body);
     --t-weight: 400;
     --t-lh: var(--t-body-lh);
@@ -288,7 +299,7 @@
 
 select.ds-field-control {
     padding-right: 2.5rem;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%234A524C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23596153' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
     background-size: 20px;
@@ -311,7 +322,7 @@ textarea.ds-field-control {
     font-family: var(--ds-font);
     font-size: var(--t-caption);
     line-height: var(--t-caption-lh);
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
 }
 
 .ds-field-hint { color: var(--c-ink-3); }

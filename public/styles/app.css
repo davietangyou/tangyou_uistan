@@ -2,7 +2,7 @@
    This file only imports the partials in cascade order; keep the order — later files override
    earlier ones exactly as when they were one file. Add new rules to the partial they belong to.
    The pre-refactor prefix was retired in Stage 11: only rules that still affect the app remain. */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;600;700&display=swap');
 @import url('./base.css'); /* Base: body, native controls, shell header entrance, scrollbar. */
 @import url('./large-font.css'); /* Large-font mode: spacing inherited from the .large-font column. */
 @import url('./tokens.css'); /* Design tokens (colour, type scale, spacing, motion) and .t-* type utilities. */

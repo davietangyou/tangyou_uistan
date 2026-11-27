@@ -1,5 +1,5 @@
 import {COMMON_CONDITIONS, OTHER_CONDITIONS, conditionsList} from '../../utils/constants';
-import {View, DiabetesType} from '../../utils/types';
+import {DiabetesType} from '../../utils/types';
 import type {OnboardingViewModel} from './useOnboardingViewModel';
 import {FieldBlock, OptionTile, Pill} from '../ProfileShared/formParts';
 import {Icon, SheetSelect} from '../../components/ui';
@@ -9,8 +9,6 @@ export function ConditionsStep({vm}: {vm: OnboardingViewModel}) {
     const {
         profile,
         setProfile,
-        setOnboardingStep,
-        setView,
         toggleCondition,
         handleUpdateConditionDetail,
         selectedConditions,
@@ -28,16 +26,6 @@ export function ConditionsStep({vm}: {vm: OnboardingViewModel}) {
                 <p className="t-caption t-ink-2">
                     點選符合您的項目（可多選），如無請選擇「沒有長期疾病」。
                 </p>
-                {/* D-b2：這一步可以稍後在「個人檔案」補填；已點選的照樣保存（與「完成並進入」同一結果）。 */}
-                <button
-                    type="button"
-                    onClick={() => setView(View.Home)}
-                    data-verify="ob-later"
-                    className="ds-btn ds-btn-ghost ds-control ds-ob-later"
-                >
-                    <span>稍後填寫</span>
-                    <Icon name="forward" size={20} />
-                </button>
             </div>
 
             {/* 沒有長期疾病選項 */}
@@ -250,26 +238,6 @@ export function ConditionsStep({vm}: {vm: OnboardingViewModel}) {
                 </p>
             </div>
 
-            {/* 操作按鈕 */}
-            <div className="ds-ob-actions is-row">
-                <button
-                    type="button"
-                    onClick={() => setOnboardingStep(1)}
-                    className="ds-btn ds-btn-secondary ds-control ds-ob-back"
-                >
-                    <Icon name="back" />
-                    <span>上一步</span>
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setView(View.Home)}
-                    data-verify="ob-finish"
-                    className="ds-btn ds-btn-primary ds-control ds-ob-finish"
-                >
-                    <span>完成並進入糖友導航</span>
-                    <Icon name="check" />
-                </button>
-            </div>
         </div>
     );
 }

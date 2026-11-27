@@ -1,19 +1,30 @@
 import type {OnboardingViewModel} from './useOnboardingViewModel';
-import {Icon} from '../../components/ui';
 
-export function WelcomeHeader(_props: {vm: OnboardingViewModel}) {
+/** Quiet first screen: brand, title, one line of purpose, then 開始使用. */
+export function WelcomeHeader({onStart}: {vm?: OnboardingViewModel; onStart: () => void}) {
     return (
-        <header className="ds-ob-welcome">
-            {/* 頂部歡迎區 */}
-            <span className="ds-ob-welcome-icon" aria-hidden>
-                <Icon name="glucose" size={32} />
-            </span>
-            <h2 className="t-h1">
-                歡迎來到「糖友導航」
-            </h2>
-            <p className="t-body t-ink-2">
-                首次使用只需填寫基本資料與長期疾病，即可量身打造個人化健康指引。
-            </p>
-        </header>
+        <div className="ds-root ds-onboarding is-welcome">
+            <main className="ds-ob-welcome" aria-labelledby="welcome-title">
+                <p className="ds-ob-welcome-brand">DiaGuide HK</p>
+                <h2 id="welcome-title" className="ds-ob-welcome-title">
+                    歡迎使用
+                    <br />
+                    <span>糖友導航</span>
+                </h2>
+                <p className="ds-ob-welcome-desc">
+                    記錄日常健康，
+                    <br />
+                    輕鬆準備覆診。
+                </p>
+                <button
+                    type="button"
+                    onClick={onStart}
+                    data-verify="ob-welcome-start"
+                    className="ds-ob-welcome-start ds-control"
+                >
+                    開始使用
+                </button>
+            </main>
+        </div>
     );
 }

@@ -55,6 +55,7 @@ function revealField(focused: HTMLElement, vv: VisualViewport) {
 
 export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLargeFont, view}) => {
     const isHome = view === View.Home;
+    const isOnboarding = view === View.Onboarding;
     const isCompact = view !== undefined && COMPACT_HEADER_VIEWS.has(view);
     const FontIcon = uiIcons.fontSize;
     const PrivacyIcon = uiIcons.privacy;
@@ -130,12 +131,12 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
     return (
         <div className="ds-shell-canvas" data-scroll-root>
             <div className={`ds-shell-column min-h-screen flex flex-col ${isLargeFont ? 'large-font' : ''}`}>
-                <header ref={headerRef} className={`ds-root ds-shell-header${isHome ? ' ds-shell-header-home ds-shell-header-absorbed' : ''}${isCompact ? ' ds-shell-header-compact' : ''}`}>
+                <header ref={headerRef} className={`ds-root ds-shell-header${isHome || isOnboarding ? ' ds-shell-header-home ds-shell-header-absorbed' : ''}${isCompact && !isOnboarding ? ' ds-shell-header-compact' : ''}`}>
                     <div className="ds-shell-brand">
                         {isHome && <p className="ds-shell-eyebrow">DiaGuide HK</p>}
                         <h1 className={`ds-shell-title ${isHome ? 'ds-sr-only' : ''}`}>糖友導航</h1>
                     </div>
-                    {setIsLargeFont && !isHome && (
+                    {setIsLargeFont && !isHome && !isOnboarding && (
                         <button
                             type="button"
                             onClick={() => setIsLargeFont(!isLargeFont)}
@@ -153,7 +154,7 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
                     {children}
                 </main>
 
-                <footer className={`ds-root ds-shell-footer${isHome ? " ds-shell-footer-home" : ""}`}>
+                <footer className={`ds-root ds-shell-footer${isHome || isOnboarding ? " ds-shell-footer-home" : ""}`}>
                     <p className="t-caption ds-shell-disclaimer">
                         <PrivacyIcon size={16} strokeWidth={2} aria-hidden />
                         <span>

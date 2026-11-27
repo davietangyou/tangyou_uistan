@@ -909,3 +909,286 @@
     font-weight: 500;
     color: var(--c-ink-2);
 }
+
+
+/* =============================================================================
+   Phase 2 — welcome page + card-by-card first-time setup (same fields, same
+   live-save, same leave-to-home moment). Chrome of the shell is absorbed.
+   ============================================================================= */
+
+.ds-onboarding.is-welcome {
+    position: relative;
+    overflow: hidden;
+    max-width: none;
+    margin: 0 calc(-1 * var(--ds-page-pad));
+    min-height: 100dvh;
+    padding: 0;
+    gap: 0;
+    background:
+        radial-gradient(ellipse 90% 55% at 8% 92%, rgba(140, 168, 118, 0.28), transparent 58%),
+        radial-gradient(ellipse 70% 45% at 96% 86%, rgba(120, 150, 110, 0.22), transparent 52%),
+        radial-gradient(ellipse 50% 32% at 78% 6%, rgba(186, 198, 160, 0.28), transparent 55%),
+        radial-gradient(ellipse 40% 24% at 18% 12%, rgba(200, 214, 176, 0.18), transparent 60%),
+        var(--c-bg, #f5f6f6);
+}
+
+.ds-ob-welcome {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 354px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 24px;
+    padding: clamp(48px, 22dvh, 200px) 24px max(40px, env(safe-area-inset-bottom));
+    text-align: left;
+}
+
+.ds-ob-welcome-icon { display: none; }
+
+.ds-ob-welcome-brand {
+    margin: 0;
+    color: #446341;
+    font-size: 18px;
+    letter-spacing: 1px;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+.ds-ob-welcome-title {
+    margin: 0;
+    color: var(--c-ink);
+    font-size: 42px;
+    line-height: 1.3;
+    font-weight: 650;
+}
+
+.ds-ob-welcome-desc {
+    margin: 0;
+    color: var(--c-ink-2);
+    font-size: 20px;
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+.ds-ob-welcome-start {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 64px;
+    padding: 16px 24px;
+    border: 0;
+    border-radius: 16px;
+    color: #fff;
+    background: #2f3033;
+    font: inherit;
+    font-size: 22px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+
+.ds-onboarding.is-welcome::before,
+.ds-onboarding.is-welcome::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+.ds-onboarding.is-welcome::before {
+    top: -8%;
+    right: -12%;
+    width: 280px;
+    height: 280px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 280 280'><g fill='none' stroke='%239bb392' stroke-width='1.2' opacity='0.55'><path d='M170 40c40 18 70 70 55 130-28-8-62-40-78-88 8-16 16-28 23-42z' fill='%23c5d6b8' fill-opacity='0.35'/><path d='M210 30c28 22 38 70 18 112-22-6-48-36-58-78 10-14 24-26 40-34z' fill='%23d7e4cc' fill-opacity='0.45'/><path d='M230 22c8 20 6 48-8 70' stroke='%237f9a76'/></g></svg>");
+    opacity: 0.9;
+}
+.ds-onboarding.is-welcome::after {
+    bottom: -10%;
+    left: -16%;
+    width: 340px;
+    height: 340px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 340'><g fill='none' stroke='%239bb392' stroke-width='1.2' opacity='0.55'><path d='M80 300c-50-30-70-110-20-170 24 20 58 70 52 128-8 16-20 30-32 42z' fill='%23c5d6b8' fill-opacity='0.38'/><path d='M40 310c-20-36-8-90 28-130 16 22 28 64 10 112-10 8-24 14-38 18z' fill='%23d7e4cc' fill-opacity='0.42'/><path d='M30 315c18-24 40-40 70-48' stroke='%237f9a76'/></g></svg>");
+    opacity: 0.95;
+}
+.ds-onboarding.is-welcome .ds-ob-welcome { position: relative; z-index: 1; }
+
+.ds-ob-welcome-start:focus-visible {
+    outline: 3px solid var(--c-sage-700, #386341);
+    outline-offset: 4px;
+}
+
+.large-font .ds-ob-welcome-title { font-size: 48px; }
+.large-font .ds-ob-welcome-desc,
+.large-font .ds-ob-welcome-start { font-size: 24px; }
+.large-font .ds-ob-welcome-start { min-height: 68px; }
+
+html:has(.ds-onboarding.is-setup) .ds-shell-canvas[data-scroll-root] {
+    scroll-padding-top: 156px;
+}
+
+.ds-onboarding.is-setup {
+    max-width: 520px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    padding: 0;
+    gap: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.ds-ob-setup-head {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    flex: 0 0 auto;
+    padding: calc(env(safe-area-inset-top, 0px) + 20px) 6px 12px;
+    background: var(--c-bg, #f5f6f6);
+}
+
+.ds-ob-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.ds-ob-progress-title {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    color: var(--c-ink-2);
+    font-size: var(--t-caption);
+    line-height: 1.5;
+}
+
+.ds-ob-progress-count { font-variant-numeric: tabular-nums; }
+
+.ds-ob-progress-track {
+    height: 8px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #e5ebdd;
+}
+
+.ds-ob-progress-track > div {
+    height: 100%;
+    border-radius: 8px;
+    background: #487453;
+}
+
+.ds-ob-setup-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ds-ob-setup-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    min-width: 48px;
+    min-height: 48px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--c-ink);
+    box-shadow: 0 0 0 1px var(--c-hairline);
+    cursor: pointer;
+}
+
+.ds-ob-setup-back:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.large-font .ds-ob-setup-back {
+    width: 56px;
+    min-width: 56px;
+    min-height: 56px;
+}
+
+.ds-ob-setup-title {
+    margin: 0;
+    color: var(--c-ink);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.large-font .ds-ob-setup-title { font-size: 34px; }
+
+.ds-ob-setup-body {
+    flex: 1 1 auto;
+    padding: 20px 6px 32px;
+}
+
+.ds-ob-setup-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 6px calc(env(safe-area-inset-bottom, 0px) + 28px);
+    background: var(--c-bg, #f5f6f6);
+}
+
+.ds-ob-setup-bar .ds-ob-next,
+.ds-ob-setup-bar .ds-ob-finish {
+    width: 100%;
+    min-height: 56px;
+    border: 0;
+    border-radius: 16px;
+    background: #2f3033;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.ds-ob-setup-bar .ds-ob-next:disabled {
+    background: #d8dfd5;
+    color: #596153;
+}
+
+.ds-ob-setup-bar .ds-ob-later {
+    align-self: stretch;
+    margin: 0;
+    width: 100%;
+    min-height: 56px;
+    padding: 12px 20px;
+    border: 1.5px solid var(--c-stroke, #dce1d8);
+    border-radius: 16px;
+    background: #fff;
+    color: var(--c-ink);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+.large-font .ds-ob-setup-bar .ds-ob-next,
+.large-font .ds-ob-setup-bar .ds-ob-finish,
+.large-font .ds-ob-setup-bar .ds-ob-later {
+    min-height: 56px;
+    font-size: 22px;
+}
+
+.ds-ob-setup-bar .ds-ob-gate-hint { text-align: center; margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+    .ds-ob-welcome-start,
+    .ds-ob-setup-back { transition: none; }
+}

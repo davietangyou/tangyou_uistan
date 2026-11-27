@@ -1,19 +1,16 @@
 import {getBmiEvaluation} from '../../utils/constants';
 import type {OnboardingViewModel} from './useOnboardingViewModel';
 import {BmiScale, FieldBlock, OptionTile, Pill, UnitSwitch, bmiTone} from '../ProfileShared/formParts';
-import {Icon} from '../../components/ui';
 import {GENDER_OPTIONS} from '../../domain/options';
 
 export function BasicsStep({vm}: {vm: OnboardingViewModel}) {
     const {
         profile,
         setProfile,
-        setOnboardingStep,
         handleHeightChange,
         handleWeightChange,
         handleWeightUnitChange,
     } = vm;
-    const canContinue = Boolean(profile.age && profile.gender);
     return (
         <div className="ds-ob-body">
             {/* 1. 如何稱呼您 */}
@@ -177,23 +174,6 @@ export function BasicsStep({vm}: {vm: OnboardingViewModel}) {
                         </div>
                     );
                 })()}
-            </div>
-
-            {/* 下一步按鈕 */}
-            <div className="ds-ob-actions">
-                <button
-                    type="button"
-                    disabled={!profile.age || !profile.gender}
-                    onClick={() => setOnboardingStep(2)}
-                    data-verify="ob-next"
-                    className="ds-btn ds-btn-primary ds-btn-block ds-control ds-ob-next"
-                >
-                    <span>下一步：長期疾病狀況</span>
-                    <Icon name="forward" />
-                </button>
-                {!canContinue && (
-                    <p className="t-caption t-ink-2 ds-ob-gate-hint">請先填寫年齡及選擇性別</p>
-                )}
             </div>
         </div>
     );

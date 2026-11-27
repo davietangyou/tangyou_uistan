@@ -102,3 +102,38 @@ html {
         animation: none;
     }
 }
+
+/* =============================================================================
+   S5 motion rhythm — one clock for the whole app:
+   120ms (--ds-duration-fast) press / release · 200ms (--ds-duration) state
+   change, reveal, exit · 240ms (--ds-duration-slow) arrivals (tab, sub-page,
+   sheet). Every rule below is switched off under prefers-reduced-motion.
+   ============================================================================= */
+
+/* Press: the dim + shrink lands at once (finger down), eases back in 120ms
+   (finger up) — controls without their own transition list get it here. */
+button,
+[role="button"] {
+    transition-property: scale, filter;
+    transition-duration: var(--ds-duration-fast);
+    transition-timing-function: var(--ds-ease);
+}
+button:not(:disabled):not(.ds-shell-mic):not(.ds-subpage-back):active,
+[role="button"]:not([aria-disabled="true"]):active {
+    transition-duration: 0ms;
+}
+
+/* Reveal: whatever an expanded disclosure shows settles in (fade + 4px rise). */
+[aria-expanded="true"]:not([aria-haspopup]) + * {
+    animation: ds-reveal var(--ds-duration) var(--ds-ease) both;
+}
+@keyframes ds-reveal {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    button,
+    [role="button"] { transition: none !important; }
+    [aria-expanded="true"]:not([aria-haspopup]) + * { animation: none; }
+}

@@ -14,6 +14,7 @@ export function RecordPeriodRow({vm, label}: {vm: GlucoseViewModel; label: strin
             <button
                 type="button"
                 onClick={() => setIsPeriodPickerOpen(!isPeriodPickerOpen)}
+                aria-haspopup="dialog"
                 aria-expanded={isPeriodPickerOpen}
                 className="ds-rec-picker ds-control"
             >

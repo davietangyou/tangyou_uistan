@@ -18,6 +18,7 @@ export function RecordTimeRow({vm, label}: {vm: GlucoseViewModel; label: string}
             <button
                 type="button"
                 onClick={() => setIsTimePickerOpen(!isTimePickerOpen)}
+                aria-haspopup="dialog"
                 aria-expanded={isTimePickerOpen}
                 className="ds-rec-picker ds-control"
             >

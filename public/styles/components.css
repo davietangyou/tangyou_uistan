@@ -103,7 +103,9 @@
     -webkit-tap-highlight-color: transparent;
     transition: background-color var(--ds-duration) var(--ds-ease),
                 color var(--ds-duration) var(--ds-ease),
-                opacity var(--ds-duration) var(--ds-ease);
+                opacity var(--ds-duration) var(--ds-ease),
+                scale var(--ds-duration-fast) var(--ds-ease),
+                filter var(--ds-duration-fast) var(--ds-ease);
 }
 
 .ds-btn-primary { background: var(--c-action); color: var(--c-on-action); }
@@ -182,7 +184,9 @@
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     transition: background-color var(--ds-duration) var(--ds-ease),
-                color var(--ds-duration) var(--ds-ease);
+                color var(--ds-duration) var(--ds-ease),
+                scale var(--ds-duration-fast) var(--ds-ease),
+                filter var(--ds-duration-fast) var(--ds-ease);
 }
 
 .ds-seg-btn[aria-checked="true"] {
@@ -214,7 +218,9 @@
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     transition: background-color var(--ds-duration) var(--ds-ease),
-                color var(--ds-duration) var(--ds-ease);
+                color var(--ds-duration) var(--ds-ease),
+                scale var(--ds-duration-fast) var(--ds-ease),
+                filter var(--ds-duration-fast) var(--ds-ease);
 }
 
 .ds-chip[aria-pressed="true"],

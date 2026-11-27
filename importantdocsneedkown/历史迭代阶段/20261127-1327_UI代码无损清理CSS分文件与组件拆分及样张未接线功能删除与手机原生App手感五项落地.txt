@@ -129,7 +129,7 @@ ac5b3d1（09:34）删除 `views/DetailView/`（含桶文件）及 ViewRouter 中
   - webfeel：touch-action auto → manipulation；overscroll auto → none；导航按钮 user-select auto → none；页头 static → sticky；scroll-padding-top 16px → 102px。
 - 前后对比页：/workspace/ui-refactor-work/stage12/review.html（之前为 ac5b3d1，之后为阶段十二；390×844，模拟安全区上 47 / 下 34），可用 file:// 打开，或在该目录 `python3 -m http.server 8812`。
 
-尺寸汇总：CSS 合计 112,055 B（main）→ 105,757 B（阶段十一末）→ 加入 native.css 后约 108 KB；生产包 898,497 → 887,902 → 890,343 B。
+尺寸汇总：CSS 合计 112,055 B（main）→ 105,757 B（阶段十一末）→ 110,075 B（阶段十二加入 native.css 并在 app.css 增加一行 @import）；生产包 898,497 → 887,902 → 890,343 B。
 
 ================================================================================
 六、AI Studio ZIP 回灌新增保留路径

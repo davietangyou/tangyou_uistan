@@ -18,6 +18,12 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
 
     return (
             <div className="ds-consult-panel">
+                {/* S4b: disclaimer leads the page, quiet caption (moved from below the composer). */}
+                <p className="ds-consult-disclaimer t-caption">
+                    <Icon name="privacy" size={18} />
+                    <span>專業聲明：資訊來源基於香港醫學臨床指引與 ADA 標準。所有對話僅供共同決策 (SDM) 及覆診前備忘，不作直接個體化臨床診斷。</span>
+                </p>
+
                 {/* 歡迎與對話歷史 */}
                 <div className="ds-consult-thread">
                     {chatMessages.map((msg, index) => {
@@ -89,14 +95,11 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
 
                 <FollowUps vm={vm} />
 
-                <Composer vm={vm} />
-
                 <Shortcuts vm={vm} />
 
-                <p className="ds-consult-disclaimer t-caption">
-                    <Icon name="privacy" size={18} />
-                    <span>專業聲明：資訊來源基於香港醫學臨床指引與 ADA 標準。所有對話僅供共同決策 (SDM) 及覆診前備忘，不作直接個體化臨床診斷。</span>
-                </p>
+                {/* S4b: composer last, sticky above the bottom bar (chat-app layout). */}
+                <Composer vm={vm} />
+
             </div>
     );
 }
@@ -111,43 +114,44 @@ function SafetyCard({msg}: {msg: ChatMessage}) {
                 const isMental = safety.category === 'mental_health';
                 const severity = safety.severity || (safety.isEmergency ? 'EMERGENCY' : 'CAUTION');
 
+                // S4b: levels drawn from design tokens (consult.css .ds-consult-safety.is-*);
+                // four distinguishable levels, emoji + badge text unchanged (G13).
                 const theme = isMental
                     ? {
-                          wrapper: 'bg-indigo-50/90 border-b-2 border-indigo-300 text-indigo-950',
-                          box: 'bg-white/95 border-indigo-100',
-                          heading: 'text-indigo-900',
-                          badge: 'bg-indigo-100 text-indigo-800',
-                          contactBg: 'bg-indigo-50/70 border-indigo-200/80 text-indigo-950',
+                          wrapper: 'is-mental',
+                          box: '',
+                          heading: '',
+                          badge: '',
+                          contactBg: '',
                           icon: '💛',
                           tag: '暖心支援'
                       }
                     : severity === 'EMERGENCY'
                     ? {
-                          wrapper: 'bg-rose-50 border-b-2 border-rose-500 text-rose-950',
-                          box: 'bg-white/95 border-rose-200',
-                          heading: 'text-rose-800',
-                          badge: 'bg-rose-600 text-white',
-                          contactBg: 'bg-rose-50 border-rose-200 text-rose-950',
+                          wrapper: 'is-emergency',
+                          box: '',
+                          heading: '',
+                          badge: '',
+                          contactBg: '',
                           icon: '🚨',
                           tag: '緊急安全警示'
                       }
                     : severity === 'URGENT'
                     ? {
-                          wrapper: 'bg-orange-50 border-b-2 border-orange-400 text-orange-950',
-                          box: 'bg-white/95 border-orange-200',
-                          heading: 'text-orange-800',
-                          // Stage 5: badge orange-500 → orange-700 (same family) so white text reaches 4.5:1.
-                          badge: 'bg-orange-700 text-white',
-                          contactBg: 'bg-orange-50 border-orange-200 text-orange-950',
+                          wrapper: 'is-urgent',
+                          box: '',
+                          heading: '',
+                          badge: '',
+                          contactBg: '',
                           icon: '⚠️',
                           tag: '儘快求醫提醒'
                       }
                     : {
-                          wrapper: 'bg-amber-50/85 border-b-2 border-amber-300 text-amber-950',
-                          box: 'bg-white/95 border-amber-200/80',
-                          heading: 'text-amber-900',
-                          badge: 'bg-amber-200/90 text-amber-950',
-                          contactBg: 'bg-amber-50/80 border-amber-200 text-amber-950',
+                          wrapper: 'is-caution',
+                          box: '',
+                          heading: '',
+                          badge: '',
+                          contactBg: '',
                           icon: '🛡️',
                           tag: '安全處理速查'
                       };

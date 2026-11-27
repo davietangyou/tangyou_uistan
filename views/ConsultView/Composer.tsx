@@ -70,7 +70,7 @@ export function Composer({vm}: {vm: ConsultViewModel}) {
                 <textarea
                     id="chat-input-box"
                     className="ds-consult-input t-body ds-control"
-                    rows={3}
+                    rows={2}
                     placeholder={attachedImage ? "可補充您的提問（例如：我食呢隻藥成日胃唔舒服，有冇影響？）..." : "請在此輸入或直接使用語音，詢問您的控糖疑問..."}
                     value={chatInput}
                     onChange={e => setChatInput(e.target.value)}
@@ -116,7 +116,7 @@ export function Composer({vm}: {vm: ConsultViewModel}) {
                         aria-label="發送提問"
                     >
                         <Icon name="send" />
-                        <span className="ds-consult-send-label">發送</span>
+                        <span className="ds-consult-send-label ds-sr-only">發送</span>
                     </button>
                 </div>
             </div>

@@ -4,6 +4,8 @@ import {SHORTCUT_QUESTIONS} from './consultText';
 
 /** Display-only line icon for a shortcut chip (by position; the sent text is untouched). */
 const SHORTCUT_ICONS: UiIconName[] = ['chart', 'warning', 'meal', 'medication', 'eye'];
+/** S4b: topic cards in the domain pastels (display only, by position). */
+const SHORTCUT_TONES = ['sky', 'lilac', 'sage', 'sun', 'sky'];
 
 /** Shortcut labels keep their emoji in consultText.ts; the chip shows a line icon instead. */
 function shortcutLabelText(label: string) {
@@ -25,10 +27,11 @@ export function Shortcuts({vm}: {vm: ConsultViewModel}) {
                                 type="button"
                                 key={i}
                                 onClick={() => handleSendChatMessage(topic.text)}
-                                className="ds-consult-shortcut ds-control"
+                                className={`ds-consult-shortcut ds-control is-${SHORTCUT_TONES[i] || 'sky'}`}
                             >
-                                <Icon name={SHORTCUT_ICONS[i] || 'consult'} />
-                                <span>{shortcutLabelText(topic.label)}</span>
+                                <span className="ds-consult-shortcut-mark" aria-hidden="true"><Icon name={SHORTCUT_ICONS[i] || 'consult'} /></span>
+                                <span className="ds-consult-shortcut-label">{shortcutLabelText(topic.label)}</span>
+                                <Icon name="forward" className="ds-consult-shortcut-go" />
                             </button>
                         ))}
                     </div>

@@ -123,7 +123,3 @@ export const uiIcons = {
 } as const;
 
 export type UiIconName = keyof typeof uiIcons;
-
-export function getUiIcon(name: UiIconName) {
-    return uiIcons[name];
-}

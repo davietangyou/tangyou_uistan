@@ -94,16 +94,6 @@ Unreachable UI (`DetailView`, `View.Result`, unmounted `MedicationReminders`) is
 not DOM-captured; those modules are retained and annotated in source, and still
 counted in the source-contract snapshot.
 
-## Design-system specimen (Stage 2)
-
-The foundational components are not mounted in the app router. To screenshot
-and audit them (type scale, 48/56px touch, contrast) against the running
-dev server:
-
-```bash
-node scripts/verify/capture-uikit.mjs --out /workspace/ui-refactor-work/baselines/uikit
-```
-
-This path is not part of `npm run verify` and does not touch committed goldens.
-The script also asserts that the first 4550 bytes of `public/styles/app.css`
-(the pre-Stage-2 rules) are unchanged.
+The Stage 2 design-system specimen (`capture-uikit.mjs`, `fixtures/uikit*`) was
+removed in Stage 11 together with `UiKitPreview`; it was never part of
+`npm run verify`.

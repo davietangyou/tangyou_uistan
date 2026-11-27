@@ -19,8 +19,7 @@
 .ds-btn:focus-visible,
 .ds-icon-btn:focus-visible,
 .ds-chip:focus-visible,
-.ds-seg-btn:focus-visible,
-.ds-list-row:focus-visible {
+.ds-seg-btn:focus-visible {
     outline: 3px solid var(--c-focus);
     outline-offset: 2px;
 }
@@ -36,21 +35,10 @@
     letter-spacing: 0.02em;
 }
 
-.ds-page {
-    padding-left: var(--ds-page-pad);
-    padding-right: var(--ds-page-pad);
-}
-
 .ds-stack-cards {
     display: flex;
     flex-direction: column;
     gap: var(--ds-card-gap);
-}
-
-.ds-stack-sections {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ds-section-gap);
 }
 
 .ds-cluster {
@@ -155,7 +143,6 @@
 }
 
 .ds-icon-btn-plain { background: transparent; }
-.ds-icon-btn-ink { background: var(--c-ink); color: var(--c-white); }
 
 /* Segmented */
 .ds-segmented {
@@ -198,38 +185,6 @@
     color: var(--c-white);
 }
 
-/* List row */
-.ds-list-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    min-height: var(--touch-min);
-    padding: 12px 4px;
-    border: 0;
-    border-bottom: var(--ds-e0-border);
-    background: transparent;
-    color: var(--c-ink);
-    font-family: var(--ds-font);
-    text-align: left;
-    cursor: default;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-}
-
-button.ds-list-row { cursor: pointer; }
-.ds-list-row-body { flex: 1 1 auto; min-width: 0; }
-.ds-list-row-meta {
-    margin: 2px 0 0;
-    color: var(--c-ink-3);
-}
-.ds-list-row-lead,
-.ds-list-row-trail {
-    flex: 0 0 auto;
-    display: inline-flex;
-    color: var(--c-ink-2);
-}
-
 /* Chip */
 .ds-chip {
     display: inline-flex;
@@ -262,19 +217,6 @@ button.ds-list-row { cursor: pointer; }
     background: var(--c-sage-100);
     color: var(--c-sage-700);
     border-color: transparent;
-}
-
-/* Section header */
-.ds-section-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--ds-target-gap);
-    width: 100%;
-}
-
-.ds-section-header .t-h2 {
-    margin: 0;
 }
 
 /* Category / status tiles */
@@ -378,84 +320,9 @@ textarea.ds-field-control {
     border-color: var(--c-glucose-low);
 }
 
-/* Overlays */
-.ds-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 80;
-    background: var(--c-backdrop);
-    animation: ds-fade-in var(--ds-duration) var(--ds-ease);
-}
-
-.ds-sheet {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 81;
-    width: 100%;
-    max-width: 32rem;
-    margin: 0 auto;
-    max-height: 90vh;
-    overflow: auto;
-    background: var(--c-surface);
-    color: var(--c-ink);
-    border-radius: var(--ds-radius-sheet) var(--ds-radius-sheet) 0 0;
-    box-shadow: var(--ds-e2);
-    padding: var(--ds-card-pad);
-    padding-bottom: calc(var(--ds-card-pad) + env(safe-area-inset-bottom, 0px));
-    animation: ds-sheet-up var(--ds-duration-slow) var(--ds-ease);
-}
-
-.ds-dialog {
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    z-index: 81;
-    width: calc(100% - 40px);
-    max-width: 24rem;
-    max-height: 90vh;
-    overflow: auto;
-    background: var(--c-surface);
-    color: var(--c-ink);
-    border-radius: var(--ds-radius-card);
-    box-shadow: var(--ds-e2);
-    padding: var(--ds-card-pad);
-    transform: translate(-50%, -50%);
-    animation: ds-dialog-in var(--ds-duration-slow) var(--ds-ease);
-}
-
-.ds-overlay-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--ds-target-gap);
-    margin-bottom: 12px;
-}
-
-.ds-overlay-head .t-h2 { margin: 0; }
-
-@keyframes ds-fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes ds-sheet-up {
-    from { transform: translateY(16px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes ds-dialog-in {
-    from { transform: translate(-50%, calc(-50% + 12px)); opacity: 0; }
-    to { transform: translate(-50%, -50%); opacity: 1; }
-}
-
 @media (prefers-reduced-motion: reduce) {
     .ds-root,
-    .ds-root *,
-    .ds-backdrop,
-    .ds-sheet,
-    .ds-dialog {
+    .ds-root * {
         animation: none !important;
         transition: none !important;
     }

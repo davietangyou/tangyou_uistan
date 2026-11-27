@@ -186,7 +186,6 @@
 
 .t-display-strong { font-weight: 900; --t-weight: 900; }
 
-.t-ink { color: var(--c-ink); }
 .t-ink-2 { color: var(--c-ink-2); }
 .t-ink-3 { color: var(--c-ink-3); }
 .t-danger { color: var(--c-glucose-low); }

@@ -30,17 +30,13 @@
 |---|---|
 | `Card` | 紙面白底卡片，默認 e1，無 hover 上浮 |
 | `Button` | `primary`（墨色）/ `secondary`（鼠尾草）/ `ghost` / `danger`（破壞性，不同色） |
-| `IconButton` | 必須提供 `aria-label`；圖標來自 `uiIcons` |
 | `Segmented` | 膠囊分段，`radiogroup` |
-| `ListRow` | 列表行；可點時為 `button` 並顯示chevron |
-| `Chip` | 可選標籤，`aria-pressed` |
-| `SectionHeader` | 區塊標題 |
-| `Sheet` / `Dialog` | 焦點陷阱、Escape、遮罩關閉、滾動鎖定 |
 | `StatTile` | 關鍵數字；狀態必須有文字（如「偏高 需注意」） |
+| `Icon` | 裝飾性 `uiIcons` 圖標（`aria-hidden`，默認描邊寬度） |
 | `Field` | 原生 `input` / `textarea` / `select`，供現有語音對焦路徑使用 |
 | `uiIcons` | 語義圖標映射（階段三底欄實際使用：`home` / `glucose` / `consult` / `savedQuestions` / `profile`） |
 
-從 `components/ui` 引入，不要引入 `UiKitPreview`。樣張頁只由 `scripts/verify/fixtures/uikit.html` 掛載。
+從 `components/ui` 引入。階段十一按項目主人決定刪除了 `UiKitPreview` 樣張頁、只為它存在的 `Chip`、`Dialog`、`Sheet`、`IconButton`、`ListRow`、`SectionHeader`、`useFocusTrap`、`getUiIcon`，以及對應的樣式和 `scripts/verify/capture-uikit.mjs`；尺寸與對比度由 `npm run verify` 的 UI 審計在真實畫面上檢查。
 
 ## 無障礙底線
 
@@ -48,9 +44,3 @@
 - 可點目標：標準 ≥ 48px 高，大字 ≥ 56px；相鄰間距 ≥ 8px；主按鈕通欄
 - 焦點：3px `--c-sage-700` 外框、2px 偏移
 - `prefers-reduced-motion: reduce` 時關閉 `.ds-*` 位移與淡入
-
-樣張與尺寸 / 對比度檢查：
-
-```bash
-node scripts/verify/capture-uikit.mjs --out /workspace/ui-refactor-work/baselines/uikit
-```

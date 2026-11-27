@@ -118,7 +118,10 @@ curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css
 | `components.css` | `.ds-root` 子树与共用 `.ds-*` 组件，含 `.ds-control` |
 | `shell.css` | 外壳：页头、底部导航、全局麦克风、焦点提示、页脚 |
 | `home.css` / `consult.css` / `records.css` / `questions.css` / `profile.css` | 各视图（`profile.css` 含首次引导） |
-| `polish.css` | 跨视图修饰与无障碍（阶段九），必须最后载入 |
+| `polish.css` | 跨视图修饰与无障碍（阶段九） |
+| `native.css` | 原生手感（阶段十二）：安全区、触控、按下回馈、页头固定、分页淡入、应用内提示弹层；必须最后载入 |
+
+`index.html` 另引入 `public/manifest.webmanifest` 与 `public/icons/apple-touch-icon.png`（主画面安装、全屏），并设 `viewport-fit=cover`；同步 ZIP 时这两个路径须一并保留。
 
 原先“前 4550 字节保持逐字节不变”的规则已有意退役：重构前前缀里已不影响任何画面的规则（`.premium-card`、`.nav-blur`、`.spacy-container`、`.large-font .text-*` 与 `.large-font button, input, select, textarea` 强制规则等）被删除，仍生效的部分并入 `base.css` 与 `large-font.css`。`.large-font` 根规则与 `.ds-control` 仍然需要，不要删。新增样式写进所属分文件，新增分文件须同时在 `app.css` 里按顺序加 @import。对应的 React 基础组件在 `components/ui/`。
 

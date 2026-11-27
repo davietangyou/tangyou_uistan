@@ -51,7 +51,7 @@
 .ds-pf-header {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .ds-pf-header .t-h1 { color: var(--c-ink); }
@@ -72,10 +72,10 @@
 .ds-pf-group-head {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
     width: 100%;
     min-height: 80px;
-    padding: 14px var(--ds-card-pad);
+    padding: 12px var(--ds-card-pad);
     border: 0;
     background: transparent;
     color: var(--c-ink);
@@ -84,7 +84,7 @@
     --t-font: var(--t-title);
 }
 
-.ds-pf-group-head:hover { background: rgba(55, 53, 49, 0.03); }
+@media (hover: hover) { .ds-pf-group-head:hover { background: rgba(55, 53, 49, 0.03); } }
 
 .ds-pf-group-icon {
     display: inline-flex;
@@ -216,7 +216,7 @@
     gap: 12px;
     width: 100%;
     min-height: var(--touch-min);
-    padding: 10px 14px;
+    padding: 12px 12px;
     border: var(--ds-stroke) solid var(--c-stroke);
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface);
@@ -231,7 +231,7 @@
     --t-weight: 600;
 }
 
-.ds-pf-option:hover { border-color: var(--c-sage-700); }
+@media (hover: hover) { .ds-pf-option:hover { border-color: var(--c-sage-700); } }
 
 .ds-pf-option-mark {
     display: inline-flex;
@@ -295,7 +295,7 @@
     justify-content: center;
     min-width: 0;
     min-height: var(--touch-min);
-    padding: 6px 8px;
+    padding: 8px 8px;
     border: var(--ds-stroke) solid var(--c-stroke);
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface);
@@ -309,7 +309,7 @@
     --t-font: var(--t-label);
 }
 
-.ds-pf-choice:hover { border-color: var(--c-sage-700); }
+@media (hover: hover) { .ds-pf-choice:hover { border-color: var(--c-sage-700); } }
 
 .ds-pf-choice.is-selected {
     border-color: var(--c-sage-700);
@@ -402,11 +402,11 @@
     color: var(--c-ink);
 }
 
-.ds-pf-scale { display: flex; flex-direction: column; gap: 6px; }
+.ds-pf-scale { display: flex; flex-direction: column; gap: 8px; }
 
 .ds-pf-scale-track {
     position: relative;
-    padding: 6px 0;
+    padding: 8px 0;
 }
 
 .ds-pf-scale-bar {
@@ -430,7 +430,7 @@
     z-index: 1;
     width: 6px;
     height: 24px;
-    margin-left: -3px;
+    margin-left: -4px;
     border: 2px solid var(--c-surface);
     border-radius: 3px;
     background: var(--c-action);
@@ -494,7 +494,7 @@
 .ds-pf-feedback {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
     padding: 12px;
     border-radius: 12px;
     background: var(--c-surface);
@@ -514,9 +514,9 @@
 .ds-pf-med {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     min-height: 56px;
-    padding: 4px 4px 4px 14px;
+    padding: 4px 4px 4px 12px;
     border: 1px solid var(--c-hairline);
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface);
@@ -572,7 +572,7 @@
 .ds-pf-step {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 .ds-pf-step-head {
@@ -635,7 +635,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     text-align: center;
 }
 
@@ -715,8 +715,8 @@
 .ds-ob-bmi-tile {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 12px 14px;
+    gap: 8px;
+    padding: 12px 12px;
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface);
     border: 1px solid var(--c-hairline);
@@ -725,7 +725,7 @@
 .ds-ob-bmi-value {
     display: inline-flex;
     align-items: baseline;
-    gap: 6px;
+    gap: 8px;
     color: var(--c-ink);
 }
 
@@ -798,9 +798,9 @@
 }
 
 @media (max-width: 359px) {
-    .ds-pf-group-head { gap: 10px; padding-left: 14px; padding-right: 10px; }
+    .ds-pf-group-head { gap: 12px; padding-left: 12px; padding-right: 12px; }
     .ds-pf-group-icon { width: 36px; height: 36px; }
-    .ds-pf-group-body { padding-left: 14px; padding-right: 14px; }
+    .ds-pf-group-body { padding-left: 12px; padding-right: 12px; }
     .ds-pf-panel, .ds-pf-bmi, .ds-pf-scan, .ds-pf-detail, .ds-pf-tip { padding: 12px; }
     .ds-pf-scale-labels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .ds-pf-scale-labels span:nth-child(n) { text-align: left; }
@@ -834,7 +834,7 @@
 .ds-pf-scale-labels span:nth-child(n) {
     display: flex;
     align-items: baseline;
-    gap: 6px;
+    gap: 8px;
     text-align: left;
 }
 

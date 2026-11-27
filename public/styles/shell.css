@@ -103,9 +103,9 @@
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     min-height: var(--touch-min);
-    padding: 0 16px 0 14px;
+    padding: 0 16px 0 12px;
     border: 0;
     border-radius: var(--ds-radius-pill);
     background: var(--c-surface);
@@ -196,7 +196,7 @@
     justify-content: center;
     gap: 4px;
     min-height: var(--shell-tab-h);
-    padding: 6px 0 4px;
+    padding: 8px 0 4px;
     border: 0;
     border-radius: 20px;
     background: transparent;
@@ -351,7 +351,7 @@ html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop) .ds-shell-mic {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     margin: 0;
     color: var(--c-ink-3);
     word-break: keep-all;
@@ -415,7 +415,7 @@ html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop) .ds-shell-mic {
     z-index: 2;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
     margin: 0 calc(var(--ds-page-pad) * -1);
     padding: calc(12px + env(safe-area-inset-top, 0px)) var(--ds-page-pad) 12px;
     background: rgb(247 249 245 / 92%);

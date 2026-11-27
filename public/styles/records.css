@@ -157,7 +157,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 6px;
+    gap: 8px;
     min-height: var(--touch-min);
     padding: 8px 12px;
     border: var(--ds-stroke) solid var(--c-stroke);
@@ -251,7 +251,7 @@
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    padding: 14px 16px;
+    padding: 12px 16px;
     border-radius: var(--ds-radius-inner);
 }
 
@@ -295,7 +295,7 @@
     gap: 12px;
     width: 100%;
     min-height: var(--touch-min);
-    padding: 8px 14px 8px 8px;
+    padding: 8px 12px 8px 8px;
     border: 1px solid var(--c-hairline);
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface-muted);
@@ -354,9 +354,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     min-height: var(--touch-min);
-    padding: 0 14px;
+    padding: 0 12px;
     border: 0;
     border-radius: var(--ds-radius-btn);
     background: var(--c-sage-100);
@@ -375,7 +375,7 @@
 }
 
 .ds-rec-tag {
-    padding: 0 14px 0 10px;
+    padding: 0 12px 0 12px;
 }
 
 .ds-rec-clear {
@@ -387,7 +387,7 @@
 
 /* Section heads, range switch, custom range */
 .ds-rec-range .ds-seg-btn {
-    padding: 0 6px;
+    padding: 0 8px;
     white-space: nowrap;
 }
 
@@ -400,7 +400,7 @@
 .ds-rec-date {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .ds-rec-presets {
@@ -492,7 +492,7 @@
     flex-direction: column;
     gap: 4px;
     max-width: 240px;
-    padding: 12px 14px;
+    padding: 12px 12px;
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface);
     color: var(--c-ink);
@@ -566,13 +566,13 @@
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 6px 12px;
+    gap: 8px 12px;
 }
 
 .ds-rec-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 8px;
     padding: 0;
     list-style: none;
 }
@@ -621,7 +621,7 @@
 
 .ds-rec-more {
     height: auto;
-    padding: 10px 16px;
+    padding: 12px 16px;
     white-space: normal;
     text-align: center;
 }
@@ -654,7 +654,7 @@
 .ds-rec-banner-icon {
     flex: 0 0 auto;
     box-sizing: content-box;
-    padding: 6px;
+    padding: 8px;
     border-radius: 50%;
     background: var(--c-surface);
 }
@@ -675,7 +675,7 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 14px 16px;
+    padding: 12px 16px;
     border-radius: var(--ds-radius-inner);
     border-left: 6px solid var(--c-mist);
     background: var(--c-surface);
@@ -694,7 +694,7 @@
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     padding: 16px;
     border-radius: var(--ds-radius-card);
     background: var(--c-surface-muted);
@@ -705,7 +705,7 @@
     align-items: center;
     gap: 8px;
     min-height: var(--touch-min);
-    padding: 4px 14px;
+    padding: 4px 12px;
     border: 1px solid var(--c-hairline);
     border-radius: var(--ds-radius-pill);
     background: var(--c-surface);
@@ -748,7 +748,7 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 8px 12px;
-    padding: 12px 14px;
+    padding: 12px 12px;
     border-radius: var(--ds-radius-inner);
     background: var(--c-mist-100);
     color: var(--c-mist);
@@ -767,7 +767,7 @@
 }
 
 .ds-rec-save-count {
-    padding: 2px 10px;
+    padding: 2px 12px;
     border-radius: var(--ds-radius-pill);
     background: rgba(255, 255, 255, 0.18);
     font-size: var(--t-caption);
@@ -822,7 +822,7 @@
     gap: 12px;
     width: 100%;
     min-height: var(--touch-min);
-    padding: 8px 14px;
+    padding: 8px 12px;
     border: var(--ds-stroke) solid var(--c-stroke);
     border-radius: 14px;
     background: var(--c-surface);
@@ -883,7 +883,7 @@
 }
 
 @media (max-width: 359px) {
-    .ds-rec-toggle { padding-left: 14px; }
+    .ds-rec-toggle { padding-left: 12px; }
     .ds-rec-toggle-icon { display: none; }
 }
 
@@ -896,9 +896,9 @@
 .ds-rec-entry {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
     width: 100%;
-    padding: 18px 18px 18px;
+    padding: 16px 16px 16px;
     border: 0;
     border-radius: var(--ds-radius-card);
     background: var(--c-sky-100);
@@ -906,11 +906,11 @@
     box-shadow: var(--ds-e1);
     text-align: left;
     cursor: pointer;
-    transition: transform var(--ds-duration-fast, 120ms) var(--ds-ease);
+    transition: transform var(--ds-duration-fast) var(--ds-ease);
 }
 .ds-rec-entry:active { transform: scale(0.985); }
-.ds-rec-entry:focus-visible { outline: 3px solid var(--c-focus, #2F3033); outline-offset: 3px; }
-.ds-rec-entry-head { display: flex; align-items: center; gap: 14px; }
+.ds-rec-entry:focus-visible { outline: 3px solid var(--c-focus); outline-offset: 3px; }
+.ds-rec-entry-head { display: flex; align-items: center; gap: 12px; }
 .ds-rec-entry-mark,
 .ds-rec-entry-go {
     display: inline-flex;
@@ -932,7 +932,7 @@
 }
 .ds-rec-entry-title {
     font-size: var(--t-title-size, 22px);
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: 0.01em;
     line-height: 1.25;
 }
@@ -940,7 +940,7 @@
     display: flex;
     flex-direction: column;
     gap: 0;
-    padding: 4px 14px;
+    padding: 4px 12px;
     border-radius: var(--ds-radius-control, 16px);
     background: rgba(255, 255, 255, 0.72);
 }
@@ -950,7 +950,7 @@
     justify-content: space-between;
     gap: 12px;
     min-width: 0;
-    padding: 10px 0;
+    padding: 12px 0;
 }
 .ds-rec-entry-line + .ds-rec-entry-line { border-top: 1px solid rgba(47, 97, 120, 0.14); }
 .ds-rec-entry-line .t-caption { flex: 0 0 auto; color: var(--c-ink-2); }
@@ -975,7 +975,7 @@
 
 /* Pickers as sheets: the option grid / time panel sit on the sheet surface. */
 .ds-sheet .ds-rec-panel { background: transparent; padding: 0; }
-.ds-sheet .ds-rec-options { gap: 10px; }
+.ds-sheet .ds-rec-options { gap: 12px; }
 .ds-sheet .ds-rec-time-sheet input[type="datetime-local"] { width: 100%; }
 /* Short forms still pin the save bar to the bottom of the sub-page. */
 .ds-rec-entry-page .ds-subpage-scroller { display: flex; flex-direction: column; padding-bottom: 0; }

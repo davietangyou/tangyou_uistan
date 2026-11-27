@@ -142,7 +142,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 6px;
+    gap: 8px;
     min-width: 0;
 }
 
@@ -153,7 +153,7 @@
 .ds-consult-sender {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     padding: 0 4px;
     color: var(--c-ink-3);
     font-weight: 600;
@@ -181,7 +181,7 @@
 }
 
 .ds-consult-bubble-photo {
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     overflow: hidden;
     border-radius: 14px;
     background: var(--c-surface);
@@ -197,21 +197,21 @@
 .ds-consult-bubble-photo-cap {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
+    gap: 8px;
+    padding: 8px 12px;
     color: var(--c-ink-2);
 }
 
 .ds-consult-prefsent {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 .ds-consult-prefsent-head {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     color: var(--c-sage-700);
 }
 
@@ -224,15 +224,15 @@
 .ds-consult-prefsent-chip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
+    gap: 8px;
+    padding: 8px 12px;
     border-radius: 12px;
     background: var(--c-surface);
     color: var(--c-ink);
 }
 
 .ds-consult-prefsent-stars {
-    padding: 0 6px;
+    padding: 0 8px;
     border-radius: 6px;
     background: var(--c-butter-100);
     color: var(--c-butter);
@@ -268,7 +268,7 @@
 }
 
 .ds-consult-card .ds-consult-md strong {
-    padding: 0 3px;
+    padding: 0 4px;
     border-radius: 4px;
     background: var(--c-butter-100);
     color: var(--c-ink);
@@ -287,11 +287,11 @@
 }
 
 .ds-consult-sec {
-    padding: 16px 18px;
+    padding: 16px 16px;
 }
 
 .large-font .ds-consult-sec {
-    padding: 18px 20px;
+    padding: 16px 20px;
 }
 
 .ds-consult-sec + .ds-consult-sec,
@@ -333,11 +333,11 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 16px 18px;
+    padding: 16px 16px;
 }
 
 .large-font .ds-consult-safety {
-    padding: 18px 20px;
+    padding: 16px 20px;
 }
 
 .ds-consult-safety-head {
@@ -374,8 +374,8 @@
 .ds-consult-safety-steps {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 14px;
+    gap: 8px;
+    padding: 12px;
     border-radius: 14px;
     border-width: 1px;
     border-style: solid;
@@ -395,7 +395,7 @@
 .ds-consult-safety-contacts {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 .ds-consult-safety-grid {
@@ -408,7 +408,7 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 12px 14px;
+    padding: 12px 12px;
     border-radius: 14px;
     border-width: 1px;
     border-style: solid;
@@ -467,7 +467,7 @@
     align-items: center;
     gap: 4px;
     margin-top: 4px;
-    padding: 2px 10px;
+    padding: 2px 12px;
     border-radius: 999px;
     background: var(--c-sage-100);
     color: var(--c-sage-700);
@@ -486,7 +486,7 @@
     gap: 12px;
     width: 100%;
     min-height: var(--touch-min);
-    padding: 12px 14px;
+    padding: 12px 12px;
     border: var(--ds-stroke) solid var(--c-stroke);
     border-radius: 14px;
     background: var(--c-surface);
@@ -553,14 +553,14 @@
 .ds-consult-pref-submit-row {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 /* Native fields (other-consideration, quick memo) */
 .ds-consult-field {
     display: block;
     width: 100%;
-    padding: 12px 14px;
+    padding: 12px 12px;
     border: var(--ds-stroke) solid var(--c-stroke);
     border-radius: 14px;
     background: var(--c-surface);
@@ -627,8 +627,8 @@
 .ds-consult-compare-item {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 14px;
+    gap: 12px;
+    padding: 12px;
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface);
     border: var(--ds-e0-border);
@@ -637,7 +637,7 @@
 .ds-consult-compare-name {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .ds-consult-compare-cols {
@@ -650,7 +650,7 @@
 .ds-consult-cons {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     padding: 12px;
     border-radius: 12px;
 }
@@ -663,7 +663,7 @@
 .ds-consult-bullets {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -672,7 +672,7 @@
 .ds-consult-bullets li {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
     color: var(--c-ink);
 }
 
@@ -704,7 +704,7 @@
 .ds-consult-brief-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -713,12 +713,12 @@
 .ds-consult-brief-list li {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
 }
 
 .ds-consult-brief-list .ds-consult-num {
     background: var(--c-sage-700);
-    margin-top: calc((var(--t-body) * var(--t-body-lh) - 26px) / 2);
+    margin-top: calc((var(--t-body) * var(--t-body-lh) - 24px) / 2);
 }
 
 .ds-consult-brief-text {
@@ -736,10 +736,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
     min-height: var(--touch-min);
-    padding: 10px 18px;
+    padding: 12px 16px;
     border: 0;
     border-radius: 0;
     background: var(--c-surface);
@@ -779,7 +779,7 @@
 }
 
 .ds-consult-count {
-    padding: 2px 10px;
+    padding: 2px 12px;
     border-radius: 999px;
     background: var(--c-lavender-100);
     color: var(--c-lavender);
@@ -787,7 +787,7 @@
 }
 
 .ds-consult-fold-body {
-    padding: 4px 18px 18px;
+    padding: 4px 16px 16px;
     background: var(--c-surface);
     color: var(--c-ink-2);
 }
@@ -795,7 +795,7 @@
 .ds-consult-doctor {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 .ds-consult-doctor-hint {
@@ -806,8 +806,8 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
-    padding: 14px;
+    gap: 12px;
+    padding: 12px;
     border-radius: 14px;
     background: var(--c-lavender-100);
     color: var(--c-ink);
@@ -817,7 +817,7 @@
     align-self: flex-end;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     min-height: var(--touch-min);
     padding: 0 16px;
     border: 0;
@@ -843,7 +843,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 16px 18px;
+    padding: 16px 16px;
     border-radius: 6px 20px 20px 20px;
     background: var(--c-surface);
     border: var(--ds-e0-border);
@@ -893,10 +893,10 @@
 .ds-consult-followup {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
     min-height: var(--touch-min);
-    padding: 10px 16px;
+    padding: 12px 16px;
     border: 1.5px solid var(--c-sage-200);
     border-radius: var(--ds-radius-inner);
     background: var(--c-surface);
@@ -931,7 +931,7 @@
     display: block;
     width: 100%;
     min-height: 96px;
-    padding: 10px 10px 6px;
+    padding: 12px 12px 8px;
     border: 0;
     background: transparent;
     color: var(--c-ink);
@@ -957,7 +957,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     min-width: var(--touch-min);
     min-height: var(--touch-min);
     padding: 0 12px;
@@ -989,10 +989,10 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     min-width: var(--touch-min);
     min-height: var(--touch-min);
-    padding: 0 18px;
+    padding: 0 16px;
     border: 0;
     border-radius: var(--ds-radius-pill);
     background: var(--c-action);
@@ -1047,7 +1047,7 @@
 .ds-consult-shortcuts {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 .ds-consult-shortcuts-title {
@@ -1191,7 +1191,7 @@
     gap: 8px;
     width: 100%;
     min-height: var(--touch-min);
-    padding: 10px 14px;
+    padding: 12px 12px;
     border: 1px solid var(--c-hairline);
     border-radius: 14px;
     background: var(--c-surface);
@@ -1244,10 +1244,10 @@
         display: none;
     }
     .ds-consult-tools {
-        gap: 6px;
+        gap: 8px;
     }
     .ds-consult-voice {
-        padding: 0 10px;
+        padding: 0 12px;
         gap: 4px;
     }
     .ds-consult-memo-mark {
@@ -1275,13 +1275,13 @@
     .large-font .ds-consult-sec,
     .ds-consult-safety,
     .large-font .ds-consult-safety {
-        padding: 14px;
+        padding: 12px;
     }
     .ds-consult-disclosure {
-        padding: 10px 14px;
+        padding: 12px 12px;
     }
     .ds-consult-fold-body {
-        padding: 4px 14px 14px;
+        padding: 4px 12px 12px;
     }
 }
 
@@ -1332,7 +1332,7 @@
 .ds-consult-shortcut-list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    gap: 12px;
 }
 .ds-consult-shortcut {
     position: relative;
@@ -1340,14 +1340,14 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 14px;
+    gap: 12px;
     min-height: 104px;
-    padding: 14px 14px 16px;
+    padding: 12px 12px 16px;
     border: 0;
     border-radius: var(--ds-radius-card);
     text-align: left;
     color: var(--c-ink);
-    transition: transform 120ms var(--ds-ease);
+    transition: transform var(--ds-duration-fast) var(--ds-ease);
 }
 .ds-consult-shortcut:active { transform: scale(0.98); }
 .ds-consult-shortcut.is-sky { background: var(--c-sky-100); --tone: var(--c-sky-700); }
@@ -1389,15 +1389,15 @@
     position: sticky;
     bottom: calc(var(--shell-nav-offset) + var(--shell-nav-h) + var(--shell-gap));
     z-index: 3;
-    margin-right: calc(var(--shell-mic) + 10px);
-    padding: 6px;
+    margin-right: calc(var(--shell-mic) + 12px);
+    padding: 8px;
     gap: 2px;
     border-radius: 24px;
-    box-shadow: 0 6px 24px rgba(30, 34, 28, 0.10);
+    box-shadow: var(--ds-e2);
 }
-.ds-consult-input { min-height: 64px; padding: 8px 10px 4px; }
+.ds-consult-input { min-height: 64px; padding: 8px 12px 4px; }
 .large-font .ds-consult-input.ds-control { min-height: 76px !important; }
-.ds-consult-tool { padding: 0 10px; }
+.ds-consult-tool { padding: 0 12px; }
 .ds-consult-send {
     width: var(--touch-min);
     padding: 0;
@@ -1435,7 +1435,7 @@
     grid-template-columns: 48px 1fr auto;
     grid-template-areas: "img title remove" "text text text";
     align-items: center;
-    column-gap: 10px;
+    column-gap: 12px;
     row-gap: 4px;
 }
 .ds-consult-composer .ds-consult-attach img { grid-area: img; width: 48px; height: 48px; }

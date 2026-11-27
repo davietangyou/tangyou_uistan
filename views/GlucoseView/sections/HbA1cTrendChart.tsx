@@ -16,7 +16,8 @@ import {EmptyState} from './recordUi';
 const CHART_TITLE = '糖化血紅素趨勢';
 
 // Same reference lines as before (7% target, 8% high); labels moved to the legend.
-const C = {axis: '#636B65', grid: '#E3E7DD', target: '#2E7D4F', high: '#B42318', data: '#4A6E85'};
+// S5 (07-03 B1/A3): synced to the current tokens (ink-3, hairline, glucose-target, glucose-low).
+const C = {axis: '#686C66', grid: '#DCE1D8', target: '#256239', high: '#AE344B', data: '#4A6E85'};
 
 export function HbA1cTrendChart({vm}: {vm: GlucoseViewModel}) {
     const {chartData, isLargeFont} = vm;
@@ -43,7 +44,7 @@ export function HbA1cTrendChart({vm}: {vm: GlucoseViewModel}) {
                                     boxShadow: '0 8px 24px rgba(31, 37, 34, 0.12)',
                                     fontWeight: 600,
                                     padding: '12px 16px',
-                                    color: '#1F2522',
+                                    color: '#373531',
                                     fontSize: isLargeFont ? '18px' : '16px'
                                 }}
                             />

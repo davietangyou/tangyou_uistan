@@ -19,12 +19,13 @@ const CHART_TITLE = '血糖趨勢走勢';
 // Chart palette (design tokens; recharts needs literal colours).
 // Thresholds are unchanged: band 4–7, lines at 4 / 7 / 10.
 const C = {
-    axis: '#636B65',      // --c-ink-3
-    grid: '#E3E7DD',
-    band: '#D2E4C0',      // --c-sage-200: 餐前目標 4–7
-    low: '#B42318',       // --c-glucose-low
-    target: '#2E7D4F',    // --c-glucose-target
-    high: '#B54708',      // --c-glucose-high
+    // S5 (07-03 B1/A3): synced to the current tokens — one calmer status family.
+    axis: '#686C66',      // --c-ink-3
+    grid: '#DCE1D8',      // --c-hairline
+    band: '#DCE8CC',      // --c-sage-200: 餐前目標 4–7
+    low: '#AE344B',       // --c-glucose-low
+    target: '#256239',    // --c-glucose-target
+    high: '#8A4B0D',      // --c-glucose-high
     data: '#4A6E85',      // legacy brand, now the data colour (owner decision 1)
 };
 

@@ -101,7 +101,7 @@
     --ds-e1: none;                           /* cards: no shadow — ground tone does the layering */
     --ds-e2: 0 6px 24px rgba(55, 53, 49, 0.10);  /* floating sheets / toasts */
     --ds-shadow-nav: 0 3px 10px rgba(55, 53, 49, 0.06);
-    --ds-shadow-fab: 0 4px 14px rgba(55, 53, 49, 0.12);
+    --ds-shadow-fab: 0 3px 12px rgba(55, 53, 49, 0.08);  /* S5 (07-03 B4): as light as the nav */
     --ds-shadow-button: 0 2px 8px rgba(55, 53, 49, 0.08);
     --ds-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
     --ds-ease-exit: cubic-bezier(0.4, 0, 1, 1);

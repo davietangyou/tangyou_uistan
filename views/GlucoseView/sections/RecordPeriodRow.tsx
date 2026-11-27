@@ -1,6 +1,6 @@
 import type {GlucoseViewModel} from '../useGlucoseViewModel';
 import { PERIOD_OPTIONS } from '../constants';
-import {Icon} from './recordUi';
+import {Icon} from '../../../components/ui';
 
 /** 測量時段 / 紀錄時段 row. Selection logic unchanged (timeType + mealTag match). */
 export function RecordPeriodRow({vm, label}: {vm: GlucoseViewModel; label: string}) {

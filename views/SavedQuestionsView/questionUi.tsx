@@ -3,12 +3,7 @@
  * Presentation only: handlers come from the section that owns them.
  */
 import React from 'react';
-import {UI_ICON_DEFAULTS, cx, uiIcons, type UiIconName} from '../../components/ui';
-
-export function Icon({name, size = UI_ICON_DEFAULTS.size, className}: {name: UiIconName; size?: number; className?: string}) {
-    const C = uiIcons[name];
-    return <C size={size} strokeWidth={UI_ICON_DEFAULTS.strokeWidth} aria-hidden className={className} />;
-}
+import {cx, Icon, type UiIconName} from '../../components/ui';
 
 export function CountPill({children, tone = 'sage'}: {children: React.ReactNode; tone?: 'sage' | 'muted' | 'lavender'}) {
     return <span className={cx('ds-sq-pill', `is-${tone}`)}>{children}</span>;

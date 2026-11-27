@@ -1,0 +1,543 @@
+/* =============================================================================
+   問題紀錄 / Saved questions view (Stage 7): AI 總結, 下次問診清單, 所有已保存的問題.
+   Scoped to .ds-questions. One vertical column, no horizontal scrollers and no
+   nested scroll boxes. AI = lavender, clinic list = sage, saved library = mist.
+   ============================================================================= */
+
+.ds-questions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-section-gap);
+    padding-bottom: 8px;
+}
+
+.ds-questions p,
+.ds-questions h2,
+.ds-questions h3,
+.ds-questions h4,
+.ds-questions ol,
+.ds-questions ul {
+    margin: 0;
+}
+
+.ds-questions ol,
+.ds-questions ul {
+    padding: 0;
+    list-style: none;
+}
+
+.ds-questions button {
+    font-family: var(--ds-font);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.ds-questions .ds-btn {
+    gap: 8px;
+}
+
+.ds-questions .ds-btn:disabled {
+    opacity: 1;
+    background: var(--c-surface-muted);
+    color: var(--c-ink-3);
+}
+
+/* Page header */
+.ds-sq-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px 16px;
+}
+
+.ds-sq-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.ds-sq-header-btn {
+    flex: 0 0 auto;
+}
+
+/* Section cards */
+.ds-sq-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ds-sq-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ds-sq-head-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ds-sq-head-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+}
+
+.ds-sq-head-icon.is-lavender { background: var(--c-lavender-100); color: var(--c-lavender); }
+.ds-sq-head-icon.is-sage { background: var(--c-sage-100); color: var(--c-sage-700); }
+.ds-sq-head-icon.is-mist { background: var(--c-mist-100); color: var(--c-mist); }
+
+.ds-sq-head-title {
+    flex: 1 1 0;
+    min-width: 0;
+    color: var(--c-ink);
+    overflow-wrap: anywhere;
+}
+
+.ds-sq-head > .ds-sq-pill {
+    align-self: flex-start;
+}
+
+.ds-sq-toggle {
+    flex: 0 0 auto;
+    padding: 0 12px;
+    color: var(--c-ink-2);
+}
+
+.ds-sq-chevron {
+    flex: 0 0 auto;
+    transition: transform var(--ds-duration) var(--ds-ease);
+}
+
+.ds-sq-chevron.is-open {
+    transform: rotate(180deg);
+}
+
+.ds-sq-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 28px;
+    padding: 2px 12px;
+    border-radius: var(--ds-radius-pill);
+    font-size: var(--t-caption);
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: nowrap;
+    --t-font: var(--t-caption);
+}
+
+.ds-sq-pill.is-sage { background: var(--c-sage-100); color: var(--c-sage-700); }
+.ds-sq-pill.is-muted { background: var(--c-surface-muted); color: var(--c-ink-2); }
+.ds-sq-pill.is-lavender { background: var(--c-lavender-100); color: var(--c-lavender); }
+
+.ds-sq-body,
+.ds-sq-result,
+.ds-sq-block,
+.ds-sq-list,
+.ds-sq-form,
+.ds-sq-ready,
+.ds-sq-summary {
+    display: flex;
+    flex-direction: column;
+}
+
+.ds-sq-body { gap: 16px; }
+.ds-sq-result { gap: 16px; }
+.ds-sq-block { gap: 12px; }
+.ds-sq-list { gap: 8px; }
+.ds-sq-form { gap: 12px; }
+
+.ds-sq-sub {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: var(--c-ink);
+}
+
+.ds-sq-sub svg {
+    flex: 0 0 auto;
+    margin-top: 0.1em;
+    color: var(--c-ink-2);
+}
+
+/* Loading / empty / ready / error states */
+.ds-sq-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 16px;
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-lavender-100);
+    color: var(--c-lavender);
+    text-align: center;
+}
+
+.ds-sq-spin {
+    animation: ds-spin 1s linear infinite;
+}
+
+.ds-sq-empty {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 20px 16px;
+    border: 1px dashed rgba(31, 37, 34, 0.24);
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-surface);
+    text-align: center;
+}
+
+.ds-sq-ready {
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-lavender-100);
+}
+
+.ds-sq-ready .t-title {
+    color: var(--c-lavender);
+}
+
+.ds-sq-error {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-butter-100);
+    color: var(--c-butter);
+}
+
+.ds-sq-error-text {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.ds-sq-error-icon {
+    flex: 0 0 auto;
+    margin-top: 0.15em;
+}
+
+.ds-sq-error .ds-btn {
+    align-self: flex-start;
+}
+
+/* AI result */
+.ds-sq-summary {
+    gap: 8px;
+    padding: 16px;
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-lavender-100);
+}
+
+.ds-sq-summary .ds-sq-sub,
+.ds-sq-summary .ds-sq-sub svg {
+    color: var(--c-lavender);
+}
+
+.ds-sq-markdown {
+    color: var(--c-ink);
+}
+
+.ds-sq-markdown p + p,
+.ds-sq-markdown p + ul,
+.ds-sq-markdown ul + p {
+    margin-top: 6px;
+}
+
+.ds-sq-markdown ul {
+    padding-left: 1.25em;
+    list-style: disc;
+}
+
+.ds-sq-markdown strong {
+    font-weight: 700;
+}
+
+.ds-sq-index {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--c-surface-muted);
+    color: var(--c-ink-2);
+    font-size: var(--t-caption);
+    font-weight: 700;
+    --t-font: var(--t-caption);
+}
+
+.ds-sq-index.is-active {
+    background: var(--c-sage-100);
+    color: var(--c-sage-700);
+}
+
+.ds-sq-cat {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-surface-muted);
+}
+
+.ds-sq-cat .ds-sq-index {
+    background: var(--c-surface);
+}
+
+.ds-sq-cat-text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ds-sq-pick-head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.ds-sq-rec {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 14px 16px;
+    border: 1px solid rgba(31, 37, 34, 0.12);
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-surface);
+}
+
+.ds-sq-rec.is-picked {
+    border-color: var(--c-sage-200);
+    background: #F4F8EF;
+}
+
+.ds-sq-tag {
+    display: inline-flex;
+    padding: 0 10px;
+    border-radius: var(--ds-radius-pill);
+    background: var(--c-mist-100);
+    color: var(--c-mist);
+    font-weight: 600;
+}
+
+.ds-sq-rec-text {
+    overflow-wrap: anywhere;
+}
+
+.ds-sq-pick-btn {
+    padding: 0 16px;
+}
+
+.ds-sq-btn-outline {
+    background: var(--c-surface);
+    color: var(--c-ink);
+    box-shadow: inset 0 0 0 1px rgba(31, 37, 34, 0.24);
+}
+
+.ds-sq-refresh {
+    align-self: flex-start;
+    padding: 0 12px;
+    color: var(--c-ink-2);
+}
+
+/* 下次問診時間 */
+.ds-sq-date {
+    padding: 14px 16px;
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-surface-muted);
+}
+
+.ds-sq-date-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.ds-sq-date-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ds-sq-date-text > span:last-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ds-sq-date-value {
+    color: var(--c-sage-700);
+}
+
+.ds-sq-date-edit,
+.ds-sq-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ds-sq-date-edit { gap: 12px; }
+
+.ds-sq-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.ds-sq-actions-spacer {
+    flex: 1 1 auto;
+}
+
+/* 下次問診清單 rows */
+.ds-sq-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 8px 12px 12px;
+    border: 1px solid var(--c-sage-200);
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-surface);
+}
+
+.ds-sq-item .ds-sq-index {
+    margin-top: 2px;
+}
+
+.ds-sq-item-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-top: 4px;
+    overflow-wrap: anywhere;
+}
+
+.ds-sq-remove {
+    flex: 0 0 auto;
+    gap: 4px;
+    padding: 0 10px;
+    color: var(--c-glucose-low);
+}
+
+/* 所有已保存的問題 rows */
+.ds-sq-saved-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid rgba(31, 37, 34, 0.12);
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-surface);
+}
+
+.ds-sq-saved-item.is-picked {
+    border-color: var(--c-sage-200);
+    background: #F4F8EF;
+}
+
+.ds-sq-saved-item.is-editing {
+    border-color: var(--c-ink-2);
+    background: var(--c-surface);
+}
+
+.ds-sq-saved-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.ds-sq-saved-main .ds-sq-index {
+    margin-top: 2px;
+}
+
+.ds-sq-saved-main .ds-field-control {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ds-sq-saved-text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    min-width: 0;
+    padding-top: 4px;
+    overflow-wrap: anywhere;
+}
+
+.ds-sq-saved-item .ds-sq-actions {
+    flex-wrap: nowrap;
+    gap: 4px;
+}
+
+.ds-sq-saved-item .ds-sq-actions .ds-sq-pick-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.ds-sq-delete {
+    color: var(--c-glucose-low);
+}
+
+@media (max-width: 359px) {
+    .ds-questions .ds-card {
+        padding: 16px;
+    }
+    .ds-sq-head-icon {
+        display: none;
+    }
+    .ds-sq-item {
+        flex-wrap: wrap;
+        padding-right: 12px;
+    }
+    .ds-sq-item-text {
+        flex: 1 1 calc(100% - 44px);
+    }
+    .ds-sq-remove {
+        margin-left: auto;
+    }
+    .ds-sq-pick-btn {
+        padding: 0 12px;
+    }
+    .ds-sq-ready {
+        padding: 12px;
+    }
+    .ds-sq-ready .ds-btn > svg {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ds-sq-spin,
+    .ds-sq-chevron {
+        animation: none;
+        transition: none;
+    }
+}
+
+/* keep the native date field (and its picker icon) clear of the floating mic */
+.ds-sq-field .ds-field-control {
+    max-width: 240px;
+}

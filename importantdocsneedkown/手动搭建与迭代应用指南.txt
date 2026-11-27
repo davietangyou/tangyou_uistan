@@ -94,7 +94,7 @@ dev 模式下：
 
 ### 1.4 页面样式资源
 
-页面皮肤与大字规则写在仓库内的 `public/styles/app.css`。`index.html` 在 Tailwind CDN 之后引入：
+页面皮肤与大字规则写在仓库内的 `public/styles/` 目录：入口是 `app.css`，它按层叠顺序 @import 同目录的 11 个分文件。`index.html` 在 Tailwind CDN 之后引入：
 
 ```html
 <link rel="stylesheet" href="%BASE_URL%styles/app.css">
@@ -106,11 +106,26 @@ dev 模式下，Vite 把 `public/` 作为静态根目录，浏览器实际请求
 curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css
 ```
 
-预期 HTTP 200，正文与 `public/styles/app.css` 一致。若同步或解压后缺少该文件，Tailwind 工具类仍可用，但整套界面样式（设计令牌、`ds-*` / `t-*` 类、大字模式）会丢失，各页面基本失去版式。
+预期 HTTP 200，正文与 `public/styles/app.css` 一致；分文件同理可查，例如 `/styles/consult.css`。若同步或解压后缺少入口或任一分文件，Tailwind 工具类仍可用，但整套界面样式（设计令牌、`ds-*` / `t-*` 类、大字模式）会丢失，各页面基本失去版式。
 
-UI 重构合并（main `c18afb1`）后，该文件约 112 KB：前 4550 字节是重构前的原规则，保持逐字节不变（`head -c 4550 public/styles/app.css | sha256sum` 应为 `b864594f30dc4a8fcc526161c3b185e40c3cfbb84e0243c824e8ed8e7e2da29e`）；其后追加的是设计系统与各视图样式，新视图以 `.ds-root` 承载、控件加 `.ds-control` 以避开旧的 `.large-font` 强制规则。对应的 React 基础组件在 `components/ui/`。新增样式只在文件末尾追加。
+阶段十一（分支 `chore/ui-cleanup`）之后的结构，`app.css` 只含 Google 字体与以下 @import，顺序即层叠顺序，不可调换：
 
-本文只覆盖 dev 模式。若改走 `npm run build && npm start`，构建会把该文件原样复制为 `dist/styles/app.css`，页面链接变为相对路径 `./styles/app.css`。`npm run build` 可能打印：
+| 分文件 | 内容 |
+|---|---|
+| `base.css` | body、原生控件、页头淡入 `.animate-soft`、滚动条 |
+| `large-font.css` | `.large-font` 根规则（可继承的字距 / 词距 / 行高） |
+| `tokens.css` | 设计令牌（颜色、字阶、间距、动效）与 `.t-*` 字阶类 |
+| `components.css` | `.ds-root` 子树与共用 `.ds-*` 组件，含 `.ds-control` |
+| `shell.css` | 外壳：页头、底部导航、全局麦克风、焦点提示、页脚 |
+| `home.css` / `consult.css` / `records.css` / `questions.css` / `profile.css` | 各视图（`profile.css` 含首次引导） |
+| `polish.css` | 跨视图修饰与无障碍（阶段九） |
+| `native.css` | 原生手感（阶段十二）：安全区、触控、按下回馈、页头固定、分页淡入、应用内提示弹层；必须最后载入 |
+
+`index.html` 另引入 `public/manifest.webmanifest` 与 `public/icons/apple-touch-icon.png`（主画面安装、全屏），并设 `viewport-fit=cover`；同步 ZIP 时这两个路径须一并保留。
+
+原先“前 4550 字节保持逐字节不变”的规则已有意退役：重构前前缀里已不影响任何画面的规则（`.premium-card`、`.nav-blur`、`.spacy-container`、`.large-font .text-*` 与 `.large-font button, input, select, textarea` 强制规则等）被删除，仍生效的部分并入 `base.css` 与 `large-font.css`。`.large-font` 根规则与 `.ds-control` 仍然需要，不要删。新增样式写进所属分文件，新增分文件须同时在 `app.css` 里按顺序加 @import。对应的 React 基础组件在 `components/ui/`。
+
+本文只覆盖 dev 模式。若改走 `npm run build && npm start`，构建会把整个 `public/styles/` 原样复制为 `dist/styles/`（入口 `app.css` 与全部分文件），页面链接变为相对路径 `./styles/app.css`。`npm run build` 可能打印：
 
 ```
 ./styles/app.css doesn't exist at build time, it will remain unchanged to be resolved at runtime
@@ -281,7 +296,7 @@ npm run verify -- --out verify-results/phase-N --compare verify-results/baseline
 | `.env.example` | 对比差异，必要时更新 `.env.local` |
 | `vite.config.ts` | 重启 |
 | `server.ts` / `server/**` | 重启 |
-| `public/styles/app.css` 或 `index.html` 中的样式链接 | 确认文件仍在；刷新或重启后检查大字开/关外观 |
+| `public/styles/` 下任一文件或 `index.html` 中的样式链接 | 确认入口与分文件都在；刷新或重启后检查大字开/关外观 |
 | `scripts/verify/**` | 通常无需重启；金样变更时再按需跑 `npm run verify` |
 | `wrangler.jsonc` / `cloudflare/**` | dev 模式无需重启；只影响 Cloudflare Workers 部署形态 |
 | 前端源码 | 手动流程下重启（Vite 热更新只在运行中生效） |

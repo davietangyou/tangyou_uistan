@@ -1,7 +1,6 @@
 import type {MeViewModel} from './useMeViewModel';
 import {persistProfile} from '../../domain';
-import {cx} from '../../components/ui';
-import {Icon} from '../ProfileShared/formParts';
+import {cx, Icon} from '../../components/ui';
 
 export function SaveBar({vm}: {vm: MeViewModel}) {
     const {

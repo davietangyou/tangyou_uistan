@@ -1,0 +1,333 @@
+/* =============================================================================
+   App shell (Stage 3, opt-in only)
+   Header, bottom navigation, global mic, focus toast, footer disclaimer.
+   Only the shell subtrees carry .ds-root. Business views inside <main> stay
+   on the legacy classes until their own stage restyles them.
+   ============================================================================= */
+
+:root {
+    --shell-gap: 12px;
+    --shell-nav-offset: calc(12px + env(safe-area-inset-bottom, 0px));
+    --shell-tab-h: 52px;
+    --shell-nav-pad: 6px;
+    --shell-nav-h: calc(var(--shell-tab-h) + var(--shell-nav-pad) * 2);
+    --shell-tab-font: 13px;
+    --shell-mic: 60px;
+    --shell-column: 32rem;
+    --shell-clearance: calc(var(--shell-nav-offset) + var(--shell-nav-h) + var(--shell-gap) + var(--shell-mic) + 16px);
+}
+
+.large-font {
+    --shell-tab-h: 60px;
+    --shell-tab-font: 15px;
+    --shell-mic: 64px;
+}
+
+@media (max-width: 359px) {
+    .large-font {
+        --shell-tab-font: 14px;
+    }
+}
+
+.ds-shell-canvas {
+    min-height: 100vh;
+    background: var(--c-canvas);
+}
+
+/* Header */
+.ds-shell-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ds-target-gap);
+    padding: 20px 24px 8px;
+}
+
+.ds-shell-header-home {
+    padding: 16px 16px 4px;
+}
+
+.ds-shell-brand {
+    min-width: 0;
+}
+
+.ds-shell-eyebrow {
+    margin: 0 0 2px;
+    font-family: var(--ds-font);
+    font-size: var(--t-caption);
+    line-height: var(--t-caption-lh);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--c-sage-700);
+}
+
+.ds-shell-title {
+    margin: 0;
+    color: var(--c-ink);
+}
+
+.ds-shell-font-toggle {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: var(--touch-min);
+    padding: 0 16px;
+    border: 1px solid rgba(31, 37, 34, 0.16);
+    border-radius: var(--ds-radius-pill);
+    background: var(--c-surface);
+    color: var(--c-ink);
+    font-family: var(--ds-font);
+    font-size: var(--t-label);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    --t-font: var(--t-label);
+    --t-weight: 600;
+    --t-lh: 1.2;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color var(--ds-duration) var(--ds-ease), color var(--ds-duration) var(--ds-ease);
+}
+
+.ds-shell-font-toggle-on {
+    background: var(--c-ink);
+    border-color: var(--c-ink);
+    color: var(--c-white);
+}
+
+/* Bottom navigation */
+.ds-shell-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: var(--shell-nav-offset);
+    z-index: 40;
+    padding: 0 8px;
+    pointer-events: none;
+}
+
+.ds-shell-nav-bar {
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    max-width: calc(var(--shell-column) - 16px);
+    margin: 0 auto;
+    padding: var(--shell-nav-pad);
+    border: var(--ds-e0-border);
+    border-radius: calc(var(--shell-nav-h) / 2);
+    background: var(--c-surface);
+    box-shadow: var(--ds-e2);
+    pointer-events: auto;
+}
+
+.ds-shell-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: var(--shell-tab-h);
+    padding: 4px 2px;
+    border: 0;
+    border-radius: calc(var(--shell-tab-h) / 2);
+    background: transparent;
+    color: var(--c-ink-2);
+    font-family: var(--ds-font);
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    --t-font: var(--shell-tab-font);
+    --t-weight: 600;
+    --t-lh: 1.2;
+    transition: background-color var(--ds-duration) var(--ds-ease), color var(--ds-duration) var(--ds-ease);
+}
+
+.large-font .ds-shell-tab.ds-control {
+    min-height: var(--shell-tab-h) !important;
+}
+
+.ds-shell-tab-icon {
+    display: inline-flex;
+}
+
+.ds-shell-tab-ai .ds-shell-tab-icon {
+    color: var(--c-sage-700);
+}
+
+.ds-shell-tab-label {
+    display: block;
+    max-width: 100%;
+    font-size: var(--shell-tab-font);
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: 0;
+    white-space: nowrap;
+}
+
+.ds-shell-tab[aria-current="page"] {
+    background: var(--c-ink);
+    color: var(--c-white);
+}
+
+.ds-shell-tab[aria-current="page"] .ds-shell-tab-icon {
+    color: var(--c-white);
+}
+
+.ds-shell-tab[aria-current="page"] .ds-shell-tab-label {
+    font-weight: 700;
+}
+
+/* Global mic: floats above the nav, aligned to the app column. */
+.ds-shell-mic {
+    position: fixed;
+    right: calc(max(0px, (100vw - var(--shell-column)) / 2) + 16px);
+    bottom: calc(var(--shell-nav-offset) + var(--shell-nav-h) + var(--shell-gap));
+    z-index: 60;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--shell-mic);
+    height: var(--shell-mic);
+    padding: 0;
+    border: 3px solid var(--c-white);
+    border-radius: 50%;
+    background: var(--c-sage-700);
+    color: var(--c-white);
+    box-shadow: var(--ds-e2);
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color var(--ds-duration) var(--ds-ease), transform var(--ds-duration-fast) var(--ds-ease);
+}
+
+.large-font .ds-shell-mic.ds-control {
+    min-height: var(--shell-mic) !important;
+}
+
+.ds-shell-mic:active:not(:disabled) {
+    transform: scale(0.94);
+}
+
+.ds-shell-mic-listening {
+    background: var(--c-glucose-low);
+    animation: ds-mic-breathe 1.6s ease-in-out infinite;
+}
+
+.ds-shell-mic-processing {
+    background: var(--c-ink-3);
+    cursor: wait;
+}
+
+.ds-shell-mic-spinner {
+    width: 26px;
+    height: 26px;
+    border: 3px solid var(--c-white);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: ds-spin 0.9s linear infinite;
+}
+
+@keyframes ds-mic-breathe {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(180, 35, 24, 0.45), var(--ds-e2); }
+    50% { box-shadow: 0 0 0 12px rgba(180, 35, 24, 0), var(--ds-e2); }
+}
+
+@keyframes ds-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Focus toast */
+.ds-shell-toast {
+    position: fixed;
+    top: calc(16px + env(safe-area-inset-top, 0px));
+    left: 50%;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: max-content;
+    max-width: calc(min(100vw, var(--shell-column)) - 32px);
+    padding: 14px 20px;
+    border-radius: 20px;
+    background: var(--c-ink);
+    color: var(--c-white);
+    box-shadow: var(--ds-e2);
+    transform: translateX(-50%);
+    animation: ds-toast-in var(--ds-duration-slow) var(--ds-ease);
+}
+
+.ds-shell-toast .t-label {
+    color: var(--c-white);
+    text-wrap: balance;
+}
+
+@keyframes ds-toast-in {
+    from { opacity: 0; transform: translate(-50%, -8px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Footer disclaimer */
+.ds-shell-footer {
+    padding: 24px 24px var(--shell-clearance);
+    text-align: center;
+}
+
+.ds-shell-disclaimer {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--c-ink-3);
+    word-break: keep-all;
+}
+
+.ds-shell-disclaimer svg {
+    flex: 0 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ds-shell-mic,
+    .ds-shell-mic-listening,
+    .ds-shell-toast,
+    .ds-shell-tab,
+    .ds-shell-font-toggle {
+        animation: none !important;
+        transition: none !important;
+    }
+    .ds-shell-mic-listening {
+        box-shadow: 0 0 0 4px rgba(180, 35, 24, 0.35), var(--ds-e2);
+    }
+}
+
+@media print {
+    .ds-shell-mic,
+    .ds-shell-toast {
+        display: none !important;
+    }
+}
+
+.ds-shell-disclaimer-seg {
+    white-space: nowrap;
+}
+
+/* Narrow phones (320–359px): tighten the capsule so four-character labels
+   (血糖紀錄 / 問題紀錄 / 個人檔案) stay whole in large font. */
+@media (max-width: 359px) {
+    .ds-shell-nav {
+        padding: 0 4px;
+    }
+    .ds-shell-nav-bar {
+        gap: 0;
+        --shell-nav-pad: 4px;
+        padding: 4px;
+    }
+    .ds-shell-tab {
+        padding: 4px 0;
+    }
+}

@@ -5,12 +5,7 @@
  * option-values contract reads them from source).
  */
 import React from 'react';
-import {UI_ICON_DEFAULTS, cx, uiIcons, type UiIconName} from '../../components/ui';
-
-export function Icon({name, size = UI_ICON_DEFAULTS.size, className}: {name: UiIconName; size?: number; className?: string}) {
-    const C = uiIcons[name];
-    return <C size={size} strokeWidth={UI_ICON_DEFAULTS.strokeWidth} aria-hidden className={className} />;
-}
+import {cx, Icon, type UiIconName} from '../../components/ui';
 
 /** Big tappable choice tile. `multi` shows a check box, otherwise a radio dot. */
 export function OptionTile({selected, onClick, children, multi = false, className, tone = 'sage'}: {

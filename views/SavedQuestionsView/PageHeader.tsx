@@ -1,7 +1,6 @@
 import { View } from '../../utils/types';
-import { Button } from '../../components/ui';
+import {Button, Icon} from '../../components/ui';
 import type { SavedQuestionsViewModel } from './useSavedQuestionsViewModel';
-import { Icon } from './questionUi';
 
 export function PageHeader({vm}: {vm: SavedQuestionsViewModel}) {
     const { setView } = vm;

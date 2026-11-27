@@ -1,6 +1,6 @@
 import type {GlucoseViewModel} from '../useGlucoseViewModel';
 import {hba1cEntryTier} from '../recordStatus';
-import {Icon} from './recordUi';
+import {Icon} from '../../../components/ui';
 
 export function HbA1cEntryForm({vm}: {vm: GlucoseViewModel}) {
     const {addHbA1cRecord, newHbA1c, setNewHbA1c} = vm;

@@ -1,0 +1,868 @@
+/* =============================================================================
+   Records / 血糖紀錄 view (Stage 6): glucose, symptoms, HbA1c.
+   Scoped to .ds-records. Status colours follow the Home StatTile tones:
+   low = --c-glucose-low on #FCECEC, high = butter, normal = sage, info = mist.
+   Thresholds live in views/GlucoseView/recordStatus.ts and are unchanged.
+   ============================================================================= */
+
+.ds-records {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-section-gap);
+    padding-bottom: 8px;
+}
+
+.ds-records p,
+.ds-records h2,
+.ds-records h3,
+.ds-records h4,
+.ds-records ul,
+.ds-records dl,
+.ds-records dd {
+    margin: 0;
+}
+
+.ds-records button {
+    font-family: var(--ds-font);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.ds-records .ds-btn:disabled {
+    opacity: 1;
+    background: var(--c-surface-muted);
+    color: var(--c-ink-3);
+}
+
+.ds-records .ds-btn {
+    gap: 8px;
+}
+
+/* Tabs: let the short 糖化 tab give its room to the four-character ones */
+.ds-rec-tabs .ds-seg-btn {
+    flex: 1 1 auto;
+    padding: 0 8px;
+    white-space: nowrap;
+}
+
+.ds-rec-tab,
+.ds-rec-section,
+.ds-rec-form,
+.ds-rec-row,
+.ds-rec-details,
+.ds-rec-detail,
+.ds-rec-section-head,
+.ds-rec-actions,
+.ds-rec-list,
+.ds-rec-chart,
+.ds-rec-added,
+.ds-rec-cloud-wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+.ds-rec-tab { gap: var(--ds-section-gap); }
+.ds-rec-section { gap: 16px; }
+.ds-rec-form { gap: 24px; }
+.ds-rec-row { gap: 8px; }
+.ds-rec-details { gap: 8px; }
+.ds-rec-detail { gap: 8px; }
+.ds-rec-section-head { gap: 4px; }
+.ds-rec-actions { gap: 8px; }
+.ds-rec-list { gap: 12px; }
+.ds-rec-chart { gap: 16px; }
+.ds-rec-added { gap: 8px; }
+.ds-rec-cloud-wrap { gap: 12px; }
+
+.ds-rec-row-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ds-rec-chevron {
+    flex: 0 0 auto;
+    transition: transform var(--ds-duration) var(--ds-ease);
+}
+
+.ds-rec-chevron.is-open {
+    transform: rotate(180deg);
+}
+
+/* Full-width value buttons (time, period) */
+.ds-rec-picker {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: var(--touch-min);
+    padding: 8px 16px;
+    border: 1px solid rgba(31, 37, 34, 0.16);
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-surface);
+    color: var(--c-ink);
+    text-align: left;
+    cursor: pointer;
+    --t-font: var(--t-label);
+    --t-weight: 600;
+    --t-lh: var(--t-label-lh);
+    font-size: var(--t-label);
+    font-weight: 600;
+    line-height: var(--t-label-lh);
+}
+
+.ds-rec-picker > svg:first-child {
+    color: var(--c-sage-700);
+    flex: 0 0 auto;
+}
+
+.ds-rec-picker-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Expanded panels */
+.ds-rec-panel,
+.ds-rec-custom,
+.ds-rec-subpanel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-surface-muted);
+}
+
+.ds-rec-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.ds-rec-panel.ds-rec-options {
+    display: grid;
+}
+
+.ds-rec-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    min-height: var(--touch-min);
+    padding: 8px 12px;
+    border: 1px solid rgba(31, 37, 34, 0.16);
+    border-radius: 14px;
+    background: var(--c-surface);
+    color: var(--c-ink);
+    text-align: left;
+    cursor: pointer;
+    --t-font: var(--t-label);
+    --t-weight: 600;
+    --t-lh: var(--t-label-lh);
+    font-size: var(--t-label);
+    font-weight: 600;
+    line-height: var(--t-label-lh);
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+}
+
+.ds-rec-option[aria-pressed="true"] {
+    background: var(--c-ink);
+    border-color: var(--c-ink);
+    color: var(--c-white);
+}
+
+.ds-rec-option > svg {
+    flex: 0 0 auto;
+}
+
+/* Value entry (glucose mmol/L, HbA1c %) */
+.ds-rec-number {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 4px 16px;
+    border: 1px solid rgba(31, 37, 34, 0.16);
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-surface);
+}
+
+.ds-rec-number:focus-within {
+    outline: 3px solid var(--c-focus);
+    outline-offset: 2px;
+}
+
+.ds-rec-number-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    min-height: var(--touch-min);
+    border: 0;
+    background: transparent;
+    color: var(--c-ink);
+    font-family: var(--ds-font);
+    --t-font: var(--t-h1);
+    --t-weight: 700;
+    --t-lh: 1.2;
+    font-size: var(--t-h1);
+    font-weight: 700;
+    line-height: 1.2;
+    outline: none;
+}
+
+.ds-rec-number-input::placeholder {
+    color: var(--c-ink-3);
+    font-weight: 600;
+    opacity: 1;
+}
+
+.ds-rec-unit {
+    margin-left: 4px;
+    font-size: var(--t-body);
+    font-weight: 600;
+    color: var(--c-ink-2);
+    white-space: nowrap;
+}
+
+.ds-rec-value {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+.ds-rec-value .t-h1,
+.ds-rec-value .t-h2 {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Alerts and status pills */
+.ds-rec-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--ds-radius-inner);
+}
+
+.ds-rec-alert-icon {
+    flex: 0 0 auto;
+    margin-top: 2px;
+}
+
+.ds-rec-alert > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ds-rec-alert.is-low,
+.ds-rec-pill.is-low { background: #FCECEC; color: #8F1D14; }
+.ds-rec-alert.is-high,
+.ds-rec-pill.is-high,
+.ds-rec-pill.is-caution { background: var(--c-butter-100); color: var(--c-butter); }
+.ds-rec-alert.is-normal,
+.ds-rec-pill.is-normal { background: var(--c-sage-100); color: var(--c-sage-700); }
+.ds-rec-alert.is-info,
+.ds-rec-pill.is-info { background: var(--c-mist-100); color: var(--c-mist); }
+
+.ds-rec-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 2px 12px;
+    border-radius: var(--ds-radius-pill);
+    font-size: var(--t-caption);
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+/* 其他資訊 rows (diet / exercise / symptoms) */
+.ds-rec-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: var(--touch-min);
+    padding: 8px 14px 8px 8px;
+    border: 1px solid rgba(31, 37, 34, 0.12);
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-surface-muted);
+    color: var(--c-ink);
+    text-align: left;
+    cursor: pointer;
+    --t-font: var(--t-label);
+    --t-weight: 600;
+    --t-lh: var(--t-label-lh);
+}
+
+.ds-rec-toggle-icon {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--ds-radius-pill);
+    background: var(--c-surface);
+    color: var(--c-sage-700);
+}
+
+.ds-rec-toggle.is-filled .ds-rec-toggle-icon {
+    background: var(--c-sage-100);
+}
+
+.ds-rec-toggle-body {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.ds-rec-toggle-summary {
+    color: var(--c-sage-700);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ds-rec-inline {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.ds-rec-inline > input {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ds-rec-voice {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: var(--touch-min);
+    padding: 0 14px;
+    border: 0;
+    border-radius: var(--ds-radius-btn);
+    background: var(--c-sage-100);
+    color: var(--c-sage-700);
+    cursor: pointer;
+    white-space: nowrap;
+    --t-font: var(--t-label);
+    --t-weight: 600;
+    font-size: var(--t-label);
+    font-weight: 600;
+}
+
+.ds-rec-voice.is-live {
+    background: var(--c-glucose-low);
+    color: var(--c-white);
+}
+
+.ds-rec-tag {
+    padding: 0 14px 0 10px;
+}
+
+.ds-rec-clear {
+    align-self: flex-start;
+    min-height: var(--touch-min);
+    padding: 0 12px;
+    color: var(--c-ink-2);
+}
+
+/* Section heads, range switch, custom range */
+.ds-rec-range .ds-seg-btn {
+    padding: 0 6px;
+    white-space: nowrap;
+}
+
+.ds-rec-custom-dates {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.ds-rec-date {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ds-rec-presets {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Glucose stats */
+.ds-rec-stats {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.ds-rec-stat {
+    padding: 16px 20px;
+}
+
+.ds-rec-stat .t-display-strong {
+    --t-font: var(--t-h1);
+    font-size: var(--t-h1);
+    line-height: 1.2;
+}
+
+/* Charts */
+.ds-rec-chart-box {
+    width: 100%;
+    height: 260px;
+}
+
+.ds-rec-chart-box.is-large {
+    height: 320px;
+}
+
+.ds-rec-chart-box > .ds-rec-empty {
+    height: 100%;
+    justify-content: center;
+}
+
+.ds-rec-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    padding: 12px 0 0;
+    border-top: 1px solid rgba(31, 37, 34, 0.08);
+    list-style: none;
+}
+
+.ds-rec-legend li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--c-ink-2);
+}
+
+.ds-rec-key {
+    flex: 0 0 auto;
+    display: inline-block;
+}
+
+.ds-rec-key.is-band {
+    width: 22px;
+    height: 14px;
+    border-radius: 4px;
+    background: var(--c-sage-200);
+    border-top: 2px dashed var(--c-glucose-target);
+}
+
+.ds-rec-key.is-line {
+    width: 24px;
+    height: 0;
+    border-top: 2px dashed currentColor;
+}
+
+.ds-rec-key.is-line.is-low { color: var(--c-glucose-low); }
+.ds-rec-key.is-line.is-high { color: var(--c-glucose-high); }
+.ds-rec-key.is-line.is-target { color: var(--c-glucose-target); }
+
+.ds-rec-key.is-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--ds-radius-pill);
+    background: var(--c-brand-legacy);
+}
+
+.ds-rec-tooltip {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 240px;
+    padding: 12px 14px;
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-surface);
+    color: var(--c-ink);
+    box-shadow: var(--ds-e2);
+    font-family: var(--ds-font);
+}
+
+.ds-rec-tooltip-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.ds-rec-tooltip-note {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Record list */
+.ds-rec-disclosure {
+    align-self: flex-start;
+    padding: 0 16px;
+}
+
+.ds-rec-filters .ds-chip {
+    gap: 8px;
+}
+
+.ds-rec-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    padding: 0 8px;
+    border-radius: var(--ds-radius-pill);
+    background: var(--c-surface-muted);
+    color: var(--c-ink);
+    font-size: var(--t-caption);
+    font-weight: 700;
+    line-height: 1.6;
+}
+
+.ds-chip[aria-pressed="true"] .ds-rec-count {
+    background: var(--c-surface);
+}
+
+.ds-rec-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 16px 4px 16px 16px;
+    border-left: 6px solid var(--c-mist);
+}
+
+.ds-rec-card.is-low { border-left-color: var(--c-glucose-low); }
+.ds-rec-card.is-high { border-left-color: var(--c-glucose-high); }
+.ds-rec-card.is-normal { border-left-color: var(--c-glucose-target); }
+.ds-rec-card.is-none { border-left-color: var(--c-mist); }
+
+.ds-rec-card-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ds-rec-card-top {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+}
+
+.ds-rec-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0;
+    list-style: none;
+}
+
+.ds-rec-tagchip {
+    padding: 4px 12px;
+    border-radius: var(--ds-radius-pill);
+    background: var(--c-surface-muted);
+    color: var(--c-ink);
+    font-size: var(--t-caption);
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.ds-rec-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--c-surface-muted);
+}
+
+.ds-rec-notes > div {
+    display: grid;
+    grid-template-columns: 3em minmax(0, 1fr);
+    gap: 8px;
+    font-size: var(--t-caption);
+    line-height: 1.5;
+}
+
+.ds-rec-notes dt {
+    color: var(--c-ink-2);
+    font-weight: 600;
+}
+
+.ds-rec-notes dd {
+    color: var(--c-ink);
+    overflow-wrap: anywhere;
+}
+
+.ds-rec-delete {
+    flex: 0 0 auto;
+    color: var(--c-ink-2);
+}
+
+.ds-rec-more {
+    height: auto;
+    padding: 10px 16px;
+    white-space: normal;
+    text-align: center;
+}
+
+.ds-rec-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 16px;
+    border: 1px dashed rgba(31, 37, 34, 0.24);
+    border-radius: var(--ds-radius-card);
+    background: var(--c-surface);
+    text-align: center;
+}
+
+/* Saved banner */
+.ds-rec-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-sage-100);
+    color: var(--c-sage-700);
+}
+
+.ds-rec-banner-icon {
+    flex: 0 0 auto;
+}
+
+/* Symptom categories */
+.ds-rec-cats {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.ds-rec-cat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    border-radius: var(--ds-radius-inner);
+    border-left: 6px solid var(--c-mist);
+    background: var(--c-surface);
+    color: var(--c-ink);
+}
+
+.ds-rec-cat .t-caption { color: var(--c-ink-2); }
+.ds-rec-cat.is-low { border-left-color: var(--c-glucose-low); }
+.ds-rec-cat.is-high { border-left-color: var(--c-glucose-high); }
+.ds-rec-cat.is-nerve { border-left-color: var(--c-lavender); }
+.ds-rec-cat.is-top { border-left-color: var(--c-mist); }
+
+/* Word cloud: size = frequency, count always written */
+.ds-rec-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 16px;
+    border-radius: var(--ds-radius-card);
+    background: var(--c-surface-muted);
+}
+
+.ds-rec-word {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--touch-min);
+    padding: 4px 14px;
+    border: 1px solid rgba(31, 37, 34, 0.14);
+    border-radius: var(--ds-radius-pill);
+    background: var(--c-surface);
+    color: var(--c-ink);
+    cursor: pointer;
+    --t-font: var(--t-body);
+    --t-weight: 600;
+    font-size: var(--t-body);
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.ds-rec-word.is-t2 { --t-font: var(--t-label); font-size: var(--t-label); font-weight: 700; --t-weight: 700; }
+.ds-rec-word.is-t3 { --t-font: var(--t-title); font-size: var(--t-title); font-weight: 700; --t-weight: 700; background: var(--c-butter-100); color: var(--c-butter); border-color: transparent; }
+.ds-rec-word.is-t4 { --t-font: var(--t-h2); font-size: var(--t-h2); font-weight: 700; --t-weight: 700; background: var(--c-butter-100); color: var(--c-butter); border-color: var(--c-butter); }
+
+.ds-rec-word[aria-pressed="true"] {
+    background: var(--c-ink);
+    border-color: var(--c-ink);
+    color: var(--c-white);
+}
+
+.ds-rec-word[aria-pressed="true"] .ds-rec-count {
+    background: var(--c-surface);
+    color: var(--c-ink);
+}
+
+.ds-rec-word.is-zero {
+    min-height: 40px;
+    border-style: dashed;
+    background: transparent;
+    color: var(--c-ink-3);
+    cursor: default;
+    font-size: var(--t-caption);
+    font-weight: 500;
+}
+
+.ds-rec-filterbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 12px 14px;
+    border-radius: var(--ds-radius-inner);
+    background: var(--c-mist-100);
+    color: var(--c-mist);
+}
+
+.ds-rec-filterbar > .t-body-strong {
+    flex: 1 1 12em;
+    min-width: 0;
+}
+
+.ds-rec-save {
+    flex-wrap: wrap;
+    height: auto;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.ds-rec-save-count {
+    padding: 2px 10px;
+    border-radius: var(--ds-radius-pill);
+    background: rgba(255, 255, 255, 0.18);
+    font-size: var(--t-caption);
+    font-weight: 600;
+}
+
+.ds-rec-save:disabled .ds-rec-save-count {
+    background: var(--c-surface);
+}
+
+@media (min-width: 400px) {
+    .ds-rec-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ds-rec-custom-dates { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 560px) {
+    .ds-rec-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .ds-rec-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 359px) {
+    .ds-rec-voice > span { display: none; }
+    .ds-rec-voice { padding: 0 12px; }
+    .ds-rec-card { padding-left: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ds-rec-chevron { transition: none; }
+}
+
+.ds-rec-toggle-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--c-ink);
+}
+
+.ds-rec-toggle-title > svg {
+    color: var(--c-ink-2);
+}
+
+/* Symptom checklist (multi-select): leading box, full-width rows */
+.ds-rec-checklist {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.ds-rec-check {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: var(--touch-min);
+    padding: 8px 14px;
+    border: 1px solid rgba(31, 37, 34, 0.16);
+    border-radius: 14px;
+    background: var(--c-surface);
+    color: var(--c-ink);
+    text-align: left;
+    cursor: pointer;
+    --t-font: var(--t-label);
+    --t-weight: 600;
+    --t-lh: var(--t-label-lh);
+    font-size: var(--t-label);
+    font-weight: 600;
+}
+
+.ds-rec-checkbox {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 2px solid var(--c-ink-3);
+    border-radius: 6px;
+    background: var(--c-surface);
+    color: var(--c-white);
+}
+
+.ds-rec-check[aria-pressed="true"] {
+    background: var(--c-sage-100);
+    border-color: var(--c-sage-700);
+}
+
+.ds-rec-check[aria-pressed="true"] .ds-rec-checkbox {
+    border-color: var(--c-sage-700);
+    background: var(--c-sage-700);
+}
+
+/* keep row text clear of the floating mic's column */
+.ds-rec-toggle {
+    padding-right: 44px;
+}
+
+@media (min-width: 400px) {
+    .ds-rec-checklist { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 359px) {
+    .ds-rec-save > svg { display: none; }
+}
+
+@media (max-width: 359px) {
+    .ds-records .ds-card { padding: 16px; }
+    .ds-records .ds-rec-card { padding: 16px 4px 16px 12px; }
+    .ds-rec-number-input { --t-font: var(--t-h2); font-size: var(--t-h2); }
+    .ds-rec-panel,
+    .ds-rec-custom,
+    .ds-rec-subpanel { padding: 12px; }
+}
+
+@media (max-width: 359px) {
+    .ds-rec-toggle { padding-left: 14px; }
+    .ds-rec-toggle-icon { display: none; }
+}

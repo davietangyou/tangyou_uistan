@@ -1,6 +1,6 @@
-import { Button, Card, cx } from '../../components/ui';
+import {Button, Card, cx, Icon} from '../../components/ui';
 import type { SavedQuestionsViewModel } from './useSavedQuestionsViewModel';
-import { CountPill, ExpandToggle, Icon, IndexBadge, SectionHead } from './questionUi';
+import {CountPill, ExpandToggle, IndexBadge, SectionHead} from './questionUi';
 
 export function SavedListSection({vm}: {vm: SavedQuestionsViewModel}) {
     const {

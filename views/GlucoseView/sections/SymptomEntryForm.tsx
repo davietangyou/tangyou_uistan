@@ -2,7 +2,8 @@ import type {GlucoseViewModel} from '../useGlucoseViewModel';
 import { PREDEFINED_SYMPTOMS } from '../constants';
 import {RecordTimeRow} from './RecordTimeRow';
 import {RecordPeriodRow} from './RecordPeriodRow';
-import {Icon, VoiceButton} from './recordUi';
+import {VoiceButton} from './recordUi';
+import {Icon} from '../../../components/ui';
 
 export function SymptomEntryForm({vm}: {vm: GlucoseViewModel}) {
     const {

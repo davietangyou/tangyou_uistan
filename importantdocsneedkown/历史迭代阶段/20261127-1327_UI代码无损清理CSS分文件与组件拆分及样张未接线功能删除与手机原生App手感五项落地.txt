@@ -1,0 +1,175 @@
+================================================================================
+阶段历史归档：UI 代码无损清理、CSS 分文件与组件拆分、样张与未接线功能删除，以及手机原生 App 手感五项落地（阶段十一、十二）
+================================================================================
+
+归档时间：2026-11-27 13:27（香港时间，UTC+8）
+归档文件：importantdocsneedkown/历史迭代阶段/20261127-1327_UI代码无损清理CSS分文件与组件拆分及样张未接线功能删除与手机原生App手感五项落地.txt
+工作分支：chore/ui-cleanup（以 main @ 5d8d7f7 为基）
+本归档对应收口时的代码顶点：0bc4b32（本归档文件另作一次提交，只含本文件）
+合并与发布状态（归档时）：chore/ui-cleanup 未合并进 main；main 仍为 5d8d7f7（UI 重构合并 c18afb1 + 活文档同步）；未部署，线上 Worker「tangyou-app」仍为 c18afb1 时期的版本（Version 33ef2296-18fd-4844-8b92-7a1da855d38f）。
+阶段工作文档与工具位置：仓库外 /workspace/ui-refactor-work/（stages/11_代码清理.md、stages/12_原生手感.md、tools/s11/ 探针与 A/B 脚本、stage11/ 与 stage12/ 证据、stage12/review.html 前后对比页）。这些不进 git，本归档是它们在仓库内的长期摘要。
+
+================================================================================
+一、阶段起点与原始处境
+================================================================================
+
+本轮起始于《历史迭代阶段/20261127-0105_无损UI重构大升级鼠尾草墨色设计系统十阶段串行换皮验证网护航与独立差分复核确认可合并.txt》之后：`feat/ui-refactor` 已合并进 `main`（c18afb1）并发布到 Cloudflare Workers，活文档已同步（5d8d7f7）。
+
+起点时代码层面的遗留：
+
+- `public/styles/app.css` 约 112 KB、5000 多行，单文件。前 4550 字节为重构前的原规则，按旧约定「逐字节不变、新样式只在末尾追加」，其中 `.premium-card`、`.nav-blur`、`.large-font .text-*` 与 `.large-font button, input, select, textarea` 的 `!important` 大字锤等已基本不影响画面。
+- 4 份重复的 `Icon` 辅助组件，7 个从未使用的图标，ChatPanel 仍向 `renderBulletPoints` 传无效的 Tailwind 类名。
+- `views/ConsultView/ChatPanel.tsx` 834 行，`views/GlucoseView/sections/GlucoseEntryForm.tsx` 351 行。
+- 开发态样张 `UiKitPreview` 及只为它存在的组件；未接线的 `DetailView`、`MedicationReminders`。
+- 前端在手机上仍是「网页手感」：无全屏 / 安全区、无主画面安装信息、点击高亮与双击缩放、整页回弹、原生 alert / confirm。
+
+================================================================================
+二、项目主人决定与授权链
+================================================================================
+
+- t46u：当前 UI 视为终版，做代码清理；核心业务无损，只动 UI 层，回滚靠 git。新分支 `chore/ui-cleanup`。保持不变：DetailView、MedicationReminders、handleDownload（列为主人决定项）、consultText.ts 文案、dia_* 键与形状、选项值、视图模型与逻辑、server、cloudflare、提示词、package 文件、scripts、env、index.html；不新增依赖。只更新提到 4550 规则的三份活文档（须知、仓库纯净性、手动搭建指南）。
+- 中断后追加：逐块推进，每块 verify、提交、推送；可证明的高价值删除优先，难以证明的保留并列出。
+- t53u：先收尾清理，「已证明的提交，其余列出」；同一分支上做文件拆分：`app.css` 按层叠顺序拆成 `public/styles/` 下的 @import 分文件（不改 index.html），超过约 300 行的 TSX/TS 纯搬移拆分；分文件列为 ZIP 保留路径。
+- t54u：「组件样例页删了吧，该修的修好吧，详情页用药提醒下载等确认用不上的，也删了吧。」逐项确认不可达；若会动到逻辑、localStorage 键、请求或锁定文案 / 选项 / 形态金样则停下汇报。授权为此最小改动 verify 脚本（不动 package 脚本、依赖、env 名）。
+- t55u / t56u：「让这个前端模拟原生手机 app，不用改动太大，具备基本的 app 手感即可」，「不用大幅度 UI 重构，更不破坏核心业务逻辑」。阶段十二五项；授权本次 index.html 小改动。
+- t57u：麦克风遮挡不修，直接生成本历史阶段文档。
+
+整轮不变的边界：只在 `chore/ui-cleanup` 提交与推送；不合并、不部署；不碰 DNS、Route、密钥与旧 systemd 伺服器；不改 server、cloudflare、提示词、package 文件；不改《核心业务明细》与历史归档。
+
+================================================================================
+三、阶段十一：代码清理与文件拆分（提交时间为香港时间 2026-11-27）
+================================================================================
+
+### 3.1 共享 Icon 与死代码（ecb26b9，02:25）
+
+- 新增 `components/ui/Icon.tsx`（装饰性 `uiIcons` 图标，aria-hidden，默认描边），替换 recordUi / formParts / questionUi / ChatPanel 中 4 份重复的 Icon。
+- 删除 7 个未用图标：savedBookmark、glucoseLow、download、settings、activity、speak、trend。
+- ChatPanel 不再传 "text-xs"/"font-semibold"、"text-[11px]"/"font-medium"；Segmented 去掉未用的 React import。28 个文件，+49/−70。
+
+### 3.2 删除不再影响画面的 CSS，退役 4550 字节前缀规则（a809534，03:39）
+
+方法：在阶段九全应用审计的 668 个状态快照上（5 个视图 × 320/390 × 大字 / 标准字），逐规则做选择器命中扫描；再做同页 A/B：同一页面同一时刻，分别以原样式表与候选样式表记录每个元素（含伪元素）的全部计算样式，逐属性比对。候选样式表以 `<style>` 文本注入，不走 CSSOM 往返，因为 Chrome 对 var() 简写的序列化会丢信息。
+
+删除：`.premium-card`(+:hover)、`.nav-blur`、`.spacy-container`、`:root` 品牌变量（值内联进 body）、全部 `.large-font .text-*`、`.large-font button, input, select, textarea` 锤子、`.large-font select`；设计系统中无源码引用的 `.t-display`、`.t-sage`、4 条 `.ds-cat-*`、`.ds-home-guide`。
+
+A/B 结论：`.large-font` 根规则（可继承的字距 / 词距 / 行高）与 `.ds-control` 逃逸规则删掉会改变大字画面，所以保留。668 个状态中唯一的差异落在 ChatPanel 隐藏的文件输入框（display:none）上，它不渲染。
+
+旧的「前 4550 字节逐字节不变」规则有意退役；`components/ui/README.md` 的大字一节同步改写。app.css 112,055 → 107,799 B。
+
+### 3.3 app.css 拆为 @import 分文件（d3f3eee，03:47）
+
+`public/styles/app.css` 只保留 Google 字体与按层叠顺序排列的 @import：
+
+base.css（body、原生控件、页头淡入、滚动条）→ large-font.css（.large-font 根规则）→ tokens.css（设计令牌与 .t-*）→ components.css（.ds-root 子树与共用 .ds-*，含 .ds-control）→ shell.css → home.css → consult.css → records.css → questions.css → profile.css（含首次引导）→ polish.css（阶段九修饰与无障碍）。阶段十二再在最后追加 native.css。
+
+纯搬移证据：分文件按 @import 顺序以空行拼接后，与 a809534 的 app.css 正文逐字节相同（只有头注释不同）。`vite build` 把 `public/styles/` 原样复制到 `dist/styles/`；本地 `wrangler dev --assets` 逐个返回 200 text/css，与源文件相同（未部署）。index.html 未改。
+
+### 3.4 大文件纯搬移拆分（cda1bdd 03:52，f10891c 03:59）
+
+| 文件 | 前 | 后 | 拆出 |
+|---|---|---|---|
+| views/ConsultView/ChatPanel.tsx | 834 | 314 | UserBubble 78、PreferenceCard 180、AnswerDetails 132、FollowUps 42、Composer 125、Shortcuts 39 |
+| views/GlucoseView/sections/GlucoseEntryForm.tsx | 351 | 149 | GlucoseDetails 204 |
+| public/styles/app.css | 5000+ 行 | 16 行 | 11 个分文件，最大 consult.css 1,287 行 |
+
+SafetyCard 与 AnswerSummary 留在 ChatPanel：锁定文案合同（scripts/verify/lib/lockedCopy.mjs）把它们的字符串钉在该文件。仍超过约 300 行但不拆的有：`useGlucoseViewModel.ts` 788、`useConsultViewModel.tsx` 358（视图模型，不在范围内）。
+
+### 3.5 活文档（f56b064，03:59）
+
+须知、仓库纯净性、手动搭建指南：退役 4550 规则；`public/styles/` 整个目录与新模块列为 ZIP 保留路径。
+
+### 3.6 按主人决定删除样张与未接线功能
+
+95ffb9a（09:25）删除 `components/ui/` 的 UiKitPreview、Chip、Dialog、Sheet、IconButton、ListRow、SectionHeader、useFocusTrap、`getUiIcon`；`scripts/verify/capture-uikit.mjs`、`fixtures/uikit.html`、`fixtures/uikit-main.tsx`（11 个文件，861 行，36,818 B）。capture-uikit 只服务样张、不在 `npm run verify` 中，并且还在核对已退役的 4550 前缀，所以删除而不是修复。一并删除只有这些组件用到的 CSS：`.ds-page`、`.ds-stack-sections`、`.ds-icon-btn-ink`、`.ds-list-row*`、`.ds-section-header`、`.ds-backdrop`、`.ds-sheet`、`.ds-dialog`、`.ds-overlay-head`、相关 keyframes 与减少动态效果选择器、`.t-ink`。components.css 11,922 → 8,925 B，tokens.css 4,887 → 4,855 B。不可达证据：应用内无任何 import；这些类在保留的源码里零引用，也没有动态拼接；不在金样或锁定文案中。
+
+ac5b3d1（09:34）删除 `views/DetailView/`（含桶文件）及 ViewRouter 中的分支、`components/MedicationReminders/`（含桶文件）。19 个文件，1,377 行，75,725 B。不可达证据：全仓库没有 `setView(View.Detail)`；底部导航不含 Detail；初始视图只会是 Onboarding 或 Home，且不持久化；MedicationReminders 没有任何 import。两者都已没有自己的 CSS 或图标。
+
+刻意保留（会动到逻辑或金样，按规则停下不删）：
+- `handleDownload`、`handleUploadData`：属于 `useAppLogic` 回传键，在逻辑金样里。
+- `View.Detail`、`View.Result` 枚举值：在逻辑金样 `viewEnumValues` 里。
+- `domain/reminders.ts` 与 `dia_reminders_v2`、`dia_taken_logs_v2`、`dia_auto_triggered_*`：属于 domain 层与存储键合同（逻辑金样、storage-roundtrip 流程金样、verify 种子）。删除组件后已没有在线代码读写这些键。
+- `hooks/useAppLogic.ts` 中提到 DetailView 的注释（逻辑文件保持逐字节不变）；`capture-dom.mjs` 的 note 字符串（保持 DOM 采集与旧基线可比）。
+- 总体规划 P11（未接线能力不删）中的 DetailView / MedicationReminders 已被 t54u 取代；P11 由逻辑快照守护的部分仍然有效。
+
+================================================================================
+四、阶段十二：手机原生 App 手感五项（提交时间为香港时间 2026-11-27）
+================================================================================
+
+| 项 | 提交 | 改动 |
+|---|---|---|
+| 1 全屏与安全区 | 945917c（10:04） | index.html：`viewport-fit=cover`、theme-color `#F5F5EF`、mobile/apple web-app-capable、状态栏样式 default、app 标题「糖友導航」、manifest 与 apple-touch-icon 链接。新增 `public/manifest.webmanifest`（standalone、竖屏、相对 start_url 与 scope）与 `public/icons/`（apple-touch-icon、192、512）。新分文件 `public/styles/native.css`（最后 @import）：外壳列与页头的安全区内边距。无 service worker |
+| 2 去掉网页感 | 945917c | 去掉点击高亮；html `touch-action: manipulation`（不能双击缩放，保留双指缩放）；页面 `overscroll-behavior-y: none`（不回弹、不下拉刷新）；按钮与外壳 `user-select: none` 且无长按菜单，输入框与阅读文字（AI 回答、记录）仍可选 |
+| 3 按下回馈 | 141f110（10:17） | 可用按钮 :active 时 `scale: 0.97` 加 `brightness(0.94)`；用独立的 scale 属性，与原有 transform 叠加；悬浮麦克风保留自己的按下样式；减少动态效果时只保留变暗 |
+| 5 应用内提示弹层 | 8a2d100（10:26） | `components/ui/AppDialog.tsx`：`AppDialogHost` 挂载后接管 `window.alert`，12 处现有 `alert()`（hooks 与视图模型）一字不改，消息原样显示在底部弹层（按钮「知道了」）。每个调用点 alert 后都立即 return，非阻塞不改变后续执行。唯一的 `confirm()`（个人档案「重置系统所有资料」）改用 `appConfirm()`，同一句文案；只有「確定」为 true，「取消」、Escape、点遮罩都是 false；只在 true 时清除并重新加载。alertdialog + aria-modal，焦点落在主按钮，Tab 不跑出弹层，关闭后焦点还原。金样与锁定文案清单均未钉住 alert / confirm，无需停下。（该提交说明误写为 13 处，实为 12 处） |
+| 4 分页切换 | b1b0a28（10:35） | 页头 sticky 置顶（画布底色，z-index 30，低于导航、麦克风和提示）；底部导航本来就是 fixed，所以只有内容滚动。Layout 把页头实际高度写入 `--shell-header-h`，`scroll-padding-top` 据此计算，聚焦时字段不会被页头挡住。`components/useTabScrollMemory.ts`：每个分页记住自己的滚动位置，首次进入在顶部。视图根节点淡入 0.18 秒（减少动态效果时关闭），挂在原有包装层新增的 `ds-view-stage` class 上 |
+
+0bc4b32（10:37）：三份活文档补充阶段十二的 ZIP 保留路径。
+
+================================================================================
+五、等效证据与审计数字
+================================================================================
+
+验证命令：`npm run verify -- [--skip-build] --out verify-results/<名> --compare verify-results/s11-main`，其中 s11-main 是 main 5d8d7f7 的新鲜采集；浏览器时钟冻结在 2026-11-26 09:30（香港时间）。
+
+阶段十一：
+- 块 1–5（ecb26b9、a809534、d3f3eee、cda1bdd、f10891c）每块 `--skip-build`：契约金样 `diffs: []`，52/52 一致。
+- 块 2 第一次 verify 在 DOM 采集中报「glucose default period not frozen」（导航时序偶发），原样重跑通过。
+- f56b064 完整 verify（含构建）：金样 OK，52/52 一致；生产包 898,497 B（main）→ 895,931 B。
+- 95ffb9a、ac5b3d1 每块：金样 OK，52/52 一致；ac5b3d1 时逻辑快照与金样逐字节相同。样张从未被 verify 采集，所以对比数量不变。干净构建后完整 verify：金样 OK，52/52；`dist/styles/` 与源文件逐个相同；生产包 887,902 B。
+- 阶段九 a11y：36 个状态，0 问题。视图审计：问题紀錄、血糖紀錄、个人档案都是 0；问 AI 5 条、首页 1 条「麦克风遮挡」启发式命中，与 main 基线（两次独立采集）完全相同。UI 合同审计的触控摘要与 main 采集相同。
+
+阶段十二：
+- 块 1、3、5：金样 OK，52/52 一致。块 4：金样 OK，44/52；8 个 DOM 差异都是 `<div class="pb-6">` 变成 `<div class="pb-6 ds-view-stage">`，另有一次 glucose-hba1c 的 Recharts 折线入场动画帧差异（stroke-dasharray，属采集时机）。块 3 第一次 verify 遇到首页问候加载时序偶发错误，重跑通过。
+- 0bc4b32 干净构建（`rm -rf dist`）后完整 verify：金样 `diffs: []`，OK；44/52 一致；8 个 DOM 快照去掉 `ds-view-stage` 后逐行残差为 0，动画帧差异没有再出现；16 张流程截图全部一致（verify 截图都在页顶，桌面浏览器安全区 inset 为 0，减少动态效果时淡入关闭，截图里也没有按下或弹层状态）。
+- 构建产物：`dist/styles/` 13 个文件与源文件逐个相同；`dist/manifest.webmanifest`、`dist/icons/` 都在；`dist/index.html` 含 `viewport-fit=cover` 与 manifest 链接。生产包 887,902 → 890,343 B（+2,441）。
+- a11y：36 个状态，0 问题；触控摘要与 main 相同；问 AI 审计 68 个状态触控不足 0，麦克风告警 5 条与 main 相同。首页审计因 CDP「Inspected target navigated」偶发崩溃无结果。
+- 行为检查（仓库外 stage12/）：
+  - sheet-test：文案与原文相同；取消、Escape 后 7 个键都在；确定后清除并回到首次引导；没有打开任何原生对话框。
+  - tab-test：血糖 600 → 首页 0 → 首页 300 → 血糖 600 → 首页 300；首次进入为 0；滚动时页头 top=0。
+  - webfeel：touch-action auto → manipulation；overscroll auto → none；导航按钮 user-select auto → none；页头 static → sticky；scroll-padding-top 16px → 102px。
+- 前后对比页：/workspace/ui-refactor-work/stage12/review.html（之前为 ac5b3d1，之后为阶段十二；390×844，模拟安全区上 47 / 下 34），可用 file:// 打开，或在该目录 `python3 -m http.server 8812`。
+
+尺寸汇总：CSS 合计 112,055 B（main）→ 105,757 B（阶段十一末）→ 110,075 B（阶段十二加入 native.css 并在 app.css 增加一行 @import）；生产包 898,497 → 887,902 → 890,343 B。
+
+================================================================================
+六、AI Studio ZIP 回灌新增保留路径
+================================================================================
+
+须知、仓库纯净性、手动搭建指南已列入（f56b064、0bc4b32）：
+
+- `public/styles/` 整个目录：入口 `app.css` 与 base、large-font、tokens、components、shell、home、consult、records、questions、profile、polish、native 共 12 个分文件；@import 顺序即层叠顺序，不可调换。
+- `public/manifest.webmanifest`、`public/icons/`（主画面安装与全屏）。
+- `components/ui/Icon.tsx`、`components/ui/AppDialog.tsx`、`components/useTabScrollMemory.ts`。
+- `views/ConsultView/` 下从 ChatPanel 拆出的 UserBubble、PreferenceCard、AnswerDetails、FollowUps、Composer、Shortcuts。
+- `views/GlucoseView/sections/GlucoseDetails.tsx`。
+- `index.html` 仍是受保护文件；阶段十二的 meta / manifest 改动已获授权，回灌时不应被导出物还原。
+
+已删除、导出物若重新带回应视为基线漂移的路径：`components/ui/` 的 UiKitPreview、Chip、Dialog、Sheet、IconButton、ListRow、SectionHeader、useFocusTrap；`scripts/verify/capture-uikit.mjs` 与 `fixtures/uikit*`；`views/DetailView*`；`components/MedicationReminders*`。
+
+================================================================================
+七、留待后续的未决项
+================================================================================
+
+- 麦克风遮挡告警（问 AI 加载态等 5 条、首页空清单 1 条，阶段九启发式）：t57u 决定不修。要消除需要挪动悬浮麦克风或增加底部留白，属于布局改动。
+- 《本项目剥离UI后用于UI重构的核心业务明细》仍写着「数据上报由 DetailView 页面上的上报按钮手动触发」。DetailView 删除后已经过时：`handleUploadData` 逻辑完整但没有任何 UI 入口。按要求未改该文档，待主人决定。
+- `motion` 依赖仍在 package.json（按要求未动），应用里已无引用。
+- `public/icons/` 是生成的占位图标（鼠尾草绿底、白色「糖」字），可由设计替换。
+- 其他：保留双指缩放的代价是 iOS 对字号小于 16px 的输入框会自动放大（本应用输入框都 ≥ 16px）；sticky 页头滚动时没有分隔阴影（为保持画面不变）。
+
+================================================================================
+八、当前现状边界
+================================================================================
+
+- `chore/ui-cleanup` 已推送远端，写入本归档前顶点为 0bc4b32；本归档另作一次只含本文件的提交。
+- `main` 仍为 5d8d7f7；未合并。
+- 未部署：线上 Worker 仍为 c18afb1 时期的版本（回滚目标 983f97ec-00ca-423c-8fb0-81b4a5e45dab 仍有效）。
+- 用户数据兼容：`dia_*` 键与形状未变。
+- 时间记录说明：box 系统时钟为 UTC，本归档中的提交时间已按 UTC+8 换算。
+
+================================================================================
+九、阶段结论
+================================================================================
+
+阶段十一在不动任何业务逻辑、契约与金样的前提下，把 UI 层代码清理到「每条规则都在生效」：退役 4550 字节冻结前缀，用 668 状态的同页计算样式 A/B 证明删除无副作用；app.css 拆成按层叠顺序 @import 的分文件，并以逐字节拼接证明是纯搬移；两个大组件纯搬移拆分；按主人决定删除样张与未接线功能，同时把逻辑合同中的部分原样保留。阶段十二以最小改动给前端加上手机原生 App 的基本手感：全屏与安全区、主画面安装、去掉网页感、按下回馈、页头固定与分页记忆和淡入、应用内提示弹层。提示文案逐字不变，确认语义不变。每块都经 verify 证明契约金样零差异，画面变化逐项解释并有前后对比页。
+
+是否合并进 `main`、是否发布到线上，不属于本归档收口范围，而属于其后由项目主人分别决定的独立步骤。

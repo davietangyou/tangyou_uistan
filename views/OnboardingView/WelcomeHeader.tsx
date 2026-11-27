@@ -1,5 +1,5 @@
 import type {OnboardingViewModel} from './useOnboardingViewModel';
-import {Icon} from '../ProfileShared/formParts';
+import {Icon} from '../../components/ui';
 
 export function WelcomeHeader(_props: {vm: OnboardingViewModel}) {
     return (

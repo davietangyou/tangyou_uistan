@@ -1,0 +1,35 @@
+body {
+    font-family: 'Noto Sans HK', sans-serif;
+    background-color: #FBFBFA;
+    color: #2C3E50;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+/* Native controls outside a more specific .ds-* rule. */
+input, textarea, select, button {
+    font-size: 1.125rem;
+    border-radius: 1rem;
+}
+
+/* Shell header entrance. */
+@keyframes soft-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-soft {
+    animation: soft-fade-in 0.8s ease-out forwards;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #DEDCDA;
+    border-radius: 10px;
+}

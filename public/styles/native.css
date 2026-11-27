@@ -1,0 +1,161 @@
+/* =============================================================================
+   Stage 12: native-app feel on phones (must load after polish.css)
+   Full-screen safe areas, no browser chrome feel, press feedback, tab
+   transitions, in-app alert/confirm sheet. Layout and copy are unchanged.
+   ============================================================================= */
+
+/* 1. Safe areas (index.html sets viewport-fit=cover, so env() is live).
+   In a normal browser tab every inset is 0 and nothing moves. */
+.ds-shell-canvas {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+}
+
+.ds-shell-header {
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+}
+
+.ds-shell-header-home {
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+}
+
+/* 2. No web feel: no grey tap flash, no double-tap zoom (pinch zoom still
+   works: touch-action manipulation keeps pan + pinch), no rubber-band bounce
+   or pull-to-refresh on the page itself. */
+html {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    overscroll-behavior-y: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    overscroll-behavior-y: none;
+}
+
+/* UI chrome is not selectable and shows no long-press callout. Inputs,
+   textareas and all reading text (AI answers, records) stay selectable. */
+button,
+[role="button"],
+[role="tab"],
+.ds-shell-header,
+.ds-shell-nav,
+.ds-shell-mic,
+.ds-shell-footer {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+}
+
+img,
+svg {
+    -webkit-touch-callout: none;
+}
+
+/* 3. Press feedback: a short dim + slight shrink while a finger is down.
+   The individual `scale` property composes with any existing transform.
+   The floating mic keeps its own :active style. */
+button:not(:disabled):not(.ds-shell-mic):active,
+[role="button"]:not([aria-disabled="true"]):active {
+    scale: 0.97;
+    filter: brightness(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    button:not(:disabled):not(.ds-shell-mic):active,
+    [role="button"]:not([aria-disabled="true"]):active {
+        scale: none;
+    }
+}
+
+/* 5. In-app alert / confirm bottom sheet (components/ui/AppDialog.tsx). */
+.ds-app-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: var(--c-backdrop);
+    animation: ds-app-fade 0.18s ease-out both;
+}
+
+.ds-app-sheet {
+    width: 100%;
+    max-width: var(--shell-column);
+    padding: 24px max(20px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+    border-radius: 24px 24px 0 0;
+    background: var(--c-surface);
+    color: var(--c-ink);
+    box-shadow: var(--ds-e2);
+    animation: ds-app-sheet-up 0.22s ease-out both;
+}
+
+.ds-app-sheet-message {
+    margin: 0 0 20px;
+    white-space: pre-wrap;
+}
+
+.ds-app-sheet-actions {
+    display: flex;
+    gap: var(--ds-target-gap);
+}
+
+.ds-app-sheet-actions .ds-btn {
+    flex: 1 1 0;
+}
+
+@keyframes ds-app-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes ds-app-sheet-up {
+    from { transform: translateY(24px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ds-app-sheet-backdrop,
+    .ds-app-sheet {
+        animation: none;
+    }
+}
+
+/* 4. Tabs: the header stays at the top and the bottom nav stays fixed, so
+   only the content scrolls. Its height comes from Layout (--shell-header-h)
+   so focus / scrollIntoView keep fields clear of it. Each tab fades in. */
+.ds-shell-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--c-canvas);
+}
+
+html {
+    scroll-padding-top: calc(var(--shell-header-h, 72px) + 16px);
+}
+
+.ds-view-stage > * {
+    animation: ds-view-in 0.18s ease-out both;
+}
+
+@keyframes ds-view-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ds-view-stage > * {
+        animation: none;
+    }
+}

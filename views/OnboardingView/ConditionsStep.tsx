@@ -1,7 +1,8 @@
 import {COMMON_CONDITIONS, OTHER_CONDITIONS, conditionsList} from '../../utils/constants';
 import {View, DiabetesType} from '../../utils/types';
 import type {OnboardingViewModel} from './useOnboardingViewModel';
-import {FieldBlock, Icon, OptionTile, Pill} from '../ProfileShared/formParts';
+import {FieldBlock, OptionTile, Pill} from '../ProfileShared/formParts';
+import {Icon} from '../../components/ui';
 
 export function ConditionsStep({vm}: {vm: OnboardingViewModel}) {
     const {

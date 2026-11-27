@@ -1,5 +1,5 @@
 import type {GlucoseViewModel} from '../useGlucoseViewModel';
-import {Icon} from './recordUi';
+import {Icon} from '../../../components/ui';
 
 /** 測量時間 / 紀錄時間 row: label + live/backfill status, full-width time button, native datetime picker. */
 export function RecordTimeRow({vm, label}: {vm: GlucoseViewModel; label: string}) {

@@ -1,8 +1,8 @@
 import type {MeViewModel} from './useMeViewModel';
 import type {GroupProps} from './MeView';
 import {EXERCISE_TYPE_OPTIONS} from './constants';
-import {cx} from '../../components/ui';
-import {FieldBlock, Icon, OptionTile, Pill, ProfileGroup} from '../ProfileShared/formParts';
+import {cx, Icon} from '../../components/ui';
+import {FieldBlock, OptionTile, Pill, ProfileGroup} from '../ProfileShared/formParts';
 
 // 每週運動狀態顯示（只影響顯示文字，儲存值 MET_150 / UNDER_150 / NONE 不變）
 function weeklyStatus(v?: string): {text: string; tone: 'sage' | 'butter' | 'muted'} {

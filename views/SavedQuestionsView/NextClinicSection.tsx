@@ -105,7 +105,7 @@ export function NextClinicSection({vm}: {vm: SavedQuestionsViewModel}) {
 
             {/* 自訂新增問診問題 */}
             {isAddingNextQ ? (
-                <div className="ds-sq-form">
+                <div className="ds-sq-form" data-keyboard-reveal>
                     <input
                         type="text"
                         className="ds-field-control ds-control"

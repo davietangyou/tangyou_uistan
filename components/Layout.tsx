@@ -23,6 +23,29 @@ interface LayoutProps {
 // row of chrome). Each page marks that heading with `.ds-page-lead`.
 const COMPACT_HEADER_VIEWS = new Set<View>([View.Home, View.SavedQuestions, View.Me, View.Onboarding]);
 
+/** R2-4: bring a focused field into the part of the screen the keyboard leaves,
+ * and out from under a pinned action bar (sticky 儲存 / 下一步 bars). A block
+ * marked data-keyboard-reveal (a field with its own 確定 / 取消 row) is
+ * revealed whole. */
+function revealField(focused: HTMLElement, vv: VisualViewport) {
+    const field = (focused.closest('[data-keyboard-reveal]') as HTMLElement | null) ?? focused;
+    field.scrollIntoView({block: 'nearest'});
+    let scroller: HTMLElement | null = field.parentElement;
+    while (scroller && !(/(auto|scroll)/.test(getComputedStyle(scroller).overflowY) && scroller.scrollHeight > scroller.clientHeight)) scroller = scroller.parentElement;
+    if (scroller === document.documentElement || scroller === document.body) scroller = null;
+    const scrollBy = (dy: number) => (scroller ? scroller.scrollBy(0, dy) : window.scrollBy(0, dy));
+    // Covered by the keyboard (page-level fields; fixed layers already end at it).
+    const limit = vv.offsetTop + vv.height - 16;
+    let r = field.getBoundingClientRect();
+    if (r.bottom > limit) { scrollBy(r.bottom - limit); r = field.getBoundingClientRect(); }
+    // Covered by a pinned bar (sticky 儲存 / 下一步) inside the same scroller.
+    const hit = document.elementFromPoint(r.left + 8, r.bottom - 4) as HTMLElement | null;
+    if (!hit || field.contains(hit) || hit.contains(field)) return;
+    let bar: HTMLElement | null = hit;
+    while (bar && !['sticky', 'fixed'].includes(getComputedStyle(bar).position)) bar = bar.parentElement;
+    if (bar && !bar.contains(field) && !bar.classList.contains('ds-shell-mic')) scrollBy(r.bottom - bar.getBoundingClientRect().top + 12);
+}
+
 export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLargeFont, view}) => {
     const isHome = view === View.Home;
     const isCompact = view !== undefined && COMPACT_HEADER_VIEWS.has(view);
@@ -59,7 +82,18 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
             // can sit on top of it instead of underneath.
             const inset = open ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
             root.style.setProperty('--ds-kb-inset', `${inset}px`);
+            // R2-4: keyboard opened (or changed height) → the field being typed
+            // into is brought above it, whether it sits in the page, a sub-page
+            // or a sheet. 問 AI anchors its own composer (useChatAnchor).
+            if (open && inset !== lastInset && el && el.id !== 'chat-input-box') {
+                const field = el;
+                requestAnimationFrame(() => {
+                    if (document.activeElement === field) revealField(field, vv);
+                });
+            }
+            lastInset = inset;
         };
+        let lastInset = 0;
         vv.addEventListener('resize', update);
         vv.addEventListener('scroll', update);
         document.addEventListener('focusout', update);

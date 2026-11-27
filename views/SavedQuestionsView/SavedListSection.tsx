@@ -47,7 +47,7 @@ export function SavedListSection({vm}: {vm: SavedQuestionsViewModel}) {
                 <div className="ds-sq-body">
                     {/* 新增問題編輯框 */}
                     {isAdding && (
-                        <div className="ds-sq-form">
+                        <div className="ds-sq-form" data-keyboard-reveal>
                             <input
                                 type="text"
                                 className="ds-field-control ds-control"

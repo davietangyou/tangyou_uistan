@@ -541,3 +541,15 @@ html[data-keyboard] .ds-shell-mic {
 html[data-keyboard] .ds-subpage {
     bottom: var(--ds-kb-inset, 0px);
 }
+
+/* R2-4: sheets with a text field (隨手記問診備忘, and any future one) do the
+   same: the sheet rests on the keyboard and gets shorter, its content scrolls
+   inside, so the field being typed into is never under the keyboard. */
+html[data-keyboard] .ds-sheet-scrim,
+html[data-keyboard] .ds-consult-memo-backdrop {
+    bottom: var(--ds-kb-inset, 0px);
+}
+html[data-keyboard] .ds-sheet,
+html[data-keyboard] .ds-consult-memo-dialog {
+    max-height: calc(100% - 16px);
+}

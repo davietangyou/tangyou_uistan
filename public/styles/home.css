@@ -96,22 +96,35 @@
     color: var(--c-ink);
 }
 
-/* Today visit banner: urgent, but no continuous pulse (hard on elders). */
+/* Today visit banner: the sun (reminder) family — clearly "today", not an
+   alarm; no continuous pulse (hard on elders). */
 .ds-home-today {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 14px;
     padding: var(--ds-card-pad);
     border-radius: var(--ds-radius-card);
-    background: var(--c-glucose-low);
-    color: var(--c-white);
+    background: var(--c-sun-100);
+    color: var(--c-sun-700);
 }
 
 .ds-home-today-row {
     display: flex;
     align-items: flex-start;
     gap: 12px;
+}
+
+.ds-home-today-mark {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--c-surface);
+    color: var(--c-sun-700);
 }
 
 .ds-home-today-copy {
@@ -122,21 +135,58 @@
 .ds-home-today-copy .t-body-strong,
 .ds-home-today-copy .t-body,
 .ds-home-today-copy .t-caption {
-    color: var(--c-white);
+    color: var(--c-sun-700);
     margin: 0;
     word-break: normal;
     line-break: auto;
     overflow-wrap: break-word;
 }
 
+.ds-home-today-copy .t-body-strong {
+    color: var(--c-ink);
+}
+
 .ds-home-today-copy .t-caption {
     margin-top: 4px;
-    opacity: 0.95;
 }
 
 .ds-home-today .ds-btn-secondary {
-    background: var(--c-white);
-    color: var(--c-glucose-low);
+    background: var(--c-surface);
+    color: var(--c-ink);
+}
+
+/* 去完善: the sage (profile) family. */
+.ds-home-enrich {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: var(--ds-card-pad);
+    border-radius: var(--ds-radius-card);
+    background: var(--c-sage-200);
+    color: var(--c-ink);
+}
+
+.ds-home-enrich-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.ds-home-enrich-row .t-body {
+    margin: 0;
+    min-width: 0;
+}
+
+.ds-home-enrich-mark {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--c-surface);
+    color: var(--c-sage-700);
 }
 
 /* Clinic / 覆診 card uses the lavender category pair. */
@@ -218,6 +268,7 @@
     flex-direction: column;
     gap: 12px;
     width: 100%;
+    padding-top: 4px;
 }
 
 .ds-home-q {
@@ -252,18 +303,17 @@
 }
 
 .ds-home-clinic-empty {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 16px;
-    border-radius: var(--ds-radius-inner);
-    background: var(--c-surface);
-    color: var(--c-ink);
+    padding: 8px 0 0;
 }
 
-.ds-home-clinic-empty .t-body-strong,
-.ds-home-clinic-empty .t-caption {
+.ds-home-clinic-empty .ds-empty-title {
+    font-size: var(--t-body);
+    line-height: var(--t-body-lh);
+}
+
+.ds-home-clinic-empty .ds-empty-text .t-caption {
     margin: 0;
+    color: var(--c-lilac-700);
 }
 
 .ds-home-clinic-foot {

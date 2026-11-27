@@ -1,5 +1,5 @@
 import {View} from '../../utils/types';
-import {Button, Field, uiIcons} from '../../components/ui';
+import {BottomSheet, Button, EmptyState, Field, uiIcons} from '../../components/ui';
 import type {HomeViewModel} from './useHomeViewModel';
 
 export function ClinicCard({vm}: {vm: HomeViewModel}) {
@@ -13,6 +13,10 @@ export function ClinicCard({vm}: {vm: HomeViewModel}) {
         handleSaveDate,
     } = vm;
     const CalendarIcon = uiIcons.calendar;
+    const cancelEdit = () => {
+        setTempDate(nextClinicDate);
+        setIsEditingDate(false);
+    };
 
     return (
         <section className="ds-home-clinic">
@@ -22,72 +26,76 @@ export function ClinicCard({vm}: {vm: HomeViewModel}) {
             </div>
 
             <div className="ds-home-clinic-date">
-                {isEditingDate ? (
-                    <div className="ds-home-clinic-edit">
-                        <Field
-                            label="覆診日期"
-                            type="date"
-                            value={tempDate}
-                            onChange={(e) => setTempDate(e.target.value)}
-                        />
-                        <div className="ds-cluster">
-                            <Button onClick={handleSaveDate}>保存</Button>
-                            <Button
-                                variant="ghost"
-                                onClick={() => {
-                                    setTempDate(nextClinicDate);
-                                    setIsEditingDate(false);
-                                }}
-                            >
-                                取消
-                            </Button>
-                        </div>
-                    </div>
-                ) : (
-                    <>
-                        <div className="ds-home-clinic-date-row">
-                            {nextClinicDate ? (
-                                <>
-                                    <span className="ds-home-chip">
-                                        <CalendarIcon size={18} strokeWidth={1.75} aria-hidden />
-                                        {nextClinicDate}
-                                    </span>
-                                    {dateReminderStatus === 'TODAY' && (
-                                        <span className="ds-home-chip ds-home-chip-today">今日！</span>
-                                    )}
-                                    {dateReminderStatus === 'FUTURE' && (
-                                        <span className="ds-home-chip ds-home-chip-future">還有 {daysDiff} 日</span>
-                                    )}
-                                    {dateReminderStatus === 'PAST' && (
-                                        <span className="ds-home-chip ds-home-chip-past">已過期</span>
-                                    )}
-                                </>
-                            ) : (
-                                <span className="ds-home-chip ds-home-chip-none">未設定日期</span>
+                <div className="ds-home-clinic-date-row">
+                    {nextClinicDate ? (
+                        <>
+                            <span className="ds-home-chip">
+                                <CalendarIcon size={18} strokeWidth={1.75} aria-hidden />
+                                {nextClinicDate}
+                            </span>
+                            {dateReminderStatus === 'TODAY' && (
+                                <span className="ds-home-chip ds-home-chip-today">今日！</span>
                             )}
-                            <Button
-                                variant="secondary"
-                                onClick={() => {
-                                    setTempDate(nextClinicDate || new Date().toISOString().split('T')[0]);
-                                    setIsEditingDate(true);
-                                }}
-                                title="設定/修改問診日期"
-                            >
-                                {nextClinicDate ? '改期' : '設日期'}
-                            </Button>
-                        </div>
-                    </>
-                )}
-            </div>
-
-            {nextClinicQuestions.length === 0 ? (
-                <div className="ds-home-clinic-empty">
-                    <p className="t-body-strong">目前尚未挑選下次問診問題</p>
-                    <p className="t-caption t-ink-2">可在「問題紀錄」的【AI 總結】中挑選重點問題，隨時同步至此清單！</p>
-                    <Button fullWidth onClick={() => setView(View.SavedQuestions)}>
-                        前往挑選問診問題
+                            {dateReminderStatus === 'FUTURE' && (
+                                <span className="ds-home-chip ds-home-chip-future">還有 {daysDiff} 日</span>
+                            )}
+                            {dateReminderStatus === 'PAST' && (
+                                <span className="ds-home-chip ds-home-chip-past">已過期</span>
+                            )}
+                        </>
+                    ) : (
+                        <span className="ds-home-chip ds-home-chip-none">未設定日期</span>
+                    )}
+                    <Button
+                        variant="secondary"
+                        onClick={() => {
+                            setTempDate(nextClinicDate || new Date().toISOString().split('T')[0]);
+                            setIsEditingDate(true);
+                        }}
+                        title="設定/修改問診日期"
+                    >
+                        {nextClinicDate ? '改期' : '設日期'}
                     </Button>
                 </div>
+            </div>
+
+            {/* S4: the date is picked in a bottom sheet (same draft, same 保存 / 取消). */}
+            <BottomSheet
+                open={isEditingDate}
+                onClose={cancelEdit}
+                title="設定覆診日期"
+                hideClose
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={cancelEdit}>取消</Button>
+                        <Button onClick={handleSaveDate}>保存</Button>
+                    </>
+                }
+            >
+                <div className="ds-home-clinic-edit">
+                    <Field
+                        label="覆診日期"
+                        type="date"
+                        value={tempDate}
+                        onChange={(e) => setTempDate(e.target.value)}
+                    />
+                </div>
+            </BottomSheet>
+
+            {nextClinicQuestions.length === 0 ? (
+                <EmptyState
+                    className="ds-home-clinic-empty"
+                    icon="savedQuestions"
+                    tone="lilac"
+                    title="目前尚未挑選下次問診問題"
+                    action={
+                        <Button fullWidth onClick={() => setView(View.SavedQuestions)}>
+                            前往挑選問診問題
+                        </Button>
+                    }
+                >
+                    <p className="t-caption">可在「問題紀錄」的【AI 總結】中挑選重點問題，隨時同步至此清單！</p>
+                </EmptyState>
             ) : (
                 <div className="ds-stack-cards">
                     {nextClinicQuestions.map((q, qIdx) => (

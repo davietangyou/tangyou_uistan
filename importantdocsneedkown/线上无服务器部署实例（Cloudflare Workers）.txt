@@ -1,6 +1,6 @@
 # 线上无服务器部署实例（Cloudflare Workers）
 
-版本：1.5
+版本：1.6
 渠道状态：本渠道已在生产启用。测试地址 `https://tangyou-app.davie12580.workers.dev` 与正式域名 `https://tangyou-app.alphathought.org` 均由 Worker「tangyou-app」承接（Route 已启用）。DNS 橙云 A 记录未改，上报路径仍回源旧伺服器（配置见第 9 节，回滚见第 10 节）。线上当前运行哪个提交、哪个 Worker 版本，以 `npx --yes wrangler@4.168.0 deployments list` 的实时结果为准；每次发布的提交、版本 ID 与回滚目标属于时间点事实，沉淀在《历史迭代阶段/》对应归档中。
 
 ---
@@ -234,11 +234,13 @@ curl -s -o /dev/null -w "%{http_code}\n" -H "Sec-Fetch-Mode: navigate" $W/any/ro
 curl -s -X POST $W/api/nope                             # {"error":"找不到對應的 API 端點。"} 404
 ```
 
-验证门（与 Node 端相同的 DOM / 流程 / 截图采集）：
+验证门（与 Node 端相同的业务硬门：node 层 + 浏览器冒烟 + 金样，AI 请求在浏览器内拦截）：
 
 ```bash
-VERIFY_BASE_URL=http://127.0.0.1:8799/ npm run verify -- --out verify-results/cf-worker --skip-build --compare verify-results/<node 端基线>
+VERIFY_BASE_URL=http://127.0.0.1:8799/ npm run verify -- --skip-build --out verify-results/cf-worker
 ```
+
+需要对照 DOM / 截图时，再加 `--ui --compare verify-results/<node 端 --ui 产物>`；这一层属参考项，不影响退出码。
 
 ---
 
@@ -419,7 +421,7 @@ npm ci →（涉及 Workers 代码时先 npm run cf:dev 冒烟）→ npm run cf:
 | 项 | 预期 |
 | --- | --- |
 | `npm ci` / `npm run lint` / `npm run build` | 通过 |
-| Node 端 `npm run verify`（对比既有基线） | 通过；差异都能逐项说明来由 |
+| Node 端 `npm run verify` | 通过：输出「OK: contract goldens match.」与「verify OK」；`--ui --compare` 的差异都能逐项说明来由 |
 | `wrangler deploy --dry-run` | 通过；生产打包中 Express 环境为 `production` |
 | `/api/health` | 200，`configured:true`，`Cache-Control: no-store` |
 | DO 路径 | 日志出现 `[gemini-egress] Express app started inside Durable Object (gemini-egress-v1).` |

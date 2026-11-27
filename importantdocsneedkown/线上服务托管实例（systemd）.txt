@@ -1,6 +1,6 @@
 # 线上服务托管实例（systemd）
 
-版本：1.1
+版本：1.2
 
 ---
 
@@ -33,6 +33,8 @@
   → tsx server.ts
   → Vite middleware + /api/gemini/*
 ```
+
+正式域名目前由 Cloudflare Workers 的 Route 承接（见《线上无服务器部署实例（Cloudflare Workers）.txt》），上面这条链路是 Route 之下的旧源站，作为备用渠道保留。Route 模式下 DNS 未改动：在 Cloudflare 一侧撤下该主机名的 Route，流量即回到本实例；本实例自身的验收以 `127.0.0.1:9002` 为准。
 
 关键参数：
 
@@ -144,7 +146,7 @@ npm -v
 /da04/webser/sour/pro/tangyou_uistan_0
 ```
 
-项目根目录应包含 `package.json`、`server.ts`、`server/`、`public/styles/app.css`、`services/`、`views/`、`components/`、`hooks/`、`utils/` 等。当前托管形态是 `npm run dev`（Vite middleware），页面皮肤与大字规则依赖仓库内的 `public/styles/app.css`；该文件不在时，Tailwind 工具类仍可用，但自定义样式会丢失。
+项目根目录应包含 `package.json`、`server.ts`、`server/`、`public/styles/app.css`、`domain/`、`services/`、`views/`、`components/`、`hooks/`、`utils/` 等。当前托管形态是 `npm run dev`（Vite middleware），页面皮肤与大字规则依赖仓库内的 `public/styles/app.css`；该文件不在时，Tailwind 工具类仍可用，但自定义样式会丢失。
 
 ### 3.2 调整属主
 

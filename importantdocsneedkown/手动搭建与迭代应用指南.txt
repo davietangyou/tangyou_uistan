@@ -1,7 +1,7 @@
 # 手动搭建与迭代应用指南
 ## macOS 本地 + Linux 线上
 
-版本：1.4
+版本：1.5
 适用项目：tangyou_uistan
 适用模式：dev 模式（`npm run dev`）
 
@@ -108,7 +108,7 @@ curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css
 
 预期 HTTP 200，正文与 `public/styles/app.css` 一致；分文件同理可查，例如 `/styles/consult.css`。若同步或解压后缺少入口或任一分文件，Tailwind 工具类仍可用，但整套界面样式（设计令牌、`ds-*` / `t-*` 类、大字模式）会丢失，各页面基本失去版式。
 
-`app.css` 只含字体引入与 `@import`，顺序即层叠顺序，不可调换。分文件大致按“基础与原生控件 → 大字根规则 → 设计令牌 → 共用组件 → 外壳 → 各视图 → 跨视图修饰 → 移动端原生手感”的层次排列，后面的文件覆盖前面的文件，与合成一个文件时的效果相同；实际列表与顺序以 `app.css` 为准。新增样式写进所属分文件；新增分文件时，同时在 `app.css` 中按层次加上对应的 `@import`。`.large-font` 根规则（可继承的字距、词距与行高）与 `.ds-control`（控件不继承这组间距）共同构成大字机制。对应的 React 基础组件在 `components/ui/`，外壳级组件（页面舞台、子页及其返回栈）在 `components/shell/`；同步 ZIP 时这两个目录与各视图的分文件目录（如 `views/GlucoseView/sections/`、`views/MeView/`）都属于已跟踪源码，需要保留。
+`app.css` 只含字体引入与 `@import`，顺序即层叠顺序，不可调换。分文件大致按“基础与原生控件 → 大字根规则 → 设计令牌 → 共用组件 → 外壳 → 各视图 → 跨视图修饰 → 移动端原生手感”的层次排列，后面的文件覆盖前面的文件，与合成一个文件时的效果相同；实际列表与顺序以 `app.css` 为准。新增样式写进所属分文件；新增分文件时，同时在 `app.css` 中按层次加上对应的 `@import`。`.large-font` 根规则（可继承的字距、词距与行高）与 `.ds-control`（控件不继承这组间距）共同构成大字机制。对应的 React 基础组件在 `components/ui/`，外壳级组件（页面舞台、子页及其返回栈、页面滚动根）在 `components/shell/`。文档本身不滚动：`html` / `body` 固定为视口高度，底栏各页在外壳画布（`Layout` 上标记 `data-scroll-root` 的元素）里滚动，规则见 `native.css`，读写页面滚动统一经 `components/shell/scrollRoot.ts`；子页与底部层保留各自的滚动容器。这样 iPhone Safari 的地址栏和工具栏不会随每次滑动伸缩；同步 ZIP 时这两个目录与各视图的分文件目录（如 `views/GlucoseView/sections/`、`views/MeView/`）都属于已跟踪源码，需要保留。
 
 `index.html` 另引入 `public/manifest.webmanifest` 与 `public/icons/` 下的图标（主画面安装、全屏），并设 `viewport-fit=cover`；同步 ZIP 时这些静态资源与样式目录一样需要保留。
 
@@ -202,7 +202,7 @@ curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css
 http://127.0.0.1:9002/
 ```
 
-线上入口（反向代理已配置时）：
+线上入口（正式域名目前由 Cloudflare Workers 承接，见《线上无服务器部署实例（Cloudflare Workers）.txt》；systemd 自托管实例在 Route 之下作为旧源站与备用，其自身以 `127.0.0.1:9002` 验证）：
 
 ```
 https://tangyou-app.alphathought.org/
@@ -213,7 +213,7 @@ https://tangyou-app.alphathought.org/
 - 文字 AI 问答：发送一条血糖或饮食相关问题，确认回复正常返回；
 - 拍照识药：在底栏「我的」（个人档案页）→「糖尿病相關信息」→「拍照 / 上傳藥物照片」上传一张药袋/药盒照片，确认识药接口返回；
 - 问题总结：在底栏「問題」（问题纪录页）→「AI 總結」触发一次总结，确认分类与建议问题正常；
-- 语音输入：聚焦输入框，点击全局麦克风录音，确认转写结果填入。
+- 语音输入：聚焦输入框，点击全局麦克风录音，确认转写结果填入。全局麦克风只在当前画面（弹层 > 子页 > 页面）有可输入文字的栏位时出现，录音中保持可见；問 AI 页改用输入列内的「語音輸入」。
 
 若线上反向代理尚未配置，可以在服务器本机用 `curl` 验证 health；是否对外开放 9002 取决于安全组与防火墙，本文档不展开。
 
@@ -698,7 +698,7 @@ curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css
 
 预期 health 返回 `ok:true`、`configured:true`；样式资源返回 HTTP 200。
 
-域名入口（反向代理已配置时）：
+域名入口（正式域名目前由 Cloudflare Workers 承接；本机手动实例与 systemd 实例在 Route 之下作为旧源站，撤下 Route 后才由这里提供）：
 
 ```
 https://tangyou-app.alphathought.org/
@@ -888,6 +888,8 @@ sudo ss -ltnp | grep 9002
 ├── cloudflare/（仅 Workers 部署形态使用）
 ├── wrangler.jsonc（仅 Workers 部署形态使用）
 ├── public/styles/app.css
+├── public/manifest.webmanifest
+├── public/icons/
 ├── domain/
 ├── scripts/verify/
 ├── services/
@@ -921,6 +923,8 @@ sudo ss -ltnp | grep 9002
             ├── cloudflare/（仅 Workers 部署形态使用）
             ├── wrangler.jsonc（仅 Workers 部署形态使用）
             ├── public/styles/app.css
+            ├── public/manifest.webmanifest
+            ├── public/icons/
             ├── domain/
             ├── scripts/verify/
             ├── services/

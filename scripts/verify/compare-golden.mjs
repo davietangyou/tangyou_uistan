@@ -14,6 +14,7 @@ export const GOLDEN_CONTRACTS = [
     { out: 'contracts/option-values.normalized.json', golden: 'option-values.normalized.json' },
     { out: 'flows/requests.normalized.json', golden: 'requests.normalized.json' },
     { out: 'ui/shapes.normalized.json', golden: 'shapes.normalized.json' },
+    { out: 'domain/domain.normalized.json', golden: 'domain.normalized.json' },
 ];
 
 export function compareGolden(outRoot, { allowMissingOut = false } = {}) {

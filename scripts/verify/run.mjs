@@ -78,6 +78,15 @@ const contractsDir = path.join(outRoot, 'contracts');
 const contracts = await run('node', ['--import', 'tsx', 'scripts/verify/capture-contracts.mjs', '--out', contractsDir]);
 if (contracts.code !== 0) process.exit(contracts.code);
 
+console.log(`\n=== verify domain (node: records, storage shapes, AI request contract) ===`);
+const domainDir = path.join(outRoot, 'domain');
+const domain = await run('node', ['--import', 'tsx', 'scripts/verify/capture-domain.mjs', '--out', domainDir], { env: { ...process.env, TZ: 'Asia/Hong_Kong' } });
+if (domain.code !== 0) process.exit(domain.code);
+
+console.log(`\n=== verify source hygiene ===`);
+const source = await run('node', ['scripts/verify/check-source.mjs', '--out', path.join(outRoot, 'source')]);
+if (source.code !== 0) process.exit(source.code);
+
 const healthUrl = (process.env.VERIFY_BASE_URL || 'http://127.0.0.1:9002/').replace(/\/?$/, '/api/health');
 const domDir = path.join(outRoot, 'dom');
 if (!skipDom && await serverUp(healthUrl)) {
@@ -122,6 +131,8 @@ const status = {
     dom: skipDom ? 'skipped' : (fs.existsSync(path.join(outRoot, 'dom', 'index.json')) ? 0 : 'missing'),
     flows: skipFlows ? 'skipped' : (fs.existsSync(path.join(outRoot, 'flows', 'index.json')) ? 0 : 'missing'),
     contracts: contracts.code,
+    domain: domain.code,
+    source: source.code,
     ui: skipUi ? 'skipped' : (fs.existsSync(path.join(outRoot, 'ui', 'index.json')) ? 0 : 'missing'),
 };
 fs.writeFileSync(path.join(outRoot, 'status.json'), JSON.stringify(status, null, 2) + '\n');

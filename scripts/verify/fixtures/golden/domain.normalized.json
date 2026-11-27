@@ -1,0 +1,512 @@
+{
+  "chat": {
+    "cleared": null,
+    "defaultMessages": [
+      {
+        "content": "關於糖尿病管理，\n您目前最關心什麼？",
+        "id": "welcome",
+        "isWelcome": true,
+        "role": "assistant"
+      }
+    ],
+    "fallbackWhenBroken": [
+      "FALLBACK"
+    ],
+    "fallbackWhenEmpty": [
+      "FALLBACK"
+    ],
+    "imageStripped": {
+      "base64": "",
+      "mimeType": "image/jpeg",
+      "name": "a.jpg",
+      "previewUrl": ""
+    },
+    "loaded": 2,
+    "storedKeys": [
+      "dia_chat_messages"
+    ]
+  },
+  "chatMessagesSent": {
+    "errorReply": "⚠️ 唔好意思，系統暫時未能完成回覆，請稍等幾秒再試一次。",
+    "errorReplyPrefix": "⚠️ 唔好意思，系統暫時未能完成回覆",
+    "follow_up": "【夾具】可見追問-decision",
+    "imageOnlyDefault": "請幫我分析這張藥物相片或處方標籤，說明藥物名稱、用法、注意事項及覆診問醫生的問題。",
+    "preferenceMarker": "我已選擇我的個人偏好",
+    "preference_count": 3,
+    "preference_nothing": null,
+    "preference_other": "我已選擇我的個人偏好（決策考量維度）：\n- 針對「【夾具】偏好問題：打針時你最在意什麼？」，我有其他考量：【想每日少打一針】（價值維度：其他）",
+    "preference_submit": "我已選擇我的個人偏好（決策考量維度）：\n- 針對「【夾具】偏好問題：打針時你最在意什麼？」，我最看重：【【夾具】怕痛】（價值維度：pain）",
+    "shortcuts": [
+      {
+        "label": "📊 數據解讀",
+        "text": "📊 我的血糖數據合格嗎？幫我分析指標與健康檔案的關係"
+      },
+      {
+        "label": "⚠️ 突發情況",
+        "text": "⚠️ 出現手震、心慌、冒冷汗等症狀，我該如何緊急處理？"
+      },
+      {
+        "label": "🥗 飲食建議",
+        "text": "🥗 糖尿病患者一日三餐或外出用餐有什麼飲食控糖建議？"
+      },
+      {
+        "label": "💊 用藥副作用",
+        "text": "💊 二甲雙胍(Metformin)等控糖藥物會有什麼常見副作用？"
+      },
+      {
+        "label": "👁️ 常見併發症",
+        "text": "👁️ 糖尿病會引致哪些常見併發症（如眼底或腎病變）？該如何預防？"
+      }
+    ]
+  },
+  "clock": "2026-11-26T09:30:00+08:00",
+  "font": {
+    "defaultOn": true,
+    "loadedOff": false,
+    "storedOff": "false"
+  },
+  "glucose": {
+    "built": {
+      "bpDiastolic": "",
+      "bpSystolic": "",
+      "date": "26/11/2026 09:30",
+      "dietNote": "叉燒飯",
+      "exerciseNote": "",
+      "id": "<timestamp>_<rand4>",
+      "illnessNote": "",
+      "mealTag": "早餐",
+      "medicationNote": "",
+      "mood": "",
+      "pulse": "",
+      "symptoms": [
+        "口乾口渴"
+      ],
+      "timeType": "餐後2小時",
+      "timestamp": 1795656600000,
+      "value": "8.1",
+      "weight": ""
+    },
+    "customTime": {
+      "date": "2026/11/26 08:30",
+      "timestamp": 1795653000000
+    },
+    "emptyDraft": {
+      "bpDiastolic": "",
+      "bpSystolic": "",
+      "dietNote": "",
+      "exerciseNote": "",
+      "illnessNote": "",
+      "medicationNote": "",
+      "mood": "",
+      "pulse": "",
+      "symptoms": [],
+      "timeType": "",
+      "value": "",
+      "weight": ""
+    },
+    "emptyRejected": {
+      "ok": false,
+      "reason": "empty"
+    },
+    "missingTimeType": {
+      "ok": false,
+      "reason": "missing-time-type"
+    },
+    "negativeClamped": "0.0",
+    "roundTrip": true,
+    "roundedTo1": "5.5",
+    "sorted": [
+      "b",
+      "d",
+      "a",
+      "c"
+    ],
+    "storedKeys": [
+      "dia_glucose"
+    ],
+    "storedShape": [
+      {
+        "bpDiastolic": "string",
+        "bpSystolic": "string",
+        "date": "string",
+        "dietNote": "string",
+        "exerciseNote": "string",
+        "id": "string",
+        "illnessNote": "string",
+        "mealTag": "string",
+        "medicationNote": "string",
+        "mood": "string",
+        "pulse": "string",
+        "symptoms": [
+          "string"
+        ],
+        "timeType": "string",
+        "timestamp": "number",
+        "value": "string",
+        "weight": "string"
+      }
+    ],
+    "symptomOnly": {
+      "symptoms": [
+        "頭暈"
+      ],
+      "value": ""
+    }
+  },
+  "greeting": {
+    "atVerifyNow": "陳生，早安",
+    "byHour": {
+      "3": "晚安",
+      "5": "早安",
+      "11": "早安",
+      "12": "午安",
+      "17": "午安",
+      "18": "晚安",
+      "23": "晚安"
+    },
+    "fallbackName": "老友記，午安"
+  },
+  "hba1c": {
+    "built": {
+      "date": "2026-11-20",
+      "id": "1795656600000",
+      "timestamp": 1795132800000,
+      "value": "6.8"
+    },
+    "rejected": null,
+    "roundTrip": true,
+    "sorted": [
+      "y",
+      "x"
+    ],
+    "storedKeys": [
+      "dia_hba1c"
+    ]
+  },
+  "profile": {
+    "bmi": {
+      "heightChange": "27.3",
+      "invalid": "",
+      "kg": "24.8",
+      "lb": "24.7"
+    },
+    "conditionDetail": {
+      "dmYears": {
+        "conditionDetails": {
+          "DM": {
+            "years": "12"
+          }
+        },
+        "yearsWithDiabetes": "12"
+      },
+      "htYears": "8",
+      "otName": "痛風"
+    },
+    "conditions": {
+      "add": [
+        "DM"
+      ],
+      "none": [
+        "NONE"
+      ],
+      "remove": [
+        "DM"
+      ]
+    },
+    "empty": {
+      "age": "",
+      "bmi": "",
+      "clinicTypeOther": "",
+      "clinicTypes": [],
+      "conditionDetails": {},
+      "conditions": [],
+      "diabetesType": "UNKNOWN",
+      "dietHabits": [],
+      "dietHabitsOther": "",
+      "exerciseDaysPerWeek": "",
+      "exerciseMinutesPerSession": "",
+      "exerciseTypes": [],
+      "exerciseWeekly": "",
+      "gender": "",
+      "glucoseMonitoring": "",
+      "hasCaregiverSupport": false,
+      "hasNoCaregiverSupport": false,
+      "height": "",
+      "hypertensionYears": "",
+      "hypoExperience": "",
+      "isInsulinUser": false,
+      "lifestyle": "",
+      "livingSituation": "",
+      "medications": "",
+      "nextClinicDate": "",
+      "nextClinicQuestions": [],
+      "otherConditions": "",
+      "otherDiabetesType": "",
+      "savedDoctorQuestions": [],
+      "sleepQuality": "",
+      "stressMood": "",
+      "weight": "",
+      "weightUnit": "kg",
+      "yearsWithDiabetes": ""
+    },
+    "exercise": {
+      "lightLong": {
+        "category": "UNDER_150",
+        "estimatedMins": 330
+      },
+      "met": {
+        "category": "MET_150",
+        "estimatedMins": 165
+      },
+      "none": {
+        "category": "NONE",
+        "estimatedMins": 0
+      },
+      "under": {
+        "category": "UNDER_150",
+        "estimatedMins": 105
+      }
+    },
+    "legacyMigration": {
+      "clinicTypes": [
+        "SOPC"
+      ],
+      "conditionDetails": {
+        "DM": {
+          "years": "5"
+        }
+      },
+      "diabetesType": "UNKNOWN",
+      "isInsulinUser": false,
+      "nextClinicQuestions": [],
+      "savedDoctorQuestions": []
+    },
+    "mergeQuestions": [
+      "C",
+      "A",
+      "B"
+    ],
+    "noStoredProfile": true,
+    "roundTripName": "陳生",
+    "storedKeys": [
+      "dia_profile"
+    ]
+  },
+  "questions": {
+    "add": [
+      "新問題",
+      "舊問題",
+      "要減藥嗎？"
+    ],
+    "addEmpty": null,
+    "addNextAlsoSaves": {
+      "nextClinicQuestions": [
+        "新覆診問題",
+        "要減藥嗎？"
+      ],
+      "savedDoctorQuestions": [
+        "新覆診問題",
+        "舊問題",
+        "要減藥嗎？"
+      ]
+    },
+    "clinicReminder": {
+      "future": {
+        "daysDiff": 7,
+        "status": "FUTURE"
+      },
+      "none": {
+        "daysDiff": 0,
+        "status": "NONE"
+      },
+      "past": {
+        "daysDiff": -6,
+        "status": "PAST"
+      },
+      "today": {
+        "daysDiff": 0,
+        "status": "TODAY"
+      }
+    },
+    "deleteAlsoFromNext": {
+      "nextClinicQuestions": [],
+      "savedDoctorQuestions": [
+        "舊問題"
+      ]
+    },
+    "editEmpty": null,
+    "editSyncsNext": {
+      "nextClinicQuestions": [
+        "要減藥嗎？（補充）"
+      ],
+      "savedDoctorQuestions": [
+        "舊問題",
+        "要減藥嗎？（補充）"
+      ]
+    },
+    "nextClinicDate": "2026-12-03",
+    "toggleNextOff": [],
+    "toggleNextOn": [
+      "要減藥嗎？",
+      "舊問題"
+    ]
+  },
+  "requestContract": [
+    {
+      "body": {
+        "glucoseRecords": [
+          {
+            "id": "g"
+          }
+        ],
+        "hba1cRecords": [
+          {
+            "id": "h"
+          }
+        ],
+        "history": [
+          {
+            "content": "a",
+            "role": "user"
+          }
+        ],
+        "imageAttachment": {
+          "data": "B64",
+          "mimeType": "image/png"
+        },
+        "message": "你好",
+        "preferenceAlreadySubmitted": true,
+        "profile": {
+          "name": "陳生"
+        }
+      },
+      "bodyShape": {
+        "glucoseRecords": [
+          {
+            "id": "string"
+          }
+        ],
+        "hba1cRecords": [
+          {
+            "id": "string"
+          }
+        ],
+        "history": [
+          {
+            "content": "string",
+            "role": "string"
+          }
+        ],
+        "imageAttachment": {
+          "data": "string",
+          "mimeType": "string"
+        },
+        "message": "string",
+        "preferenceAlreadySubmitted": "boolean",
+        "profile": {
+          "name": "string"
+        }
+      },
+      "credentials": "same-origin",
+      "headers": {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      "method": "POST",
+      "url": "/api/gemini/chat"
+    },
+    {
+      "body": {
+        "glucoseRecords": [],
+        "hba1cRecords": [],
+        "history": [],
+        "message": "你好",
+        "preferenceAlreadySubmitted": false,
+        "profile": {
+          "name": "陳生"
+        }
+      },
+      "bodyShape": {
+        "glucoseRecords": [],
+        "hba1cRecords": [],
+        "history": [],
+        "message": "string",
+        "preferenceAlreadySubmitted": "boolean",
+        "profile": {
+          "name": "string"
+        }
+      },
+      "credentials": "same-origin",
+      "headers": {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      "method": "POST",
+      "url": "/api/gemini/chat"
+    },
+    {
+      "body": {
+        "questions": [
+          "Q1"
+        ]
+      },
+      "bodyShape": {
+        "questions": [
+          "string"
+        ]
+      },
+      "credentials": "same-origin",
+      "headers": {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      "method": "POST",
+      "url": "/api/gemini/analyze-saved-questions"
+    },
+    {
+      "body": {
+        "base64Audio": "B64",
+        "mimeType": "audio/webm"
+      },
+      "bodyShape": {
+        "base64Audio": "string",
+        "mimeType": "string"
+      },
+      "credentials": "same-origin",
+      "headers": {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      "method": "POST",
+      "url": "/api/gemini/transcribe-audio"
+    },
+    {
+      "body": {},
+      "bodyShape": {},
+      "credentials": "same-origin",
+      "headers": {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      "method": "POST",
+      "url": "/api/gemini/daily-tip"
+    },
+    {
+      "body": {
+        "imageBase64": "B64",
+        "mimeType": "image/jpeg"
+      },
+      "bodyShape": {
+        "imageBase64": "string",
+        "mimeType": "string"
+      },
+      "credentials": "same-origin",
+      "headers": {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      "method": "POST",
+      "url": "/api/gemini/recognize-medications"
+    }
+  ]
+}

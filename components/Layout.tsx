@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useLayoutEffect, useRef} from 'react';
 import {View} from '../utils/types';
 import {uiIcons} from './ui/icons';
 
@@ -22,11 +22,24 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
     const isHome = view === View.Home;
     const FontIcon = uiIcons.fontSize;
     const PrivacyIcon = uiIcons.privacy;
+    const headerRef = useRef<HTMLElement>(null);
+
+    // 頁頭固定在頂部（階段十二）：把實際高度交給 CSS，讓 focus / scrollIntoView 不被頁頭蓋住。
+    useLayoutEffect(() => {
+        const header = headerRef.current;
+        if (!header || typeof ResizeObserver === 'undefined') return;
+        const root = document.documentElement;
+        const update = () => root.style.setProperty('--shell-header-h', `${header.offsetHeight}px`);
+        update();
+        const observer = new ResizeObserver(update);
+        observer.observe(header);
+        return () => observer.disconnect();
+    }, []);
 
     return (
         <div className="ds-shell-canvas">
             <div className={`min-h-screen flex flex-col max-w-lg mx-auto ${isLargeFont ? 'large-font' : ''}`}>
-                <header className={`ds-root ds-shell-header animate-soft ${isHome ? 'ds-shell-header-home' : ''}`}>
+                <header ref={headerRef} className={`ds-root ds-shell-header animate-soft ${isHome ? 'ds-shell-header-home' : ''}`}>
                     <div className="ds-shell-brand">
                         {isHome && <p className="ds-shell-eyebrow">DiaGuide HK</p>}
                         <h1 className={`ds-shell-title ${isHome ? 't-h1' : 't-title'}`}>糖友導航</h1>

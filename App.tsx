@@ -9,6 +9,7 @@ import {GlobalMic} from './components/GlobalMic';
 import {ViewRouter} from './components/ViewRouter';
 import {FocusToast} from './components/FocusToast';
 import {AppDialogHost} from './components/ui';
+import {useTabScrollMemory} from './components/useTabScrollMemory';
 
 // 依賴說明：lucide-react 自階段三起由外殼（components/ui/icons.ts）使用。motion 原只被未掛載的 MedicationReminders 使用，該組件已於階段十一刪除；依賴仍列在 package.json（未改動）。
 
@@ -36,13 +37,16 @@ const App: React.FC = () => {
         handleGlobalMicClick
     } = logic;
 
+    // 每個分頁記住自己的捲動位置（階段十二，原生分頁手感）
+    useTabScrollMemory(view);
+
     return (
         <Layout
             isLargeFont={logic.isLargeFont}
             setIsLargeFont={logic.setIsLargeFont}
             view={view}
         >
-            <div className="pb-6">
+            <div className="pb-6 ds-view-stage">
                 {/* 2. 視圖路由渲染 */}
                 {/* 將 logic 對象作為 props 展開傳遞，讓各個視圖按需獲取其需要的狀態和方法 */}
 

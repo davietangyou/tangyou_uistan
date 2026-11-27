@@ -130,3 +130,32 @@ button:not(:disabled):not(.ds-shell-mic):active,
         animation: none;
     }
 }
+
+/* 4. Tabs: the header stays at the top and the bottom nav stays fixed, so
+   only the content scrolls. Its height comes from Layout (--shell-header-h)
+   so focus / scrollIntoView keep fields clear of it. Each tab fades in. */
+.ds-shell-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--c-canvas);
+}
+
+html {
+    scroll-padding-top: calc(var(--shell-header-h, 72px) + 16px);
+}
+
+.ds-view-stage > * {
+    animation: ds-view-in 0.18s ease-out both;
+}
+
+@keyframes ds-view-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ds-view-stage > * {
+        animation: none;
+    }
+}

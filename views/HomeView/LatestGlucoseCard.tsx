@@ -1,5 +1,5 @@
 import {View} from '../../utils/types';
-import {Button, StatTile} from '../../components/ui';
+import {uiIcons} from '../../components/ui';
 import type {HomeViewModel} from './useHomeViewModel';
 import {glucoseCardStatus, glucosePeriodLabel} from './glucoseStatus';
 
@@ -8,23 +8,40 @@ export function LatestGlucoseCard({vm}: {vm: HomeViewModel}) {
     const latest = glucoseRecords[0];
     const status = glucoseCardStatus(latest);
     const period = latest ? glucosePeriodLabel(latest) : '';
-    const meta = latest
-        ? `最後檢測：${latest.date}${period ? ` · ${period}` : ''}`
-        : '最後檢測：未有紀錄';
+    const Droplet = uiIcons.glucose;
 
     return (
-        <StatTile
-            className="ds-home-glucose"
-            label="最近血糖"
-            value={latest?.value || '--'}
-            unit="mmol/L"
-            tone={status?.tone ?? 'neutral'}
-            statusLabel={status?.statusLabel}
-        >
-            <p className="t-caption t-ink-3 ds-home-glucose-meta">{meta}</p>
-            <Button variant="secondary" fullWidth onClick={() => setView(View.Glucose)}>
-                查看紀錄
-            </Button>
-        </StatTile>
+        <section className={`ds-home-tile ds-home-tile-sky${status ? ` is-${status.tone}` : ''}`}>
+            <p className="ds-home-tile-kicker">
+                <Droplet size={18} strokeWidth={1.8} aria-hidden />
+                最新血糖
+            </p>
+            {latest ? (
+                <>
+                    <p className="ds-home-tile-value">
+                        <span>{latest.value}</span>
+                        <span className="ds-home-tile-unit">mmol/L</span>
+                    </p>
+                    {status?.statusLabel && (
+                        <p className="ds-home-tile-status">{status.statusLabel}</p>
+                    )}
+                    <p className="ds-home-tile-note">
+                        {latest.date}{period ? ` · ${period}` : ''}
+                    </p>
+                </>
+            ) : (
+                <>
+                    <p className="ds-home-tile-value ds-home-tile-empty">—</p>
+                    <p className="ds-home-tile-note">尚未有血糖紀錄</p>
+                </>
+            )}
+            <button
+                type="button"
+                className="ds-home-tile-btn ds-control"
+                onClick={() => setView(View.Glucose)}
+            >
+                {latest ? '查看紀錄' : '+ 記錄血糖'}
+            </button>
+        </section>
     );
 }

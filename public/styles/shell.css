@@ -69,6 +69,20 @@
     color: var(--c-ink-3);
 }
 
+/* Home absorbs the brand row into its own greeting; keep the heading in the
+   accessibility tree without taking a second row of chrome. */
+.ds-shell-header-absorbed {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .ds-shell-title {
     color: var(--c-ink-2);
 }

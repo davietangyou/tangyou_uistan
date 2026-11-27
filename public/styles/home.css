@@ -1,31 +1,107 @@
 /* =============================================================================
-   Home view (Stage 4). Scoped to .ds-home so other business views are untouched.
+   Home view. Scoped to .ds-home so other business views are untouched.
+   North-star phase 1: a dashboard the same designer would give this app —
+   greeting row, sky AI hero, lilac clinic card, a pair of summary tiles.
    ============================================================================= */
 
 .ds-home {
     display: flex;
     flex-direction: column;
-    gap: var(--ds-section-gap);
+    gap: 16px;
+    padding-bottom: 8px;
 }
+
+.large-font .ds-home {
+    gap: 18px;
+}
+
+/* --- Greeting row: avatar, brand, hello, Aa capsule ------------------- */
 
 .ds-home-greeting {
-    margin: 8px 0 0;
-}
-
-.ds-home-greeting .t-h1 {
-    margin: 0;
-    color: var(--c-ink);
-}
-
-/* Ask AI: the sky domain card (AI / glucose family), not a charcoal slab —
-   charcoal is kept for "do it now" buttons. Icon and arrow in white circles. */
-.ds-home-ask {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+    margin: 4px 0 0;
+    min-height: 56px;
+}
+
+.ds-home-avatar {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--c-sage-100);
+    color: var(--c-sage-700);
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.large-font .ds-home-avatar.ds-control {
+    width: 52px !important;
+    height: 52px !important;
+    min-height: 52px !important;
+}
+
+.ds-home-greet-copy {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.ds-home-brand {
+    margin: 0;
+    font-family: var(--ds-font);
+    font-size: 13px;
+    line-height: 1.3;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--c-focus);
+}
+
+.ds-home-hello {
+    margin: 0;
+    font-family: var(--ds-font);
+    font-size: var(--t-h2);
+    line-height: var(--t-h2-lh);
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--c-ink);
+    word-break: keep-all;
+    overflow-wrap: break-word;
+}
+
+.ds-home-font {
+    flex: 0 0 auto;
+    position: static;
+    padding: 0 14px;
+    min-height: 48px;
+    box-shadow: none;
+    background: var(--c-surface);
+    border: 0;
+}
+
+.large-font .ds-home-font.ds-control {
+    min-height: 48px !important;
+    font-size: 16px !important;
+}
+
+/* --- Ask AI hero ------------------------------------------------------- */
+
+.ds-home-ask {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
     width: 100%;
-    min-height: 96px;
-    padding: 20px 16px 20px 16px;
+    min-height: 120px;
+    padding: 20px 18px;
     border: 0;
     border-radius: var(--ds-radius-card);
     background: var(--c-sky-100);
@@ -36,27 +112,12 @@
     cursor: pointer;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-    --t-font: var(--t-title);
-    --t-weight: 600;
-    --t-lh: var(--t-title-lh);
 }
 
 .large-font .ds-home-ask.ds-control {
-    min-height: 108px !important;
+    min-height: 128px !important;
     font-size: var(--t-title) !important;
     font-weight: 600;
-}
-
-.ds-home-ask-icon {
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: var(--c-surface);
-    color: var(--c-sky-700);
 }
 
 .ds-home-ask-text {
@@ -64,6 +125,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     gap: 2px;
 }
 
@@ -84,16 +146,36 @@
     word-break: keep-all;
 }
 
-.ds-home-ask-chevron {
-    flex: 0 0 auto;
+.ds-home-ask-go {
+    margin-top: 8px;
+    font-size: var(--t-body);
+    line-height: 1.3;
+    font-weight: 600;
+    color: var(--c-ink);
+}
+
+.ds-home-ask-art {
+    flex: 0 0 88px;
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: var(--c-surface);
-    color: var(--c-ink);
+    color: var(--c-sky-700);
+}
+
+.ds-home-ask-orb,
+.ds-home-clinic-orb {
+    position: absolute;
+    inset: 8px;
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.2));
+    pointer-events: none;
+}
+
+.ds-home-ask-art svg,
+.ds-home-clinic-art svg {
+    position: relative;
+    z-index: 1;
 }
 
 /* Today visit banner: the sun (reminder) family — clearly "today", not an
@@ -155,112 +237,98 @@
     color: var(--c-ink);
 }
 
-/* 去完善: the sage (profile) family. */
-.ds-home-enrich {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: var(--ds-card-pad);
-    border-radius: var(--ds-radius-card);
-    background: var(--c-sage-200);
-    color: var(--c-ink);
-}
+/* --- Clinic card ------------------------------------------------------- */
 
-.ds-home-enrich-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-}
-
-.ds-home-enrich-row .t-body {
-    margin: 0;
-    min-width: 0;
-}
-
-.ds-home-enrich-mark {
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: var(--c-surface);
-    color: var(--c-sage-700);
-}
-
-/* Clinic / 覆診 card uses the lavender category pair. */
 .ds-home-clinic {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding: var(--ds-card-pad);
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px 12px;
+    padding: 20px 18px 18px;
     border-radius: var(--ds-radius-card);
-    background: var(--c-lavender-100);
-    color: var(--c-lavender);
+    background: var(--c-lilac-100);
+    color: var(--c-lilac-700);
     border: var(--ds-e0-border);
 }
 
-.ds-home-clinic-head {
+.ds-home-clinic-copy {
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
-.ds-home-clinic-head .t-h2,
-.ds-home-clinic-head .t-caption {
+.ds-home-clinic-kicker {
     margin: 0;
-    color: var(--c-lavender);
+    font-family: var(--ds-font);
+    font-size: var(--t-caption);
+    line-height: var(--t-caption-lh);
+    font-weight: 600;
+    color: var(--c-lilac-700);
+}
+
+.ds-home-clinic-title {
+    margin: 0;
+    font-family: var(--ds-font);
+    font-size: var(--t-h2);
+    line-height: var(--t-h2-lh);
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--c-ink);
+    word-break: keep-all;
 }
 
 .ds-home-clinic-date {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    margin: 4px 0 0;
+    font-family: var(--ds-font);
+    font-size: var(--t-body);
+    line-height: var(--t-body-lh);
+    font-weight: 500;
+    color: var(--c-lilac-700);
+    word-break: keep-all;
 }
 
-.ds-home-clinic-date-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-}
-
-.ds-home-chip {
+.ds-home-clinic-art {
+    position: relative;
+    flex: 0 0 88px;
+    width: 88px;
     display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 40px;
-    padding: 8px 12px;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 8px;
+    color: var(--c-lilac-700);
+}
+
+.ds-home-clinic-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.ds-home-clinic-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 48px;
+    padding: 8px 10px;
+    border: 0;
     border-radius: var(--ds-radius-pill);
     background: var(--c-surface);
     color: var(--c-ink);
     font-family: var(--ds-font);
     font-size: var(--t-caption);
-    line-height: var(--t-caption-lh);
+    line-height: 1.3;
     font-weight: 600;
     letter-spacing: 0;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    word-break: keep-all;
 }
 
-.ds-home-chip-today {
-    background: var(--c-glucose-low);
-    color: var(--c-white);
-}
-
-.ds-home-chip-future {
-    background: var(--c-sage-100);
-    color: var(--c-sage-700);
-}
-
-.ds-home-chip-past {
-    background: var(--c-surface-muted);
-    color: var(--c-ink-2);
-}
-
-.ds-home-chip-none {
-    background: var(--c-surface);
-    color: var(--c-ink-2);
+.large-font .ds-home-clinic-btn.ds-control {
+    min-height: 52px !important;
+    font-size: var(--t-caption) !important;
 }
 
 .ds-home-clinic-edit {
@@ -269,6 +337,11 @@
     gap: 12px;
     width: 100%;
     padding-top: 4px;
+}
+
+.ds-home-clinic-qs {
+    grid-column: 1 / -1;
+    margin-top: 4px;
 }
 
 .ds-home-q {
@@ -290,8 +363,8 @@
     height: 28px;
     margin-top: 2px;
     border-radius: 8px;
-    background: var(--c-lavender-100);
-    color: var(--c-lavender);
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--c-lilac-700);
     font-size: var(--t-caption);
     font-weight: 600;
 }
@@ -302,44 +375,124 @@
     margin: 0;
 }
 
-.ds-home-clinic-empty {
-    padding: 8px 0 0;
-}
-
-.ds-home-clinic-empty .ds-empty-title {
-    font-size: var(--t-body);
-    line-height: var(--t-body-lh);
-}
-
-.ds-home-clinic-empty .ds-empty-text .t-caption {
+.ds-home-clinic-count {
     margin: 0;
     color: var(--c-lilac-700);
 }
 
-.ds-home-clinic-foot {
+/* --- Summary pair ------------------------------------------------------ */
+
+.ds-home-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.ds-home-tile {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    align-items: stretch;
+    gap: 6px;
+    min-height: 200px;
+    padding: 18px 16px 16px;
+    border-radius: var(--ds-radius-card);
+    color: var(--c-ink);
 }
 
-.ds-home-clinic-foot .t-caption {
+.ds-home-tile-sky { background: var(--c-sky-100); }
+.ds-home-tile-sage { background: var(--c-sage-200); }
+.ds-home-tile-lilac { background: var(--c-lilac-100); }
+
+.ds-home-tile-kicker {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     margin: 0;
-    color: var(--c-lavender);
+    font-family: var(--ds-font);
+    font-size: var(--t-caption);
+    line-height: 1.3;
+    font-weight: 600;
+    color: var(--c-ink-2);
 }
 
-/* Latest glucose: the coloured StatTile is the card; action sits inside it. */
-.ds-home-glucose {
-    gap: 12px;
+.ds-home-tile-sky .ds-home-tile-kicker { color: var(--c-sky-700); }
+.ds-home-tile-sage .ds-home-tile-kicker { color: var(--c-sage-700); }
+.ds-home-tile-lilac .ds-home-tile-kicker { color: var(--c-lilac-700); }
+
+.ds-home-tile-value {
+    margin: 8px 0 0;
+    font-family: var(--ds-font);
+    font-size: var(--t-h1);
+    line-height: 1.15;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-ink);
+    word-break: keep-all;
 }
 
-.ds-home-glucose .ds-btn-secondary {
+.ds-home-tile-empty {
+    font-size: 40px;
+    line-height: 1;
+    font-weight: 500;
+    color: var(--c-ink-2);
+}
+
+.ds-home-tile-phrase {
+    font-size: var(--t-h2);
+    letter-spacing: 0;
+    font-variant-numeric: normal;
+}
+
+.ds-home-tile-unit {
+    margin-left: 4px;
+    font-size: var(--t-caption);
+    font-weight: 600;
+    color: var(--c-ink-2);
+}
+
+.ds-home-tile-status,
+.ds-home-tile-note {
+    margin: 0;
+    font-family: var(--ds-font);
+    font-size: var(--t-caption);
+    line-height: 1.4;
+    font-weight: 500;
+    color: var(--c-ink-2);
+    word-break: keep-all;
+}
+
+.ds-home-tile.is-target .ds-home-tile-status,
+.ds-home-tile.is-ok .ds-home-tile-status { color: var(--c-glucose-target); }
+.ds-home-tile.is-warn .ds-home-tile-status,
+.ds-home-tile.is-high .ds-home-tile-status { color: var(--c-glucose-high); }
+.ds-home-tile.is-danger .ds-home-tile-status,
+.ds-home-tile.is-low .ds-home-tile-status { color: var(--c-glucose-low); }
+
+.ds-home-tile-btn {
+    margin-top: auto;
+    width: 100%;
+    min-height: 48px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: var(--ds-radius-pill);
     background: var(--c-surface);
     color: var(--c-ink);
-    border: var(--ds-stroke) solid var(--c-stroke);
+    font-family: var(--ds-font);
+    font-size: var(--t-caption);
+    line-height: 1.3;
+    font-weight: 600;
+    letter-spacing: 0;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    word-break: keep-all;
 }
 
-.ds-home-glucose-meta {
-    margin: 0;
+.large-font .ds-home-tile-btn.ds-control {
+    min-height: 52px !important;
+    font-size: var(--t-caption) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -349,6 +502,3 @@
         transition: none !important;
     }
 }
-
-/* S5 (07-03 C1): the greeting breaks only at its comma, never inside a name. */
-.ds-home-greeting .t-h1 { word-break: keep-all; overflow-wrap: break-word; }

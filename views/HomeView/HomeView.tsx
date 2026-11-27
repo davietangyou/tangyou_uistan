@@ -17,8 +17,10 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
             <ClinicTodayBanner vm={vm} />
             <AskAiButton vm={vm} />
             <ClinicCard vm={vm} />
-            <LatestGlucoseCard vm={vm} />
-            <LifestyleGuide vm={vm} />
+            <div className="ds-home-pair">
+                <LatestGlucoseCard vm={vm} />
+                <LifestyleGuide vm={vm} />
+            </div>
         </div>
     );
 };

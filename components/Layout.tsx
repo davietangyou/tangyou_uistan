@@ -22,7 +22,7 @@ interface LayoutProps {
  */
 // S4: pages whose first heading shares the top row with the font toggle (one
 // row of chrome). Each page marks that heading with `.ds-page-lead`.
-const COMPACT_HEADER_VIEWS = new Set<View>([View.Home, View.SavedQuestions, View.Me, View.Onboarding]);
+const COMPACT_HEADER_VIEWS = new Set<View>([View.SavedQuestions, View.Me, View.Onboarding]);
 
 /** R2-4: bring a focused field into the part of the screen the keyboard leaves,
  * and out from under a pinned action bar (sticky 儲存 / 下一步 bars). A block
@@ -130,12 +130,12 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
     return (
         <div className="ds-shell-canvas" data-scroll-root>
             <div className={`ds-shell-column min-h-screen flex flex-col ${isLargeFont ? 'large-font' : ''}`}>
-                <header ref={headerRef} className={`ds-root ds-shell-header${isHome ? ' ds-shell-header-home' : ''}${isCompact ? ' ds-shell-header-compact' : ''}`}>
+                <header ref={headerRef} className={`ds-root ds-shell-header${isHome ? ' ds-shell-header-home ds-shell-header-absorbed' : ''}${isCompact ? ' ds-shell-header-compact' : ''}`}>
                     <div className="ds-shell-brand">
                         {isHome && <p className="ds-shell-eyebrow">DiaGuide HK</p>}
                         <h1 className={`ds-shell-title ${isHome ? 'ds-sr-only' : ''}`}>糖友導航</h1>
                     </div>
-                    {setIsLargeFont && (
+                    {setIsLargeFont && !isHome && (
                         <button
                             type="button"
                             onClick={() => setIsLargeFont(!isLargeFont)}

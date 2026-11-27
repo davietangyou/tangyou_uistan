@@ -577,3 +577,58 @@ textarea.ds-field-control.ds-sq-textarea {
     field-sizing: content;
     max-height: 9lh;
 }
+
+
+/* =============================================================================
+   Phase 2 — questions page lilac empty state (same titles and actions).
+   ============================================================================= */
+
+.ds-questions .ds-sq-empty {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 8px;
+    min-height: 120px;
+    margin: 0;
+    padding: 20px 18px;
+    border: 1px solid #dccfe8;
+    border-radius: 22px;
+    background: #f4eff8;
+    text-align: left;
+}
+
+.ds-questions .ds-sq-empty .ds-empty-mark {
+    width: auto;
+    height: auto;
+    padding: 0;
+    background: transparent;
+    color: #746181;
+}
+
+.ds-questions .ds-sq-empty .ds-empty-mark svg {
+    width: 24px;
+    height: 24px;
+    color: #746181;
+}
+
+.ds-questions .ds-sq-empty .ds-empty-title {
+    margin: 0;
+    color: #5e4d70;
+    font-size: var(--t-body, 18px);
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.ds-questions .ds-sq-clinic .ds-sq-empty,
+.ds-questions .ds-sq-saved .ds-sq-empty {
+    min-height: 162px;
+}
+
+.ds-questions .ds-sq-empty .ds-empty-text,
+.ds-questions .ds-sq-empty .ds-empty-text .t-caption {
+    margin: 0;
+    color: #675873;
+    font-size: var(--t-caption, 14px);
+    line-height: 1.4;
+}

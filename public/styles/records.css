@@ -982,7 +982,7 @@
     bottom: 0;
     z-index: 2;
     margin: 0 calc(-1 * var(--ds-page-pad));
-    padding: 16px calc(var(--ds-page-pad) + var(--shell-mic) + 12px) calc(16px + env(safe-area-inset-bottom, 0px)) var(--ds-page-pad);
+    padding: 16px calc(var(--ds-page-pad) + calc(var(--ds-mic-on, 1) * (var(--shell-mic) + 12px))) calc(16px + env(safe-area-inset-bottom, 0px)) var(--ds-page-pad);
     background: linear-gradient(to bottom, transparent 0, var(--c-canvas) 16px);
 }
 
@@ -995,6 +995,11 @@
 .ds-rec-entry-page .ds-subpage-body { flex: 1 0 auto; display: flex; flex-direction: column; padding-bottom: 0; }
 .ds-rec-entry-page .ds-rec-form { flex: 1 0 auto; }
 .ds-rec-entry-page .ds-rec-actions { margin-top: auto; }
+/* R2-7: with a second row (清空重填), 完成儲存 takes the full width and the
+   voice button sits beside the centred secondary action instead of shortening
+   the main one. A lone save keeps the button at its side. */
+.ds-rec-entry-page .ds-rec-actions:has(> .ds-btn-ghost) { padding-right: var(--ds-page-pad); }
+.ds-rec-entry-page .ds-rec-actions > .ds-btn-ghost { align-self: center; width: auto; padding-left: 16px; padding-right: 16px; }
 
 /* S5: inside a sub-page the form's own heading becomes the quiet line under
    the sub-page title (the title already says what this page records). */

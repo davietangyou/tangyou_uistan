@@ -13,7 +13,8 @@
     --shell-tab-font: 16px;
     --shell-mic: 60px;
     --shell-column: 32rem;
-    --shell-clearance: calc(var(--shell-nav-offset) + var(--shell-nav-h) + var(--shell-gap) + var(--shell-mic) + 16px);
+    /* R2-7: the voice button's height only where it shows (--ds-mic-on, below). */
+    --shell-clearance: calc(var(--shell-nav-offset) + var(--shell-nav-h) + var(--shell-gap) + var(--ds-mic-on, 1) * var(--shell-mic) + 16px);
 }
 
 .large-font {
@@ -407,7 +408,7 @@ html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop) .ds-shell-mic {
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    padding: 0 var(--ds-page-pad) calc(var(--shell-mic) + var(--shell-nav-offset) + 32px);
+    padding: 0 var(--ds-page-pad) calc(var(--ds-mic-on, 1) * (var(--shell-mic) + var(--shell-nav-offset)) + 32px);
 }
 
 .ds-subpage-header {
@@ -486,7 +487,7 @@ html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop) .ds-shell-mic {
     flex: 0 0 auto;
     display: flex;
     gap: var(--ds-target-gap);
-    padding: 12px calc(var(--ds-page-pad) + var(--shell-mic) + 12px) calc(16px + env(safe-area-inset-bottom, 0px)) var(--ds-page-pad);
+    padding: 12px calc(var(--ds-page-pad) + calc(var(--ds-mic-on, 1) * (var(--shell-mic) + 12px))) calc(16px + env(safe-area-inset-bottom, 0px)) var(--ds-page-pad);
     background: var(--c-canvas);
 }
 
@@ -552,4 +553,50 @@ html[data-keyboard] .ds-consult-memo-backdrop {
 html[data-keyboard] .ds-sheet,
 html[data-keyboard] .ds-consult-memo-dialog {
     max-height: calc(100% - 16px);
+}
+
+/* R2-7: the floating voice button shows only where it can do something —
+   the screen in front (the open sheet, else the open sub-page, else the
+   page) has a field it can type into (useSpeechFocus: input / textarea; date,
+   time and choice inputs are not targets). Elsewhere a tap could only answer
+   「請先點擊一下您想要輸入的空格」, while the button sat on 完成, on
+   「管理/增減問題」 or on a row's chevron. Voice itself is unchanged wherever
+   there is a field.
+   - 問 AI: the composer and 隨手記 carry their own 語音輸入, so the floating
+     button steps away and the composer spans the column.
+   A recording that is running keeps its button so it can be stopped.
+   Screens that lose the button also give back the room kept for it
+   (--ds-mic-on: 0 → footers, sheet bottoms, the composer). */
+html:is(
+    :has(.ds-consult-composer),
+    :has(.ds-sheet-scrim):not(:has(.ds-sheet :is(input:not([type=checkbox], [type=radio], [type=date], [type=datetime-local], [type=time], [type=month], [type=file], [type=hidden], [type=range], [type=button], [type=submit]), textarea))),
+    [data-subpages]:not(:has(.ds-sheet-scrim)):not(:has(.ds-subpage :is(input:not([type=checkbox], [type=radio], [type=date], [type=datetime-local], [type=time], [type=month], [type=file], [type=hidden], [type=range], [type=button], [type=submit]), textarea))),
+    :not([data-subpages]):not(:has(.ds-sheet-scrim)):not(:has(.ds-view-stage :is(input:not([type=checkbox], [type=radio], [type=date], [type=datetime-local], [type=time], [type=month], [type=file], [type=hidden], [type=range], [type=button], [type=submit]), textarea), .ds-onboarding :is(input:not([type=checkbox], [type=radio], [type=date], [type=datetime-local], [type=time], [type=month], [type=file], [type=hidden], [type=range], [type=button], [type=submit]), textarea)))
+):not(:has(.ds-shell-mic-listening, .ds-shell-mic-processing)) {
+    --ds-mic-on: 0;
+}
+html:is(
+    :has(.ds-consult-composer),
+    :has(.ds-sheet-scrim):not(:has(.ds-sheet :is(input:not([type=checkbox], [type=radio], [type=date], [type=datetime-local], [type=time], [type=month], [type=file], [type=hidden], [type=range], [type=button], [type=submit]), textarea))),
+    [data-subpages]:not(:has(.ds-sheet-scrim)):not(:has(.ds-subpage :is(input:not([type=checkbox], [type=radio], [type=date], [type=datetime-local], [type=time], [type=month], [type=file], [type=hidden], [type=range], [type=button], [type=submit]), textarea))),
+    :not([data-subpages]):not(:has(.ds-sheet-scrim)):not(:has(.ds-view-stage :is(input:not([type=checkbox], [type=radio], [type=date], [type=datetime-local], [type=time], [type=month], [type=file], [type=hidden], [type=range], [type=button], [type=submit]), textarea), .ds-onboarding :is(input:not([type=checkbox], [type=radio], [type=date], [type=datetime-local], [type=time], [type=month], [type=file], [type=hidden], [type=range], [type=button], [type=submit]), textarea)))
+):not(:has(.ds-shell-mic-listening, .ds-shell-mic-processing)) .ds-shell-mic {
+    visibility: hidden;
+    opacity: 0;
+    scale: 0.85;
+    pointer-events: none;
+    transition: opacity var(--ds-duration-fast) var(--ds-ease), scale var(--ds-duration-fast) var(--ds-ease), visibility 0s linear var(--ds-duration-fast);
+}
+.ds-shell-mic {
+    transition: background-color var(--ds-duration) var(--ds-ease), color var(--ds-duration) var(--ds-ease), bottom var(--ds-duration) var(--ds-ease), scale var(--ds-duration-fast) var(--ds-ease), opacity var(--ds-duration-fast) var(--ds-ease), visibility 0s;
+}
+
+/* R2-7: on a sub-page with a pinned action bar the voice button is the bar's
+   last item — centred on the same line as 完成 / 儲存, not floating 8–10px
+   above it. */
+html[data-subpages]:has(.ds-subpage-footer, .ds-rec-entry-page .ds-rec-actions) .ds-shell-mic {
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px) + (var(--touch-min) - var(--shell-mic)) / 2);
+}
+html[data-keyboard][data-subpages]:has(.ds-subpage-footer, .ds-rec-entry-page .ds-rec-actions) .ds-shell-mic {
+    bottom: calc(var(--ds-kb-inset, 0px) + 16px + env(safe-area-inset-bottom, 0px) + (var(--touch-min) - var(--shell-mic)) / 2) !important;
 }

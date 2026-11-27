@@ -1126,7 +1126,7 @@
     padding: 28px 20px 20px;
     /* A white band outside the scroll area, where the voice button lands:
        content scrolls above it and is never under the button. */
-    border-bottom: calc(var(--shell-mic) + var(--shell-nav-offset) + 16px) solid var(--c-surface);
+    border-bottom: calc(var(--ds-mic-on, 1) * (var(--shell-mic) + var(--shell-nav-offset)) + 16px + (1 - var(--ds-mic-on, 1)) * env(safe-area-inset-bottom, 0px)) solid var(--c-surface);
     border-radius: var(--ds-radius-sheet) var(--ds-radius-sheet) 0 0;
     background: var(--c-surface);
     color: var(--c-ink);
@@ -1384,12 +1384,12 @@
 }
 .ds-consult-shortcut:last-child:nth-child(odd) .ds-consult-shortcut-go { top: 50%; transform: translateY(-50%); }
 
-/* Composer: pinned above the bottom bar; the floating voice button sits to its right. */
+/* Composer: pinned above the bottom bar (R2-7: full width — 問 AI has no floating voice button). */
 .ds-consult-composer {
     position: sticky;
     bottom: calc(var(--shell-nav-offset) + var(--shell-nav-h) + var(--shell-gap));
     z-index: 3;
-    margin-right: calc(var(--shell-mic) + 12px);
+    margin-right: calc(var(--ds-mic-on, 1) * (var(--shell-mic) + 12px));
     padding: 8px;
     gap: 2px;
     border-radius: 24px;
@@ -1438,9 +1438,9 @@
     column-gap: 12px;
     row-gap: 4px;
 }
-/* S5: beside the pinned voice button the composer is narrow (≈200px at 320px
-   with large text) — the title gets its own full row there. */
-@media (max-width: 400px) {
+/* S5: on narrow phones the title gets its own full row (R2-7: the composer is
+   full width now, so only below 360px). */
+@media (max-width: 359px) {
     .ds-consult-composer .ds-consult-attach {
         grid-template-areas: "img . remove" "title title title" "text text text";
     }
@@ -1451,13 +1451,9 @@
 .ds-consult-composer .ds-consult-attach-text .t-body-strong { grid-area: title; }
 .ds-consult-composer .ds-consult-attach-text .t-caption { grid-area: text; padding: 0 2px 2px; }
 
-/* S5 narrow phones (320–359px): beside the pinned voice button the composer
-   is ~200px wide, so 語音輸入 keeps its icon and its name moves to the
-   accessible label (title/aria are unchanged). */
-@media (max-width: 359px) {
-    .ds-consult-voice .t-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-    .ds-consult-voice { width: var(--touch-min); padding: 0; }
-}
+/* R2-7: the composer spans the column now that the floating voice button
+   steps away on 問 AI, so 語音輸入 keeps its name even at 320px (the S5
+   icon-only fallback for the ~200px composer is gone). */
 
 /* Round 2: keyboard up — the nav has stepped away, so the composer drops to
    just above the keyboard (inset from Layout) instead of hovering where the

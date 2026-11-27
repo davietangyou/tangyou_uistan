@@ -44,6 +44,17 @@ export function appAlert(message: string, options?: AppDialogOptions): Promise<v
 }
 
 /** In-app replacement for window.confirm: true only when the user taps 確定. */
+/**
+ * D-b1 (owner-approved): a second step before something can't be undone.
+ * Runs `action` — the original handler, unchanged — only after the person
+ * taps the soft-red confirm; 取消 / Escape / backdrop do nothing.
+ */
+export function confirmThen(title: string, message: string, confirmLabel: string, action: () => void): void {
+    void appConfirm(message, {title, confirmLabel, tone: 'danger'}).then((ok) => {
+        if (ok) action();
+    });
+}
+
 export function appConfirm(message: string, options?: AppDialogOptions): Promise<boolean> {
     if (!notify) return Promise.resolve(window.confirm(message));
     return enqueue('confirm', message, options);

@@ -1,6 +1,7 @@
 import type {GlucoseViewModel} from '../useGlucoseViewModel';
 import {hba1cRecordTier} from '../recordStatus';
 import {DeleteRecordButton, DisclosureButton, EmptyState, StatusPill} from './recordUi';
+import {confirmThen} from '../../../components/ui';
 
 const TIER = {
     high: {tone: 'low', text: '控制不理想'},
@@ -39,7 +40,7 @@ export function HbA1cRecordList({vm}: {vm: GlucoseViewModel}) {
                                         </div>
                                         <p className="t-caption t-ink-2">檢查日期: {r.date}</p>
                                     </div>
-                                    <DeleteRecordButton onClick={() => setHba1cRecords(hba1cRecords.filter(rec => rec.id !== r.id))} />
+                                    <DeleteRecordButton onClick={() => confirmThen('刪除這筆糖化血色素紀錄？', '刪除後無法復原。', '刪除', () => setHba1cRecords(hba1cRecords.filter(rec => rec.id !== r.id)))} />
                                 </article>
                             );
                         })}

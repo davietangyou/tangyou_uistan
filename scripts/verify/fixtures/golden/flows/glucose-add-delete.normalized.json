@@ -2,6 +2,7 @@
   "addedValue": "8.1",
   "assertions": {
     "addedRemoved": true,
+    "cancelKeptRecord": true,
     "countDecreased": true,
     "countIncreased": true,
     "hasValue81": true,

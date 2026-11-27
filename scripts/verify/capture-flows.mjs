@@ -154,10 +154,20 @@ async function flowGlucoseAddDelete(cdp, shotsDir) {
     await click(cdp, { text: '展開顯示' });
     await waitForText(cdp, '收起隱藏');
     const countBeforeDelete = afterAdd.length;
+    // D-b1 (owner-approved 2026-11-27): delete asks first. 取消 keeps the
+    // record; the dialog's confirm runs the original delete handler.
     await click(cdp, { title: '刪除紀錄' });
+    await waitForText(cdp, '刪除這筆血糖紀錄？');
+    await click(cdp, { selector: '.ds-app-dialog .ds-btn-secondary' });
+    await delay(200);
+    const afterCancel = glucoseFromStorage(await readStorage(cdp));
+    await click(cdp, { title: '刪除紀錄' });
+    await waitForText(cdp, '刪除這筆血糖紀錄？');
+    await click(cdp, { selector: '.ds-app-dialog .ds-btn-danger' });
     await delay(200);
     const afterDelete = glucoseFromStorage(await readStorage(cdp));
     const deleteAssertions = {
+        cancelKeptRecord: afterCancel.length === countBeforeDelete,
         countDecreased: afterDelete.length === countBeforeDelete - 1,
         addedRemoved: !afterDelete.some((r) => r.id === added?.id),
     };

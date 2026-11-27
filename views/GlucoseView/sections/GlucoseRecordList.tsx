@@ -1,7 +1,7 @@
 import type {GlucoseViewModel} from '../useGlucoseViewModel';
 import {RecordCard} from './RecordCard';
 import {DisclosureButton, EmptyState} from './recordUi';
-import {Icon} from '../../../components/ui';
+import {confirmThen, Icon} from '../../../components/ui';
 
 export function GlucoseRecordList({vm}: {vm: GlucoseViewModel}) {
     const {
@@ -77,7 +77,7 @@ export function GlucoseRecordList({vm}: {vm: GlucoseViewModel}) {
                                 key={r.id}
                                 record={r}
                                 showDetails
-                                onDelete={() => setGlucoseRecords(glucoseRecords.filter(rec => rec.id !== r.id))}
+                                onDelete={() => confirmThen('刪除這筆血糖紀錄？', '刪除後無法復原。', '刪除', () => setGlucoseRecords(glucoseRecords.filter(rec => rec.id !== r.id)))}
                             />
                         ))}
 

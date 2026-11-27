@@ -2,7 +2,7 @@ import type {MeViewModel} from './useMeViewModel';
 import type {GroupProps} from './MeView';
 import { DiabetesType } from '../../utils/types';
 import { HK_HA_MEDICATION_GROUPS } from '../../utils/constants';
-import {cx, Icon} from '../../components/ui';
+import {confirmThen, cx, Icon} from '../../components/ui';
 import {FieldBlock, OptionTile, Pill, ProfileGroup} from '../ProfileShared/formParts';
 
 export function DiabetesCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProps) {
@@ -130,14 +130,14 @@ export function DiabetesCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProp
                                 <span className="t-body-strong ds-pf-med-name">{med.name}</span>
                                 <button
                                     type="button"
-                                    onClick={() => {
+                                    onClick={() => confirmThen(`刪除「${med.name}」？`, '刪除後要重新輸入或拍照辨識。', '刪除', () => {
                                         const next = profile.medicationDetails?.filter((_, i) => i !== idx);
                                         setProfile({
                                             ...profile,
                                             medicationDetails: next,
                                             medications: (next || []).map(m => m.name).join('、')
                                         });
-                                    }}
+                                    })}
                                     className="ds-icon-btn ds-icon-btn-plain ds-control ds-pf-danger-icon"
                                     title="刪除此藥物"
                                     aria-label={`刪除此藥物：${med.name}`}

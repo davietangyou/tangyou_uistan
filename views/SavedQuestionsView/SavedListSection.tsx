@@ -1,4 +1,4 @@
-import {Button, Card, cx, Icon} from '../../components/ui';
+import {Button, Card, confirmThen, cx, Icon} from '../../components/ui';
 import type { SavedQuestionsViewModel } from './useSavedQuestionsViewModel';
 import {CountPill, ExpandToggle, IndexBadge, SectionHead} from './questionUi';
 
@@ -164,7 +164,7 @@ export function SavedListSection({vm}: {vm: SavedQuestionsViewModel}) {
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleDeleteQuestion(idx)}
+                                                        onClick={() => confirmThen('刪除這個問題？', '刪除後無法復原。', '刪除', () => handleDeleteQuestion(idx))}
                                                         className="ds-icon-btn ds-icon-btn-plain ds-control ds-sq-delete"
                                                         title="刪除問題"
                                                         aria-label="刪除問題"

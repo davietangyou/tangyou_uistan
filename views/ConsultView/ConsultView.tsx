@@ -1,6 +1,6 @@
 import React from 'react';
 import {View} from '../../utils/types';
-import {Toast, UI_ICON_DEFAULTS, uiIcons} from '../../components/ui';
+import {confirmThen, Toast, UI_ICON_DEFAULTS, uiIcons} from '../../components/ui';
 import type {ConsultViewProps} from './types';
 import {useConsultViewModel} from './useConsultViewModel';
 import {ChatPanel} from './ChatPanel';
@@ -74,7 +74,7 @@ export const ConsultView: React.FC<ConsultViewProps> = (props) => {
                 {chatMessages.length > 1 && (
                     <button
                         type="button"
-                        onClick={handleClearChatHistory}
+                        onClick={() => confirmThen('開啟新對話？', '目前的對話紀錄會被清空，無法恢復。', '開啟新對話', handleClearChatHistory)}
                         className="ds-consult-newchat ds-control"
                         title="清空對話紀錄並開啟新對話"
                     >

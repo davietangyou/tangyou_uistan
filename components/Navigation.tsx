@@ -26,6 +26,15 @@ const NAV_ITEMS: ReadonlyArray<{v: View; icon: UiIconName; l: string}> = [
     {v: View.Me, icon: 'profile', l: '我的'},
 ];
 
+function returnToRest(v: View) {
+    if (v === View.Consult) {
+        window.dispatchEvent(new CustomEvent('ds:tab-retap', {detail: v}));
+        return;
+    }
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({top: 0, behavior: reduce ? 'auto' : 'smooth'});
+}
+
 export const Navigation: React.FC<NavigationProps> = ({view, setView, setConsultStep}) => {
     const activeIndex = NAV_ITEMS.findIndex((item) => item.v === view);
     const barStyle = {'--nav-index': Math.max(activeIndex, 0)} as React.CSSProperties;
@@ -43,6 +52,10 @@ export const Navigation: React.FC<NavigationProps> = ({view, setView, setConsult
                             key={item.v}
                             type="button"
                             onClick={() => {
+                                // Round 2: tapping the tab you are already on takes the page
+                                // back to its resting place, as in native apps: the top of
+                                // the page; for 問 AI the newest message (useChatAnchor).
+                                if (isActive) returnToRest(item.v);
                                 setView(item.v);
                                 if (isAi) setConsultStep?.('INPUT');
                             }}

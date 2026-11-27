@@ -201,6 +201,12 @@
     outline: 3px solid var(--c-focus);
     outline-offset: 2px;
 }
+/* Round 2: the field frame carries the focus ring; the input inside it drew a
+   second, inner ring (two nested green boxes around 「8.6」). */
+.ds-rec-number-input:focus,
+.ds-rec-number-input:focus-visible {
+    outline: none;
+}
 
 .ds-rec-number-input {
     flex: 1 1 auto;

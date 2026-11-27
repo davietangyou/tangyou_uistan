@@ -62,13 +62,22 @@ export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
     }, [key, anchor]);
 
     // Page shown again (tab entry) → land on the newest message, no animation.
+    // Its tab tapped again while here → glide back to the newest message.
     useEffect(() => {
         const onShown = (e: Event) => {
             if ((e as CustomEvent).detail !== 'CONSULT') return;
             requestAnimationFrame(() => anchor(false));
         };
+        const onRetap = (e: Event) => {
+            if ((e as CustomEvent).detail !== 'CONSULT') return;
+            anchor(true);
+        };
         window.addEventListener('ds:view-shown', onShown);
-        return () => window.removeEventListener('ds:view-shown', onShown);
+        window.addEventListener('ds:tab-retap', onRetap);
+        return () => {
+            window.removeEventListener('ds:view-shown', onShown);
+            window.removeEventListener('ds:tab-retap', onRetap);
+        };
     }, [anchor]);
 
     // Typing: focus and keyboard resizes keep the newest message above the composer.

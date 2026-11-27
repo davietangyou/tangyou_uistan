@@ -1,4 +1,6 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
+import type {UserProfile} from '../../utils/types';
+import {ProfileEditorContext} from '../ProfileShared/formParts';
 import type {MeViewProps} from './types';
 import {useMeViewModel} from './useMeViewModel';
 import {PersonalInfoCard} from './PersonalInfoCard';
@@ -17,18 +19,31 @@ export interface GroupProps {
 
 export const MeView: React.FC<MeViewProps> = (props) => {
     const vm = useMeViewModel(props);
-    // 分組折叠（只影響顯示，不影響資料）：預設展開【個人信息】
+    // 分組（只影響顯示，不影響資料）。S4 起每組是目錄行，點入以子頁編輯；預設都不打開。
     const [openGroups, setOpenGroups] = useState<Record<ProfileGroupId, boolean>>({
-        personal: true,
+        personal: false,
         diabetes: false,
         conditions: false,
         caregiver: false,
         lifestyle: false,
     });
+    // D-b2：進入編輯器時記下當時的檔案；「取消」把它放回去（欄位仍即時寫入）。
+    const snapshots = useRef<Partial<Record<ProfileGroupId, UserProfile>>>({});
     const group = (id: ProfileGroupId): GroupProps => ({
         open: openGroups[id],
-        onToggle: () => setOpenGroups((g) => ({...g, [id]: !g[id]})),
+        onToggle: () => {
+            if (!openGroups[id]) snapshots.current[id] = vm.profile;
+            setOpenGroups((g) => ({...g, [id]: !g[id]}));
+        },
     });
+    const editor = {
+        cancel: (id: string) => {
+            const snap = snapshots.current[id as ProfileGroupId];
+            if (snap) vm.setProfile(snap);
+            setOpenGroups((g) => ({...g, [id]: false}));
+        },
+        cancelDisabled: vm.isScanningMed,
+    };
 
     return (
         <div className="ds-root ds-profile">
@@ -40,15 +55,19 @@ export const MeView: React.FC<MeViewProps> = (props) => {
                 </p>
             </header>
 
-            <PersonalInfoCard vm={vm} {...group('personal')} />
+            <ProfileEditorContext.Provider value={editor}>
+                <div className="ds-card ds-pf-directory">
+                    <PersonalInfoCard vm={vm} {...group('personal')} />
 
-            <DiabetesCard vm={vm} {...group('diabetes')} />
+                    <DiabetesCard vm={vm} {...group('diabetes')} />
 
-            <ConditionsCard vm={vm} {...group('conditions')} />
+                    <ConditionsCard vm={vm} {...group('conditions')} />
 
-            <CaregiverCard vm={vm} {...group('caregiver')} />
+                    <CaregiverCard vm={vm} {...group('caregiver')} />
 
-            <LifestyleCard vm={vm} {...group('lifestyle')} />
+                    <LifestyleCard vm={vm} {...group('lifestyle')} />
+                </div>
+            </ProfileEditorContext.Provider>
 
             <SaveBar vm={vm} />
 

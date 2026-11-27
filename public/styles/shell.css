@@ -81,9 +81,10 @@
     padding-bottom: 0;
 }
 
+/* No z-index: it must stay under sub-pages and sheets (they live in the page
+   stage, which is its own stacking context). */
 .ds-shell-header-compact .ds-shell-font-toggle {
     position: absolute;
-    z-index: 1;
     top: 18px;
     right: var(--ds-page-pad);
 }

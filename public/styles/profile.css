@@ -56,20 +56,25 @@
 
 .ds-pf-header .t-h1 { color: var(--c-ink); }
 
-/* Collapsible group */
-.ds-pf-group {
+/* S4 directory: one white card, a row per group (icon block, title, what is
+   filled in, ›). Each row opens its editor as a sub-page. */
+.ds-pf-directory {
     display: flex;
     flex-direction: column;
-    padding: 0;
+    padding: 4px 0;
     overflow: hidden;
+}
+
+.ds-pf-group + .ds-pf-group .ds-pf-group-head {
+    border-top: 1px solid var(--c-hairline);
 }
 
 .ds-pf-group-head {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     width: 100%;
-    min-height: 72px;
+    min-height: 80px;
     padding: 14px var(--ds-card-pad);
     border: 0;
     background: transparent;
@@ -86,9 +91,9 @@
     flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
 }
 
 .ds-pf-group-icon.is-sage { background: var(--c-sage-100); color: var(--c-sage-700); }
@@ -118,25 +123,17 @@
     font-weight: 400;
 }
 
-.ds-pf-group-toggle {
-    display: inline-flex;
+.ds-pf-chevron {
     flex: 0 0 auto;
-    align-items: center;
-    gap: 2px;
-    color: var(--c-ink-2);
-    font-weight: 600;
+    color: var(--c-ink-3);
 }
 
-.ds-pf-chevron { transition: transform var(--ds-duration) var(--ds-ease); }
-.ds-pf-chevron.is-open { transform: rotate(180deg); }
-
+/* Editor (sub-page) body: the fields on one white card. */
 .ds-pf-group-body {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    padding: 4px var(--ds-card-pad) var(--ds-card-pad);
-    border-top: 1px solid var(--c-hairline);
-    padding-top: 16px;
+    padding: var(--ds-card-pad);
 }
 
 /* Fields */
@@ -786,7 +783,6 @@
 @media (max-width: 359px) {
     .ds-pf-group-head { gap: 10px; padding-left: 14px; padding-right: 10px; }
     .ds-pf-group-icon { width: 36px; height: 36px; }
-    .ds-pf-group-toggle > span { display: none; }
     .ds-pf-group-body { padding-left: 14px; padding-right: 14px; }
     .ds-pf-panel, .ds-pf-bmi, .ds-pf-scan, .ds-pf-detail, .ds-pf-tip { padding: 12px; }
     .ds-pf-scale-labels { grid-template-columns: repeat(2, minmax(0, 1fr)); }

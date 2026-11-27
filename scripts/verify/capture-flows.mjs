@@ -223,7 +223,12 @@ async function flowMeProfile(cdp, shotsDir) {
     await disableAnimations(cdp);
     await click(cdp, { text: '個人檔案', withinNav: true });
     await waitForText(cdp, '保存修改');
+    // D-b2 (owner-approved 2026-11-27): each profile group is edited in its own
+    // sub-page (取消 / 完成). Open 個人信息, type, 完成, then 保存修改 as before.
+    await click(cdp, { text: '個人信息' });
     await typeText(cdp, { placeholder: '例如：陳生、張太' }, '陳生驗證');
+    await click(cdp, { selector: '.ds-subpage-footer .ds-btn-primary' });
+    await delay(300);
     await click(cdp, { text: '保存修改' });
     await waitForText(cdp, '已成功保存修改');
     const live = profileFromStorage(await readStorage(cdp));
@@ -239,6 +244,8 @@ async function flowMeProfile(cdp, shotsDir) {
     await disableAnimations(cdp);
     await click(cdp, { text: '個人檔案', withinNav: true });
     await waitForText(cdp, '保存修改');
+    await click(cdp, { text: '個人信息' });
+    await delay(300);
     const afterReload = profileFromStorage(await readStorage(cdp));
     const inputValue = await evaluate(cdp, `(() => {
         const el = [...document.querySelectorAll('input')].find((e) => (e.getAttribute('placeholder') || '').includes('例如：陳生、張太'));

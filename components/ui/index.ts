@@ -5,6 +5,7 @@
 export {cx} from './cx';
 export {AppDialogHost, appAlert, appConfirm, confirmThen, type AppDialogOptions} from './AppDialog';
 export {BottomSheet, type BottomSheetProps} from './BottomSheet';
+export {SheetSelect, type SheetSelectProps} from './SheetSelect';
 export {EmptyState, type EmptyStateProps} from './EmptyState';
 export {Button, type ButtonProps, type ButtonVariant} from './Button';
 export {Card, type CardProps} from './Card';

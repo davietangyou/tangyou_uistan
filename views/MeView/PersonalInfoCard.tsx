@@ -2,6 +2,7 @@ import type {MeViewModel} from './useMeViewModel';
 import type {GroupProps} from './MeView';
 import { getBmiEvaluation } from '../../utils/constants';
 import {BmiScale, FieldBlock, Pill, ProfileGroup, UnitSwitch, bmiTone} from '../ProfileShared/formParts';
+import {SheetSelect} from '../../components/ui';
 
 export function PersonalInfoCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProps) {
     const {
@@ -50,7 +51,9 @@ export function PersonalInfoCard({vm, open, onToggle}: {vm: MeViewModel} & Group
                     />
                 </FieldBlock>
                 <FieldBlock label="性別" htmlFor="me-gender">
-                    <select
+                    <SheetSelect
+                        sheetTitle="性別"
+                        triggerClassName="ds-pf-short"
                         id="me-gender"
                         className="ds-field-control ds-control ds-pf-short"
                         value={profile.gender || '男'}
@@ -59,7 +62,7 @@ export function PersonalInfoCard({vm, open, onToggle}: {vm: MeViewModel} & Group
                         <option value="男">男</option>
                         <option value="女">女</option>
                         <option value="其他">其他</option>
-                    </select>
+                    </SheetSelect>
                 </FieldBlock>
                 <FieldBlock label="身高 (cm)" htmlFor="me-height">
                     <input

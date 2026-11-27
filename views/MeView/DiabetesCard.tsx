@@ -2,7 +2,7 @@ import type {MeViewModel} from './useMeViewModel';
 import type {GroupProps} from './MeView';
 import { DiabetesType } from '../../utils/types';
 import { HK_HA_MEDICATION_GROUPS } from '../../utils/constants';
-import {confirmThen, cx, Icon} from '../../components/ui';
+import {confirmThen, cx, Icon, SheetSelect} from '../../components/ui';
 import {FieldBlock, OptionTile, Pill, ProfileGroup} from '../ProfileShared/formParts';
 
 export function DiabetesCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProps) {
@@ -41,7 +41,9 @@ export function DiabetesCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProp
 
             {/* 糖尿病類型 */}
             <FieldBlock label="糖尿病類型" htmlFor="me-dm-type">
-                <select
+                <SheetSelect
+                    sheetTitle="糖尿病類型"
+                    mode="list"
                     id="me-dm-type"
                     className="ds-field-control ds-control"
                     value={profile.diabetesType || 'TYPE_2'}
@@ -52,7 +54,7 @@ export function DiabetesCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProp
                     <option value="PRE_DIABETES">糖尿病前期 / 血糖警戒線 (Pre-diabetes)</option>
                     <option value="GESTATIONAL">妊娠期糖尿病 (Gestational DM)</option>
                     <option value="OTHER">其他類型 (Other Types)</option>
-                </select>
+                </SheetSelect>
             </FieldBlock>
 
             {/* 胰島素注射狀態 */}
@@ -154,7 +156,10 @@ export function DiabetesCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProp
                 )}
 
                 {/* 手動選擇香港常見糖尿專科藥物 (同步香港 HA 醫管局藥物名冊，以英文為主顯示) */}
-                <select
+                <SheetSelect
+                    sheetTitle="選擇香港 HA 常見糖尿專科藥物"
+                    mode="list"
+                    triggerClassName="ds-pf-med-picker"
                     className="ds-field-control ds-control"
                     aria-label="選擇香港 HA 常見糖尿專科藥物"
                     onChange={(e) => {
@@ -185,7 +190,7 @@ export function DiabetesCard({vm, open, onToggle}: {vm: MeViewModel} & GroupProp
                             ))}
                         </optgroup>
                     ))}
-                </select>
+                </SheetSelect>
 
                 <div className="ds-pf-inline">
                     <input

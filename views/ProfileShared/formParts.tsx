@@ -4,8 +4,23 @@
  * option VALUES stay written out in the original view files (the verify
  * option-values contract reads them from source).
  */
-import React from 'react';
-import {cx, Icon, type UiIconName} from '../../components/ui';
+import React, {createContext, useContext} from 'react';
+import {Button, cx, Icon, type UiIconName} from '../../components/ui';
+import {SubPage} from '../../components/shell/SubPage';
+
+/**
+ * D-b2 (owner-approved 2026-11-27): a profile group is a directory row that
+ * opens its editor as a sub-page with 取消 / 完成. Fields still write live
+ * (unchanged handlers); 取消 asks the page to put back the profile as it was
+ * when the editor opened. 完成 and the back button keep what was typed —
+ * the same result as editing field by field and leaving.
+ */
+export interface ProfileEditorControls {
+    cancel: (id: string) => void;
+    /** e.g. while a medication photo is still being read */
+    cancelDisabled?: boolean;
+}
+export const ProfileEditorContext = createContext<ProfileEditorControls | null>(null);
 
 /** Big tappable choice tile. `multi` shows a check box, otherwise a radio dot. */
 export function OptionTile({selected, onClick, children, multi = false, className, tone = 'sage'}: {
@@ -109,27 +124,41 @@ export function ProfileGroup({id, icon, tone, title, summary, open, onToggle, ch
     onToggle: () => void;
     children: React.ReactNode;
 }) {
+    const editor = useContext(ProfileEditorContext);
     const panelId = `ds-pf-group-${id}`;
+    const close = () => { if (open) onToggle(); };
     return (
-        <section className={cx('ds-card ds-pf-group', open && 'is-open')} aria-labelledby={`${panelId}-title`}>
-            <button type="button" className="ds-pf-group-head ds-control" aria-expanded={open} aria-controls={panelId} onClick={onToggle}>
+        <section className="ds-pf-group" aria-labelledby={`${panelId}-title`}>
+            <button type="button" className="ds-pf-group-head ds-control" aria-haspopup="dialog" aria-expanded={open} onClick={onToggle}>
                 <span className={cx('ds-pf-group-icon', `is-${tone}`)}>
                     <Icon name={icon} />
                 </span>
                 <span className="ds-pf-group-text">
                     <span className="t-title ds-pf-group-title" id={`${panelId}-title`}>{title}</span>
-                    {!open && summary && <span className="t-caption t-ink-2 ds-pf-group-summary">{summary}</span>}
+                    <span className="t-caption t-ink-2 ds-pf-group-summary">{summary || '待填寫'}</span>
                 </span>
-                <span className="ds-pf-group-toggle t-caption">
-                    <span>{open ? '收起' : '展開'}</span>
-                    <Icon name="expand" size={20} className={cx('ds-pf-chevron', open && 'is-open')} />
-                </span>
+                <Icon name="forward" size={22} className="ds-pf-chevron" />
             </button>
-            {open && (
-                <div className="ds-pf-group-body" id={panelId}>
+            <SubPage
+                open={open}
+                title={title}
+                onBack={close}
+                className="ds-pf-editor"
+                footer={
+                    <>
+                        {editor && (
+                            <Button variant="secondary" disabled={editor.cancelDisabled} onClick={() => editor.cancel(id)}>
+                                取消
+                            </Button>
+                        )}
+                        <Button onClick={close}>完成</Button>
+                    </>
+                }
+            >
+                <div className="ds-card ds-pf-group-body" id={panelId}>
                     {children}
                 </div>
-            )}
+            </SubPage>
         </section>
     );
 }

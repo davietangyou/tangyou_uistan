@@ -1012,3 +1012,11 @@
 
 /* R2-5: a record's date and time read as one unit. */
 .ds-rec-when { white-space: nowrap; }
+
+/* R2-8: day headers in long record lists — a quiet label, closer to the day's
+   first card than to the card before it. */
+.ds-rec-list > .ds-rec-day {
+    margin: 12px 4px -4px;
+    color: var(--c-ink-2);
+}
+.ds-rec-list > .ds-rec-day:first-child { margin-top: 0; }

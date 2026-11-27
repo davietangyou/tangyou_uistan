@@ -2,7 +2,7 @@ import {ErrorRetry} from './ErrorRetry';
 import type {ConsultViewModel} from './useConsultViewModel';
 import type {ChatMessage, ChatOptionComparison} from '../../utils/types';
 import ReactMarkdown from 'react-markdown';
-import {Icon} from '../../components/ui';
+import {Icon, SlowWaitNote} from '../../components/ui';
 import {AnswerDetails} from './AnswerDetails';
 import {Composer} from './Composer';
 import {FollowUps} from './FollowUps';
@@ -94,6 +94,7 @@ export function ChatPanel({vm}: {vm: ConsultViewModel}) {
                                 <span></span>
                                 <span></span>
                             </div>
+                            <SlowWaitNote />
                         </div>
                     )}
                 </div>

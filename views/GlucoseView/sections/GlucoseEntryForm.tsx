@@ -3,7 +3,7 @@ import {RecordTimeRow} from './RecordTimeRow';
 import {RecordPeriodRow} from './RecordPeriodRow';
 import {GlucoseDetails} from './GlucoseDetails';
 import {glucoseStatus} from '../recordStatus';
-import {Icon} from '../../../components/ui';
+import {Icon, returnDialogFocusTo} from '../../../components/ui';
 
 export function GlucoseEntryForm({vm, onSaved}: {vm: GlucoseViewModel; onSaved?: () => void}) {
     const {
@@ -102,6 +102,8 @@ export function GlucoseEntryForm({vm, onSaved}: {vm: GlucoseViewModel; onSaved?:
                     onClick={() => {
                         if (!newGlucose.value) {
                             alert('請先輸入測量的血糖值（例如：5.5）噢！');
+                            // R2-8: after 「知道了」 the cursor is in the value field, ready to type.
+                            returnDialogFocusTo(document.getElementById('glucose-value-input'));
                             return;
                         }
                         if (!newGlucose.timeType) {

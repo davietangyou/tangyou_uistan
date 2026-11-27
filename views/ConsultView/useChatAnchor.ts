@@ -87,6 +87,24 @@ export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
         };
     }, [anchor]);
 
+    // R2-8: the waiting card grows (the long-wait note fades in) → keep it in
+    // view, but only while the person is still looking at it (its top is on
+    // screen), so someone who scrolled up to reread is not pulled back.
+    useEffect(() => {
+        if (!waiting || typeof ResizeObserver === 'undefined') return;
+        const el = panel.current?.querySelector<HTMLElement>('.ds-consult-loading');
+        if (!el) return;
+        let h = el.offsetHeight;
+        const ro = new ResizeObserver(() => {
+            if (el.offsetHeight <= h) { h = el.offsetHeight; return; }
+            h = el.offsetHeight;
+            const r = el.getBoundingClientRect();
+            if (r.top >= 0 && r.top < window.innerHeight) anchor(true);
+        });
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [waiting, anchor]);
+
     // Typing: focus and keyboard resizes keep the newest message above the composer.
     useEffect(() => {
         const vv = window.visualViewport;

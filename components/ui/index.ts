@@ -3,7 +3,7 @@
  * Every view and the app shell use them.
  */
 export {cx} from './cx';
-export {AppDialogHost, appAlert, appConfirm, confirmThen, type AppDialogOptions} from './AppDialog';
+export {AppDialogHost, appAlert, appConfirm, confirmThen, returnDialogFocusTo, type AppDialogOptions} from './AppDialog';
 export {BottomSheet, type BottomSheetProps} from './BottomSheet';
 export {SheetSelect, type SheetSelectProps} from './SheetSelect';
 export {EmptyState, type EmptyStateProps} from './EmptyState';
@@ -16,3 +16,4 @@ export {StatTile, type StatTileProps, type StatTone} from './StatTile';
 export {Toast, type ToastProps} from './Toast';
 export {WheelPicker, type WheelOption, type WheelPickerProps} from './WheelPicker';
 export {UI_ICON_DEFAULTS, uiIcons, type UiIconName} from './icons';
+export {SlowWaitNote, SLOW_WAIT_TEXT} from './SlowWaitNote';

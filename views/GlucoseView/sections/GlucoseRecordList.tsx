@@ -1,5 +1,6 @@
 import type {GlucoseViewModel} from '../useGlucoseViewModel';
 import {RecordCard} from './RecordCard';
+import {withDayHeaders} from './RecordDays';
 import {DisclosureButton, EmptyState} from './recordUi';
 import {confirmThen, Icon} from '../../../components/ui';
 
@@ -72,7 +73,7 @@ export function GlucoseRecordList({vm}: {vm: GlucoseViewModel}) {
             {isRecentRecordsVisible && (
                 visibleRecords.length > 0 ? (
                     <div className="ds-rec-list">
-                        {visibleRecords.map(r => (
+                        {withDayHeaders(visibleRecords, r => (
                             <RecordCard
                                 key={r.id}
                                 record={r}

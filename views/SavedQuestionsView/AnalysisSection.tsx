@@ -1,5 +1,5 @@
 import ReactMarkdown from 'react-markdown';
-import {Button, Card, cx, EmptyState, Icon} from '../../components/ui';
+import {Button, Card, cx, EmptyState, Icon, SlowWaitNote} from '../../components/ui';
 import type { SavedQuestionsViewModel } from './useSavedQuestionsViewModel';
 import {CountPill, ExpandToggle, IndexBadge, SectionHead} from './questionUi';
 
@@ -29,6 +29,7 @@ export function AnalysisSection({vm}: {vm: SavedQuestionsViewModel}) {
                         <div className="ds-sq-state" role="status">
                             <Icon name="loading" size={28} className="ds-sq-spin" />
                             <p className="t-body-strong">AI 正在為您智慧歸納常問類別與就診建議，請稍候...</p>
+                            <SlowWaitNote />
                         </div>
                     )}
 

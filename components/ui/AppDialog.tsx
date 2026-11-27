@@ -26,6 +26,19 @@ type DialogRequest = {id: number; kind: 'alert' | 'confirm'; message: string; op
 let queue: DialogRequest[] = [];
 let notify: ((next: DialogRequest[]) => void) | null = null;
 let seq = 0;
+/** R2-8: where focus goes when the dialog just requested closes (default: back to its opener). */
+let pendingReturn: HTMLElement | null = null;
+
+/**
+ * R2-8: call right after alert(...) when the message asks the person to fill a
+ * field — on close, focus lands in that field instead of back on the button
+ * that raised it. UI only; the message and the alert call are unchanged.
+ */
+export function returnDialogFocusTo(el: HTMLElement | null): void {
+    if (!el) return;
+    if (!notify) { el.focus(); return; }
+    pendingReturn = el;
+}
 
 function enqueue(kind: DialogRequest['kind'], message: string, options: AppDialogOptions = {}): Promise<boolean> {
     return new Promise((resolve) => {
@@ -84,7 +97,8 @@ export function AppDialogHost() {
 
     useEffect(() => {
         if (!current) return;
-        returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        returnFocusRef.current = pendingReturn ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+        pendingReturn = null;
         const startOnCancel = current.kind === 'confirm' && current.options.tone === 'danger';
         (startOnCancel ? cancelRef.current : primaryRef.current)?.focus();
     }, [current?.id]);

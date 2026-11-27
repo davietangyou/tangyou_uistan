@@ -1471,3 +1471,8 @@ html[data-keyboard] .ds-consult-composer {
     padding-top: 16px;
     border-top: 1px solid var(--c-hairline);
 }
+
+/* R2-8: the long-wait note fades in under the loading line. */
+.ds-slow-note { animation: ds-slow-note-in var(--ds-duration-slow) var(--ds-ease) both; text-wrap: pretty; }
+@keyframes ds-slow-note-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ds-slow-note { animation: none; } }

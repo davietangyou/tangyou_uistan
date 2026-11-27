@@ -136,7 +136,7 @@ async function flowGlucoseAddDelete(cdp, shotsDir) {
     await writeStorageAndReload(cdp, buildSeed(VERIFY_NOW_MS));
     await disableAnimations(cdp);
     const beforeCount = glucoseFromStorage(await readStorage(cdp)).length;
-    await click(cdp, { text: '血糖紀錄', withinNav: true });
+    await click(cdp, { text: '紀錄', withinNav: true });
     // S4b (owner-approved structure, 2026-11-27): the entry form is a sub-page
     // opened from the 記錄血糖 card; same draft, same 完成儲存 handler.
     await waitForText(cdp, '記錄血糖');
@@ -195,7 +195,7 @@ async function flowGlucoseAddDelete(cdp, shotsDir) {
 async function flowSavedQuestions(cdp, shotsDir) {
     await writeStorageAndReload(cdp, buildSeed(VERIFY_NOW_MS));
     await disableAnimations(cdp);
-    await click(cdp, { text: '問題紀錄', withinNav: true });
+    await click(cdp, { text: '問題', withinNav: true });
     await waitForText(cdp, '手動新增問題');
     const before = profileFromStorage(await readStorage(cdp)).savedDoctorQuestions || [];
     await click(cdp, { selector: '#btn-add-q-inline' });
@@ -225,7 +225,7 @@ async function flowSavedQuestions(cdp, shotsDir) {
 async function flowMeProfile(cdp, shotsDir) {
     await writeStorageAndReload(cdp, buildSeed(VERIFY_NOW_MS));
     await disableAnimations(cdp);
-    await click(cdp, { text: '個人檔案', withinNav: true });
+    await click(cdp, { text: '我的', withinNav: true });
     await waitForText(cdp, '保存修改');
     // D-b2 (owner-approved 2026-11-27): each profile group is edited in its own
     // sub-page (取消 / 完成). Open 個人信息, type, 完成, then 保存修改 as before.
@@ -246,7 +246,7 @@ async function flowMeProfile(cdp, shotsDir) {
     await cdp.send('Page.reload', { ignoreCache: true });
     await settle(cdp, 600);
     await disableAnimations(cdp);
-    await click(cdp, { text: '個人檔案', withinNav: true });
+    await click(cdp, { text: '我的', withinNav: true });
     await waitForText(cdp, '保存修改');
     await click(cdp, { text: '個人信息' });
     await delay(300);
@@ -313,7 +313,7 @@ async function flowStorageRoundTrip(cdp, shotsDir) {
     const first = await readStorage(cdp);
     const firstProfile = profileFromStorage(first);
     const firstGlucose = glucoseFromStorage(first);
-    await click(cdp, { text: '血糖紀錄', withinNav: true });
+    await click(cdp, { text: '紀錄', withinNav: true });
     // S4b: page-ready marker is the 記錄血糖 entry card (form moved into a sub-page).
     await waitForText(cdp, '記錄血糖');
     const afterNav = await readStorage(cdp);

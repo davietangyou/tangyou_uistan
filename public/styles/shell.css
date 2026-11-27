@@ -10,7 +10,7 @@
     --shell-tab-h: 64px;
     --shell-nav-pad: 6px;
     --shell-nav-h: calc(var(--shell-tab-h) + var(--shell-nav-pad) * 2);
-    --shell-tab-font: 15px;
+    --shell-tab-font: 16px;
     --shell-mic: 60px;
     --shell-column: 32rem;
     --shell-clearance: calc(var(--shell-nav-offset) + var(--shell-nav-h) + var(--shell-gap) + var(--shell-mic) + 16px);
@@ -18,15 +18,15 @@
 
 .large-font {
     --shell-tab-h: 72px;
-    /* Big enough to read, small enough that a 4-character label fits a fifth
-       of a 375–390px column: ~16–17px. */
-    --shell-tab-font: min(17px, calc((min(100vw, var(--shell-column)) - 40px) / 21));
+    /* S5: two-character labels (首頁/紀錄/問 AI/問題/我的, as 被仿侧) — the
+       large size can now be a true 19px. */
+    --shell-tab-font: 19px;
     --shell-mic: 64px;
 }
 
 @media (max-width: 359px) {
     .large-font {
-        --shell-tab-font: 14px;
+        --shell-tab-font: 17px;
     }
 }
 
@@ -519,8 +519,7 @@ html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop) .ds-shell-mic {
     }
 }
 
-/* Narrow phones (320–359px): four-character labels (血糖紀錄 / 問題紀錄 /
-   個人檔案) must stay whole, so the capsule tightens instead of the type shrinking further. */
+/* Narrow phones (320–359px): the capsule tightens so 「問 AI」 keeps its 17px. */
 @media (max-width: 359px) {
     .ds-shell-nav {
         padding: 0 6px;

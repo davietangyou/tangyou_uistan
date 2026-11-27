@@ -1,7 +1,8 @@
 /**
  * 底部導航欄組件（階段三外殼）
  *
- * 五個入口，標籤保持全稱：首頁 / 血糖紀錄 / 問 AI / 問題紀錄 / 個人檔案。
+ * 五個入口。S5（業主 t20u）：標籤改為與被仿側同式的兩字：首頁 / 紀錄 / 問 AI / 問題 / 我的
+ * （頁內標題仍是「血糖紀錄」「問題紀錄」「個人檔案」）。
  * 階段 S2：懸浮白色膠囊 + 一塊炭黑滑塊（全 app 唯一的「你在這裡」），切頁時滑塊平移 200ms；
  * 進入子頁時整條導航收起（見 shell.css 的 html[data-subpages]）。
  * 「問 AI」與首頁「問問 AI」主卡相同：setView(View.Consult) 並把 consultStep 設為 'INPUT'。
@@ -19,10 +20,10 @@ interface NavigationProps {
 
 const NAV_ITEMS: ReadonlyArray<{v: View; icon: UiIconName; l: string}> = [
     {v: View.Home, icon: 'home', l: '首頁'},
-    {v: View.Glucose, icon: 'glucose', l: '血糖紀錄'},
+    {v: View.Glucose, icon: 'glucose', l: '紀錄'},
     {v: View.Consult, icon: 'consult', l: '問 AI'},
-    {v: View.SavedQuestions, icon: 'savedQuestions', l: '問題紀錄'},
-    {v: View.Me, icon: 'profile', l: '個人檔案'},
+    {v: View.SavedQuestions, icon: 'savedQuestions', l: '問題'},
+    {v: View.Me, icon: 'profile', l: '我的'},
 ];
 
 export const Navigation: React.FC<NavigationProps> = ({view, setView, setConsultStep}) => {

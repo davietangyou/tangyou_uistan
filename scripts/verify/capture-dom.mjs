@@ -161,28 +161,28 @@ async function main() {
         writeSnapshot(outDir, 'home', await snapshotRoot(cdp), homeText);
 
         await fromHome();
-        let snap = await activate(cdp, { text: '血糖紀錄', withinNav: true, expectText: '症狀紀錄' });
+        let snap = await activate(cdp, { text: '紀錄', withinNav: true, expectText: '症狀紀錄' });
         if (!snap.text.includes(VERIFY_EXPECTED.periodLabel)) {
             throw new Error('glucose default period not frozen as expected: ' + JSON.stringify(VERIFY_EXPECTED.periodLabel) + ' in ' + snap.text.slice(0, 240));
         }
         writeSnapshot(outDir, 'glucose-bg', snap.html, snap.text);
 
         await fromHome();
-        await activate(cdp, { text: '血糖紀錄', withinNav: true, expectText: '症狀紀錄' });
+        await activate(cdp, { text: '紀錄', withinNav: true, expectText: '症狀紀錄' });
         snap = await activate(cdp, { text: '症狀紀錄', expectText: '紀錄時間' });
         writeSnapshot(outDir, 'glucose-symptom', snap.html, snap.text);
 
         await fromHome();
-        await activate(cdp, { text: '血糖紀錄', withinNav: true, expectText: '症狀紀錄' });
+        await activate(cdp, { text: '紀錄', withinNav: true, expectText: '症狀紀錄' });
         snap = await activate(cdp, { text: '糖化', expectText: '糖化血紅素' });
         writeSnapshot(outDir, 'glucose-hba1c', snap.html, snap.text);
 
         await fromHome();
-        snap = await activate(cdp, { text: '問題紀錄', withinNav: true, expectText: 'AI 自動總結常見類別' });
+        snap = await activate(cdp, { text: '問題', withinNav: true, expectText: 'AI 自動總結常見類別' });
         writeSnapshot(outDir, 'saved-questions', snap.html, snap.text);
 
         await fromHome();
-        snap = await activate(cdp, { text: '個人檔案', withinNav: true, expectText: '糖尿病相關信息' });
+        snap = await activate(cdp, { text: '我的', withinNav: true, expectText: '糖尿病相關信息' });
         writeSnapshot(outDir, 'me', snap.html, snap.text);
 
         await fromHome();

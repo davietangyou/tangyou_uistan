@@ -1,6 +1,6 @@
 import type {GlucoseViewModel} from '../useGlucoseViewModel';
 import { PERIOD_OPTIONS } from '../constants';
-import {Icon} from '../../../components/ui';
+import {BottomSheet, Icon} from '../../../components/ui';
 
 /** 測量時段 / 紀錄時段 row. Selection logic unchanged (timeType + mealTag match). */
 export function RecordPeriodRow({vm, label}: {vm: GlucoseViewModel; label: string}) {
@@ -22,7 +22,12 @@ export function RecordPeriodRow({vm, label}: {vm: GlucoseViewModel; label: strin
                 <Icon name="expand" className={`ds-rec-chevron${isPeriodPickerOpen ? ' is-open' : ''}`} />
             </button>
 
-            {isPeriodPickerOpen && (
+            {/* S4: choosing happens in a bottom sheet; a tap selects and closes (handleSelectPeriod, unchanged). */}
+            <BottomSheet
+                open={isPeriodPickerOpen}
+                onClose={() => setIsPeriodPickerOpen(false)}
+                title={label}
+            >
                 <div className="ds-rec-panel ds-rec-options">
                     {PERIOD_OPTIONS.map((item) => {
                         const isSelected =
@@ -43,7 +48,7 @@ export function RecordPeriodRow({vm, label}: {vm: GlucoseViewModel; label: strin
                         );
                     })}
                 </div>
-            )}
+            </BottomSheet>
         </div>
     );
 }

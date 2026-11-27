@@ -50,8 +50,13 @@ function classifyInventory(text) {
 const VIEWS = [
     { id: 'onboarding', setup: 'clear', expect: '如何稱呼您？' },
     { id: 'home', setup: 'seed', expect: '問問 AI' },
-    { id: 'glucose-bg', setup: 'seed', nav: [{ text: '血糖紀錄', withinNav: true, expect: '症狀紀錄' }], expect: '完成儲存' },
+    // S4b: the glucose / symptom entry forms are sub-pages; the page shows the
+    // 記錄血糖 / 記錄症狀 entry card (with the draft's time + 時段). The forms are
+    // still audited, as their own views (-entry).
+    { id: 'glucose-bg', setup: 'seed', nav: [{ text: '血糖紀錄', withinNav: true, expect: '症狀紀錄' }], expect: '記錄血糖' },
+    { id: 'glucose-bg-entry', setup: 'seed', nav: [{ text: '血糖紀錄', withinNav: true, expect: '症狀紀錄' }, { selector: '#btn-rec-entry-bg', expect: '完成儲存' }], expect: '完成儲存' },
     { id: 'glucose-symptom', setup: 'seed', nav: [{ text: '血糖紀錄', withinNav: true, expect: '症狀紀錄' }, { text: '症狀紀錄', expect: '紀錄時間' }], expect: '紀錄時間' },
+    { id: 'glucose-symptom-entry', setup: 'seed', nav: [{ text: '血糖紀錄', withinNav: true, expect: '症狀紀錄' }, { text: '症狀紀錄', expect: '紀錄時間' }, { selector: '#btn-rec-entry-symptom', expect: '儲存症狀紀錄' }], expect: '儲存症狀紀錄' },
     { id: 'glucose-hba1c', setup: 'seed', nav: [{ text: '血糖紀錄', withinNav: true, expect: '症狀紀錄' }, { text: '糖化', expect: '糖化血紅素' }], expect: '糖化血紅素' },
     { id: 'saved-questions', setup: 'seed', nav: [{ text: '問題紀錄', withinNav: true, expect: 'AI 自動總結常見類別' }], expect: 'AI 自動總結常見類別' },
     { id: 'me', setup: 'seed', nav: [{ text: '個人檔案', withinNav: true, expect: '糖尿病相關信息' }], expect: '糖尿病相關信息' },

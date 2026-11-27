@@ -1,5 +1,5 @@
 import type {GlucoseViewModel} from '../useGlucoseViewModel';
-import {Icon} from '../../../components/ui';
+import {BottomSheet, Button, Icon} from '../../../components/ui';
 
 /** 測量時間 / 紀錄時間 row: label + live/backfill status, full-width time button, native datetime picker. */
 export function RecordTimeRow({vm, label}: {vm: GlucoseViewModel; label: string}) {
@@ -26,8 +26,15 @@ export function RecordTimeRow({vm, label}: {vm: GlucoseViewModel; label: string}
                 <Icon name="expand" className={`ds-rec-chevron${isTimePickerOpen ? ' is-open' : ''}`} />
             </button>
 
-            {isTimePickerOpen && (
-                <div className="ds-rec-panel">
+            {/* S4: picked in a bottom sheet; changes apply as before (immediately), 完成 just closes. */}
+            <BottomSheet
+                open={isTimePickerOpen}
+                onClose={() => setIsTimePickerOpen(false)}
+                title={label}
+                hideClose
+                footer={<Button onClick={() => setIsTimePickerOpen(false)}>完成</Button>}
+            >
+                <div className="ds-rec-panel ds-rec-time-sheet">
                     <input
                         type="datetime-local"
                         aria-label={label}
@@ -50,7 +57,7 @@ export function RecordTimeRow({vm, label}: {vm: GlucoseViewModel; label: string}
                         設為現在時間
                     </button>
                 </div>
-            )}
+            </BottomSheet>
         </div>
     );
 }

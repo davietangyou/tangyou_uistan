@@ -137,6 +137,10 @@ async function flowGlucoseAddDelete(cdp, shotsDir) {
     await disableAnimations(cdp);
     const beforeCount = glucoseFromStorage(await readStorage(cdp)).length;
     await click(cdp, { text: '血糖紀錄', withinNav: true });
+    // S4b (owner-approved structure, 2026-11-27): the entry form is a sub-page
+    // opened from the 記錄血糖 card; same draft, same 完成儲存 handler.
+    await waitForText(cdp, '記錄血糖');
+    await click(cdp, { selector: '#btn-rec-entry-bg' });
     await waitForText(cdp, '完成儲存');
     await typeText(cdp, { placeholder: '請輸入' }, '8.1');
     await click(cdp, { text: '完成儲存' });
@@ -310,7 +314,8 @@ async function flowStorageRoundTrip(cdp, shotsDir) {
     const firstProfile = profileFromStorage(first);
     const firstGlucose = glucoseFromStorage(first);
     await click(cdp, { text: '血糖紀錄', withinNav: true });
-    await waitForText(cdp, '完成儲存');
+    // S4b: page-ready marker is the 記錄血糖 entry card (form moved into a sub-page).
+    await waitForText(cdp, '記錄血糖');
     const afterNav = await readStorage(cdp);
     const assertions = {
         profileSurvivedReload: firstProfile.name === '陳生' && firstProfile.age === '72',

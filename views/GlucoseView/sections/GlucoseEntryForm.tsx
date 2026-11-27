@@ -5,7 +5,7 @@ import {GlucoseDetails} from './GlucoseDetails';
 import {glucoseStatus} from '../recordStatus';
 import {Icon} from '../../../components/ui';
 
-export function GlucoseEntryForm({vm}: {vm: GlucoseViewModel}) {
+export function GlucoseEntryForm({vm, onSaved}: {vm: GlucoseViewModel; onSaved?: () => void}) {
     const {
         addGlucoseRecord,
         handleSetTime,
@@ -116,6 +116,8 @@ export function GlucoseEntryForm({vm}: {vm: GlucoseViewModel}) {
                         setIsTimePickerOpen(false);
                         setIsPeriodPickerOpen(false);
                         handleSetTime(new Date(), true);
+                        // S4: back to the page, where the saved banner and the new record show.
+                        onSaved?.();
                     }}
                     className="ds-btn ds-btn-primary ds-btn-block ds-control"
                 >

@@ -18,23 +18,31 @@
 .ds-records h4,
 .ds-records ul,
 .ds-records dl,
-.ds-records dd {
+.ds-records dd,
+.ds-rec-entry-page p,
+.ds-rec-entry-page h3,
+.ds-rec-entry-page h4,
+.ds-rec-entry-page ul,
+.ds-rec-sheet-scope p {
     margin: 0;
 }
 
-.ds-records button {
+.ds-records button,
+.ds-rec-entry-page button {
     font-family: var(--ds-font);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
 }
 
-.ds-records .ds-btn:disabled {
+.ds-records .ds-btn:disabled,
+.ds-rec-entry-page .ds-btn:disabled {
     opacity: 1;
     background: var(--c-surface-muted);
     color: var(--c-ink-3);
 }
 
-.ds-records .ds-btn {
+.ds-records .ds-btn,
+.ds-rec-entry-page .ds-btn {
     gap: 8px;
 }
 
@@ -865,7 +873,8 @@
 }
 
 @media (max-width: 359px) {
-    .ds-records .ds-card { padding: 16px; }
+    .ds-records .ds-card,
+    .ds-rec-entry-page .ds-card { padding: 16px; }
     .ds-records .ds-rec-card { padding: 16px 4px 16px 12px; }
     .ds-rec-number-input { --t-font: var(--t-h2); font-size: var(--t-h2); }
     .ds-rec-panel,
@@ -877,3 +886,99 @@
     .ds-rec-toggle { padding-left: 14px; }
     .ds-rec-toggle-icon { display: none; }
 }
+
+/* =============================================================================
+   S4 batch 2: entry as sub-pages, pickers as sheets.
+   ============================================================================= */
+
+/* Entry card on the page — sky domain card, like 首頁「問問 AI」. It also shows
+   where the next record lands (time + 時段 of the shared draft). */
+.ds-rec-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    padding: 18px 18px 18px;
+    border: 0;
+    border-radius: var(--ds-radius-card);
+    background: var(--c-sky-100);
+    color: var(--c-ink);
+    box-shadow: var(--ds-e1);
+    text-align: left;
+    cursor: pointer;
+    transition: transform var(--ds-duration-fast, 120ms) var(--ds-ease);
+}
+.ds-rec-entry:active { transform: scale(0.985); }
+.ds-rec-entry:focus-visible { outline: 3px solid var(--c-focus, #2F3033); outline-offset: 3px; }
+.ds-rec-entry-head { display: flex; align-items: center; gap: 14px; }
+.ds-rec-entry-mark,
+.ds-rec-entry-go {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+}
+.ds-rec-entry-mark {
+    width: 48px; height: 48px;
+    background: #fff;
+    color: var(--c-sky-700);
+}
+.ds-rec-entry-go {
+    width: 44px; height: 44px;
+    margin-left: auto;
+    background: var(--c-action, #2F3033);
+    color: #fff;
+}
+.ds-rec-entry-title {
+    font-size: var(--t-title-size, 22px);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+}
+.ds-rec-entry-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 4px 14px;
+    border-radius: var(--ds-radius-control, 16px);
+    background: rgba(255, 255, 255, 0.72);
+}
+.ds-rec-entry-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+    padding: 10px 0;
+}
+.ds-rec-entry-line + .ds-rec-entry-line { border-top: 1px solid rgba(47, 97, 120, 0.14); }
+.ds-rec-entry-line .t-caption { flex: 0 0 auto; color: var(--c-ink-2); }
+.ds-rec-entry-line .t-body-strong { text-align: right; overflow-wrap: anywhere; }
+
+/* Inside the sub-page the form is the page: no extra card frame. */
+.ds-rec-entry-page .ds-rec-form {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+/* Save stays in reach: sticky white bar at the bottom of the sub-page body. */
+.ds-rec-entry-page .ds-rec-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin: 0 calc(-1 * var(--ds-page-pad));
+    padding: 16px calc(var(--ds-page-pad) + var(--shell-mic) + 12px) calc(16px + env(safe-area-inset-bottom, 0px)) var(--ds-page-pad);
+    background: linear-gradient(to bottom, transparent 0, var(--c-canvas) 16px);
+}
+
+/* Pickers as sheets: the option grid / time panel sit on the sheet surface. */
+.ds-sheet .ds-rec-panel { background: transparent; padding: 0; }
+.ds-sheet .ds-rec-options { gap: 10px; }
+.ds-sheet .ds-rec-time-sheet input[type="datetime-local"] { width: 100%; }
+/* Short forms still pin the save bar to the bottom of the sub-page. */
+.ds-rec-entry-page .ds-subpage-scroller { display: flex; flex-direction: column; padding-bottom: 0; }
+.ds-rec-entry-page .ds-subpage-body { flex: 1 0 auto; display: flex; flex-direction: column; padding-bottom: 0; }
+.ds-rec-entry-page .ds-rec-form { flex: 1 0 auto; }
+.ds-rec-entry-page .ds-rec-actions { margin-top: auto; }

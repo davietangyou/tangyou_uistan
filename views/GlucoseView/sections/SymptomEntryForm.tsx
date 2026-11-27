@@ -5,7 +5,7 @@ import {RecordPeriodRow} from './RecordPeriodRow';
 import {VoiceButton} from './recordUi';
 import {Icon} from '../../../components/ui';
 
-export function SymptomEntryForm({vm}: {vm: GlucoseViewModel}) {
+export function SymptomEntryForm({vm, onSaved}: {vm: GlucoseViewModel; onSaved?: () => void}) {
     const {
         addGlucoseRecord,
         customSymptomText,
@@ -142,6 +142,8 @@ export function SymptomEntryForm({vm}: {vm: GlucoseViewModel}) {
                         addGlucoseRecord();
                         setSaveSuccessMessage('🎉 身體症狀紀錄儲存成功！');
                         setTimeout(() => setSaveSuccessMessage(null), 4500);
+                        // S4: back to the page, where the saved banner and the new record show.
+                        onSaved?.();
                     }}
                     disabled={!(newGlucose.symptoms && newGlucose.symptoms.length > 0)}
                     className="ds-btn ds-btn-primary ds-btn-block ds-control ds-rec-save"

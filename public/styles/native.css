@@ -137,3 +137,47 @@ button:not(:disabled):not(.ds-shell-mic):not(.ds-subpage-back):active,
     [role="button"] { transition: none !important; }
     [aria-expanded="true"]:not([aria-haspopup]) + * { animation: none; }
 }
+
+/* R2-10: the document never scrolls. On iPhone Safari a scrolling document
+   makes the bottom address bar collapse and expand on every swipe; native
+   apps keep their frame still and scroll only the content. html / body are
+   pinned to the viewport and clip; the shell canvas is the one page scroller
+   (Layout marks it data-scroll-root; sub-pages and sheets keep their own
+   scrollers). Fixed nav / mic / sub-pages still pin to the viewport because
+   the canvas has no transform. The canvas's own bounce stays (it is the
+   content moving, as in a native list), but it never chains to the page. */
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+#root {
+    height: 100%;
+}
+
+.ds-shell-canvas[data-scroll-root] {
+    position: fixed;
+    inset: 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+}
+
+/* 100vh on iPhone is the tall viewport (bars hidden): as a min-height it left
+   every short page a bar's height of scroll. Fill the scroller instead. */
+.ds-shell-canvas[data-scroll-root] > .ds-shell-column {
+    min-height: 100%;
+}
+
+/* While a sub-page, sheet, memo or dialog covers the page, a drag that
+   starts on its non-scrolling parts (header, scrim) must not scroll the page
+   underneath: clip the canvas. Its scrollTop is kept, so closing the layer
+   returns to the same place. */
+html[data-subpages] .ds-shell-canvas[data-scroll-root],
+html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop, .ds-app-dialog-backdrop) .ds-shell-canvas[data-scroll-root] {
+    overflow-y: hidden;
+}

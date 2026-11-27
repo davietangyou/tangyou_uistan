@@ -6,6 +6,7 @@ import {StepIndicator} from './StepIndicator';
 import {BasicsStep} from './BasicsStep';
 import {ConditionsStep} from './ConditionsStep';
 import {ProgressDots} from './ProgressDots';
+import {scrollRoot} from '../../components/shell/scrollRoot';
 
 export const OnboardingView: React.FC<OnboardingViewProps> = (props) => {
     const vm = useOnboardingViewModel(props);
@@ -21,8 +22,9 @@ export const OnboardingView: React.FC<OnboardingViewProps> = (props) => {
         shownStep.current = onboardingStep;
         const card = cardRef.current;
         if (!card) return;
-        const top = card.getBoundingClientRect().top + window.scrollY - 12;
-        if (window.scrollY > top) window.scrollTo(0, Math.max(0, top));
+        const root = scrollRoot();
+        const top = card.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop - 12;
+        if (root.scrollTop > top) root.scrollTo(0, Math.max(0, top));
     }, [onboardingStep]);
 
     return (

@@ -1,5 +1,6 @@
 import React, {useEffect, useLayoutEffect, useRef} from 'react';
 import {View} from '../utils/types';
+import {scrollRoot} from './shell/scrollRoot';
 import {uiIcons} from './ui/icons';
 
 // 全局免責聲明（鎖定級文案，不可改字）。只在「 · 」處斷行，讓分隔點留在行尾。
@@ -33,7 +34,13 @@ function revealField(focused: HTMLElement, vv: VisualViewport) {
     let scroller: HTMLElement | null = field.parentElement;
     while (scroller && !(/(auto|scroll)/.test(getComputedStyle(scroller).overflowY) && scroller.scrollHeight > scroller.clientHeight)) scroller = scroller.parentElement;
     if (scroller === document.documentElement || scroller === document.body) scroller = null;
-    const scrollBy = (dy: number) => (scroller ? scroller.scrollBy(0, dy) : window.scrollBy(0, dy));
+    // R2-10: the document no longer scrolls; the page scroller is the shell
+    // canvas (unless a layer has clipped it, then nothing moves behind it).
+    if (!scroller) {
+        const root = scrollRoot();
+        if (root.contains(field) && /(auto|scroll)/.test(getComputedStyle(root).overflowY)) scroller = root;
+    }
+    const scrollBy = (dy: number) => scroller?.scrollBy(0, dy);
     // Covered by the keyboard (page-level fields; fixed layers already end at it).
     const limit = vv.offsetTop + vv.height - 16;
     let r = field.getBoundingClientRect();
@@ -121,7 +128,7 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
     }, []);
 
     return (
-        <div className="ds-shell-canvas">
+        <div className="ds-shell-canvas" data-scroll-root>
             <div className={`ds-shell-column min-h-screen flex flex-col ${isLargeFont ? 'large-font' : ''}`}>
                 <header ref={headerRef} className={`ds-root ds-shell-header${isHome ? ' ds-shell-header-home' : ''}${isCompact ? ' ds-shell-header-compact' : ''}`}>
                     <div className="ds-shell-brand">

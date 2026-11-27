@@ -11,6 +11,7 @@
 import React from 'react';
 import {View, type ConsultStep} from '../utils/types';
 import {UI_ICON_DEFAULTS, uiIcons, type UiIconName} from './ui/icons';
+import {scrollRoot} from './shell/scrollRoot';
 
 interface NavigationProps {
     view: View;
@@ -32,7 +33,7 @@ function returnToRest(v: View) {
         return;
     }
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    window.scrollTo({top: 0, behavior: reduce ? 'auto' : 'smooth'});
+    scrollRoot().scrollTo({top: 0, behavior: reduce ? 'auto' : 'smooth'});
 }
 
 export const Navigation: React.FC<NavigationProps> = ({view, setView, setConsultStep}) => {

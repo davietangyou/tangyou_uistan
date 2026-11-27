@@ -5,8 +5,9 @@
 /* Keyboard focus never lands under the fixed bottom nav / floating mic:
    focus() and scrollIntoView() keep this much room at the bottom. The html
    element sits above .large-font, so the large-mode mic/nav sizes (+12px)
-   are added here explicitly. */
-html {
+   are added here explicitly. R2-10: set on the page scroller (the shell
+   canvas), since the document itself no longer scrolls. */
+[data-scroll-root] {
     scroll-padding-top: 16px;
     scroll-padding-bottom: calc(var(--shell-clearance) + 12px);
 }

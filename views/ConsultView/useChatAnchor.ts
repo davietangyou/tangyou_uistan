@@ -1,9 +1,11 @@
 import {useCallback, useEffect, useLayoutEffect, useRef} from 'react';
 import type {ChatMessage} from '../../utils/types';
+import {scrollRoot, scrollRootMax} from '../../components/shell/scrollRoot';
 
 /**
  * Round 2 (chat anchor): the conversation stays anchored at its newest message,
- * like a messaging app. Display-only — it only moves the window scroll.
+ * like a messaging app. Display-only — it only moves the page scroller
+ * (R2-10: the shell canvas; the document itself never scrolls).
  *
  * "Anchored" means: scroll as far down as the thread allows while the newest
  * message (plus its follow-up chips) sits just above the pinned composer; if
@@ -34,7 +36,8 @@ export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
         const follow = loadingEl ? null : root.querySelector<HTMLElement>('.ds-consult-followups');
         const composer = root.querySelector<HTMLElement>('.ds-consult-composer');
         const vv = window.visualViewport;
-        const y = window.scrollY;
+        const scroller = scrollRoot(); // R2-10: the page scroller, not the window
+        const y = scroller.scrollTop;
         const top = last.getBoundingClientRect().top + y;
         const bottom = (follow ?? last).getBoundingClientRect().bottom + y;
         const visibleTop = (vv?.offsetTop ?? 0) + 12;
@@ -45,11 +48,11 @@ export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
         }
         let target = bottom - bandBottom;
         if (bottom - top > bandBottom - visibleTop) target = top - visibleTop;
-        const max = document.documentElement.scrollHeight - window.innerHeight;
+        const max = scrollRootMax(scroller);
         target = Math.max(0, Math.min(max, Math.round(target)));
         if (Math.abs(target - y) < 2) return;
         const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-        window.scrollTo({top: target, behavior: smooth && !reduce ? 'smooth' : 'auto'});
+        scroller.scrollTo({top: target, behavior: smooth && !reduce ? 'smooth' : 'auto'});
     }, []);
 
     // Newest message / waiting state changed → follow it (smoothly).

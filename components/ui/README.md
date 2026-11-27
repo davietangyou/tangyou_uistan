@@ -36,6 +36,8 @@
 | `Icon` | 裝飾性 `uiIcons` 圖標（`aria-hidden`，默認描邊寬度） |
 | `Field` | 原生 `input` / `textarea` / `select`，供現有語音對焦路徑使用 |
 | `appConfirm` / `appAlert`（`AppDialogHost`） | 居中決定框（S3）：問題式標題（可選）+ 一句後果 + 通欄主鈕在上、取消在下。可選 `{title, confirmLabel, cancelLabel, tone:'danger'}`；`danger` 為淡紅主鈕且初始焦點在「取消」。不帶選項時文字、結果、焦點與改前一致 |
+| `confirmThen(title, message, confirmLabel, action)` | D-b1（S4）：先問再做。淡紅確認鈕才執行原處理函數 `action`（原樣），取消 / Esc / 遮罩什麼都不做 |
+| `SheetSelect` | 原生選擇的底部層外觀（S4）：原 `<select>`/`<option>` 字面量照樣寫在頁面裡並留在 DOM（hidden）作為唯一真值；觸發鈕外觀像欄位，`mode="wheel"` 開滾輪（「完成」才套用），`mode="list"` 開清單（長而分組的選項，點選即套用）。選定後對原 select 設值並派發真實 `change` 事件，原 `onChange` 不改一字 |
 | `BottomSheet` | 底部選擇層（S3）：抓手可下拉關閉（≥72px，或 >16px 且快）、遮罩點擊 / Esc / 系統返回關閉；頁面 inert、底欄讓位、語音鈕落到右下且可點；吸底操作欄給語音鈕留位。portal 到所在頁面的子頁層 |
 | `WheelPicker` | 滾輪（S3）：58px 行、吸附、中間淡灰帶；只改「待定值」，由外層在「完成」時套用；↑/↓ / Home / End；選項必須來自頁面既有的選項數據 |
 | `Toast` | 頂部提示條（S3）：`success` 淡綠 ✓ / `info` 炭黑 / `warn` 琥珀；時長與文字由調用方決定（如語音焦點提示、問題已存入） |

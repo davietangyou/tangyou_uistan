@@ -582,7 +582,7 @@ grep -E '^\*deleting' "$STAGE/export_vs_base.txt" || true
 
 若导出物明显缺少大量未触碰文件，删除候选多为噪声，不据此删除。
 
-导出物给出 `*deleting` 时，任何当前仓库已跟踪的路径都值得停下来看一眼，其中分量较重的几类是：`public/`（`styles/*.css`、`manifest.webmanifest`、`icons/` 等静态资源）、`components/` 与 `views/` 下的源码目录（含 `components/ui/`、各视图的分文件与 `views/ConsultView/consultText.ts`）、`domain/`、`scripts/verify/`（含 `fixtures/golden/`）、`.env.example`、`server/`、`cloudflare/`、`wrangler.jsonc`。AI Studio 的导出物常常只是没有看见近期新增或拆分出的文件，所以对已跟踪路径的删除默认更接近“工具没看见”，予以保留，除非能说明这是有意删除；某一轮具体新增了哪些文件，可在《历史迭代阶段/》对应归档中查到。
+导出物给出 `*deleting` 时，任何当前仓库已跟踪的路径都值得停下来看一眼，其中分量较重的几类是：`public/`（`styles/*.css`、`manifest.webmanifest`、`icons/` 等静态资源）、`components/` 与 `views/` 下的源码目录（含 `components/ui/`、`components/shell/`、各视图的分文件——如 `views/GlucoseView/sections/`、`views/MeView/`——与 `views/ConsultView/consultText.ts`）、`domain/`、`scripts/verify/`（含 `fixtures/golden/`）、`.env.example`、`server/`、`cloudflare/`、`wrangler.jsonc`。AI Studio 的导出物常常只是没有看见近期新增或拆分出的文件，所以对已跟踪路径的删除默认更接近“工具没看见”，予以保留，除非能说明这是有意删除；某一轮具体新增了哪些文件，可在《历史迭代阶段/》对应归档中查到。
 
 ### 5.11 候选区验证
 

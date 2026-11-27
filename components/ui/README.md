@@ -55,4 +55,4 @@
 - 正文對比度 ≥ 4.5:1；大字（≥ 24px，或 ≥ 19px 且粗體）≥ 3:1
 - 可點目標：標準 ≥ 48px 高，大字 ≥ 56px；相鄰間距 ≥ 8px；主按鈕通欄
 - 焦點：3px `--c-focus` 外框、3px 偏移；輸入框聚焦時邊框轉 `--c-focus`
-- `prefers-reduced-motion: reduce` 時關閉 `.ds-*` 位移與淡入
+- `prefers-reduced-motion: reduce` 時關閉 `.ds-*` 位移與淡入，以及按下回饋與展開動效（`native.css`）

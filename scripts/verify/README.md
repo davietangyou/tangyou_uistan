@@ -57,7 +57,8 @@ before the first navigation.
 - Option values that get stored or injected into AI (`option-values.normalized.json`)
 - Normalized `#root` HTML and visible text for every UI-reachable view
 - Interaction flows driven by real Chrome CDP pointer and keyboard events, including:
-  - onboarding, large-font toggle, glucose add/delete, saved-question add, me profile edit with reload
+  - onboarding, large-font toggle, glucose add/delete (entry sub-page, then the delete confirmation: cancel keeps the record, confirm removes it), saved-question add, me profile edit in its sub-page editor with reload
+  - bottom-nav clicks use the tab labels 首頁 / 紀錄 / 問 AI / 問題 / 我的 (`withinNav`, first `<nav>`)
   - consult send with an in-page mocked `/api/gemini/chat`
   - request-body capture for a shortcut question, a preference-card submit, and a follow-up click (`requests.normalized.json`)
   - localStorage round-trips

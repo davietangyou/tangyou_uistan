@@ -619,7 +619,7 @@ rm -f .env.local
 VERIFY_BASE_URL=http://127.0.0.1:9102/ npm run verify -- --out verify-results/candidate
 ```
 
-需要与某次基线对照时，再加上 `--compare`。产物目录 `verify-results/` 已被 `.gitignore` 忽略；提交进仓库的金样在 `scripts/verify/fixtures/golden/`（逻辑、锁定文案、选项值、请求体、消息形态五份契约，以及 7 条流程）。验证门把浏览器时钟冻结在香港时间 `2026-11-26 09:30`，结果可重复；判读时以「OK: contract goldens match.」与 status 全 0 为硬门，`--compare` 的 DOM / 截图差异需逐项说明来由。更细的说明见 `scripts/verify/README.md`。该步骤不是每次导入的必做项。
+verify 只守非 UI 的核心业务，不锁界面。候选服务不可达时它会直接报错；只想快速确认业务层、不起服务时，可用 `npm run verify -- --no-browser`（约 10 s，但不覆盖界面到业务的接线）。产物目录 `verify-results/` 已被 `.gitignore` 忽略；提交进仓库的金样在 `scripts/verify/fixtures/golden/`（node 层四份：逻辑、锁定文案、选项值、领域层；浏览器冒烟三份：请求体、消息形态、冒烟结果）。验证门把时钟冻结在香港时间 `2026-11-26 09:30`，结果可重复；判读时以「OK: contract goldens match.」与「verify OK」为硬门。AI Studio 导出的 UI 若丢了 `data-verify` 钩子，冒烟会报「timed out waiting for [data-verify=…]」，按 `scripts/verify/README.md` 的钩子表补回即可（钩子只是属性，不改行为）。需要看 DOM / 截图差异时加 `--ui --compare <目录>`，属参考项。该步骤不是每次导入的必做项。
 
 若 `node --import tsx` 不可用，可以改用 `PORT=9102 npm run dev`。若 9102 已被占用，可以用 `lsof -iTCP:9102 -sTCP:LISTEN` 查看。
 
@@ -645,7 +645,7 @@ git commit -m "import(<渠道名>): <一句话描述本次迭代>"
 | 变更类型 | 候选区验证 | 干净 clone 测试 |
 | --- | --- | --- |
 | 纯文档、文案、注释 | 可选 lint | 跳过 |
-| 普通源码改动 | `npm ci` + lint + build；有条件时再加 `npm run verify` | 可选，或每周/每月一次 |
+| 普通源码改动 | `npm ci` + lint + build；有条件时再加 `npm run verify -- --skip-build`（约 35 s；无服务时 `--no-browser`） | 可选，或每周/每月一次 |
 | 依赖、lockfile、构建配置、目录结构变化 | `npm ci` + lint + build；有条件时再加 `npm run verify` | 建议必做 |
 | 大范围重构、工具导出可疑、基线漂移 | `npm ci` + lint + build；有条件时再加 `npm run verify` | 建议必做 |
 

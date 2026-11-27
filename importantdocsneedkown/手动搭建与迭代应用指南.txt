@@ -237,21 +237,20 @@ sudo ss -ltnp | grep 9002
 
 无输出表示端口已释放。若有残留进程，可以按 PID 结束。
 
-### 3.4 可选：无损改动验证门
+### 3.4 可选：业务验证门（verify）
 
-日常启动不必执行。做不应改变客户端可见行为的改动时，可用仓库内的验证门：
-
-```bash
-npm run verify
-```
-
-该命令对应 `package.json` 的 `verify` 脚本（`node scripts/verify/run.mjs`）。完整的 DOM 与交互快照需要本机 dev 已在 9002 监听，并有 Chrome。产物写在 git 忽略的 `verify-results/`；提交进仓库的金样在 `scripts/verify/fixtures/golden/`。与某次基线对照时，可以加上 `--out` 与 `--compare`，例如：
+日常启动不必执行。改动代码后想确认核心业务没被带坏时，用仓库内的验证门。它只守非 UI 的核心业务：数据与计算、`dia_*` 存储键与形状、`/api/gemini/*` 请求契约、锁定 AI 文案、会存储或发给 AI 的选项值、关键流程落盘的结果；**不锁 UI**（不比 DOM、截图、样式、文字位置）。全程不会真的调用 AI（浏览器内拦截 `/api/gemini/*`）。
 
 ```bash
-npm run verify -- --out verify-results/phase-N --compare verify-results/baseline
+npm run verify                    # 硬门：lint + build + node 层 + 浏览器冒烟 + 金样（约 40 s）
+npm run verify -- --skip-build    # 迭代时最常用（约 35 s）
+npm run verify -- --no-browser    # 不需要 dev server（约 9 s），但不覆盖「点了能不能走到业务」
+npm run verify -- --skip-build --ui   # 再加 UI 参考层（DOM 快照、文案清单、触控/对比度审计），不影响退出码
 ```
 
-验证门会把浏览器时钟冻结在一个固定的香港时间（见 `scripts/verify/lib/clock.mjs`），结果可重复。输出「OK: contract goldens match.」且 status 全 0 即契约无损；`--compare` 的 DOM / 截图差异在界面改动时属预期，需逐项确认来由。
+该命令对应 `package.json` 的 `verify` 脚本（`node scripts/verify/run.mjs`）。默认（不带 `--no-browser`）需要本机 dev 已在 9002 监听（其他端口用 `VERIFY_BASE_URL` 指定）并有 Chrome；dev server 不可达时会**直接报错**，不再静默跳过。浏览器冒烟只通过 `data-verify` 钩子找元素，UI 重写时须保留同名钩子（见 `scripts/verify/README.md` 的钩子表）。最小触控尺寸（大字 56 px、标准 48 px）是硬门里唯一保留的版面规则。产物写在 git 忽略的 `verify-results/`；提交进仓库的金样在 `scripts/verify/fixtures/golden/`。需要和某次 `--ui` 产物对照 DOM / 截图时，加上 `--ui --compare <目录>`（参考项，不阻断）。
+
+验证门会把浏览器时钟冻结在一个固定的香港时间（见 `scripts/verify/lib/clock.mjs`），结果可重复。输出「OK: contract goldens match.」和「verify OK」即业务无损；`--ui` 的差异在界面改动时属预期。
 
 不要把 `verify-results/` 提交进仓库，也不必拷到线上托管目录。更细的说明见 `scripts/verify/README.md`。
 
@@ -284,7 +283,7 @@ npm run verify -- --out verify-results/phase-N --compare verify-results/baseline
 | `vite.config.ts` | 重启 |
 | `server.ts` / `server/**` | 重启 |
 | `public/styles/` 下任一文件或 `index.html` 中的样式链接 | 确认入口与分文件都在；刷新或重启后检查大字开/关外观 |
-| `scripts/verify/**` | 通常无需重启；金样变更时再按需跑 `npm run verify` |
+| `scripts/verify/**` | 通常无需重启；改动后跑一次 `npm run verify -- --skip-build` |
 | `wrangler.jsonc` / `cloudflare/**` | dev 模式无需重启；只影响 Cloudflare Workers 部署形态 |
 | 前端源码 | 手动流程下重启（Vite 热更新只在运行中生效） |
 | 仅文档 | 通常无需重启 |
@@ -863,7 +862,7 @@ sudo ss -ltnp | grep 9002
 | 启动 | `npm run dev` | `sudo -H -u webser npm run dev` |
 | 健康检查 | `curl -sS http://127.0.0.1:9002/api/health; echo` | 同左 |
 | 样式资源 | `curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css` | 同左 |
-| 可选验证门 | `npm run verify` | 同左（需 Chrome；产物在 `verify-results/`） |
+| 可选验证门 | `npm run verify`（无 dev server 时 `-- --no-browser`） | 同左（默认需 dev server 与 Chrome；产物在 `verify-results/`） |
 | 端口检查 | `lsof -iTCP:9002 -sTCP:LISTEN` | `sudo ss -ltnp \| grep 9002` |
 | 记录旧 commit | `OLD_HEAD="$(git rev-parse HEAD)"` | `OLD_HEAD="$(sudo -H -u webser git rev-parse HEAD)"` |
 | 拉取 | `git pull --ff-only` | `sudo -H -u webser git pull --ff-only` |

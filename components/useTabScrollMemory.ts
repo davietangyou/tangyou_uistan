@@ -21,5 +21,8 @@ export function useTabScrollMemory(view: string) {
         if (current.current === view) return;
         current.current = view;
         window.scrollTo(0, positions.current[view] ?? 0);
+        // Round 2: let a page that anchors its own scroll (問 AI → newest
+        // message) adjust once it is back in the document.
+        window.dispatchEvent(new CustomEvent('ds:view-shown', {detail: view}));
     }, [view]);
 }

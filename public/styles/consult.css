@@ -1458,3 +1458,10 @@
     .ds-consult-voice .t-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .ds-consult-voice { width: var(--touch-min); padding: 0; }
 }
+
+/* Round 2: keyboard up — the nav has stepped away, so the composer drops to
+   just above the keyboard (inset from Layout) instead of hovering where the
+   nav used to be, or hiding underneath the keyboard. */
+html[data-keyboard] .ds-consult-composer {
+    bottom: calc(var(--ds-kb-inset, 0px) + 8px);
+}

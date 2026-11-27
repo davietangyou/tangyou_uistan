@@ -533,5 +533,11 @@ html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop) .ds-shell-mic {
    visualViewport): the nav fades away like for a sub-page so it is not pushed
    up over the field, and the voice button takes the nav's corner. */
 html[data-keyboard] .ds-shell-mic {
-    bottom: calc(var(--shell-nav-offset) + 8px) !important;
+    bottom: calc(var(--ds-kb-inset, 0px) + var(--shell-nav-offset) + 8px) !important;
+}
+
+/* Round 2: with the keyboard up the sub-page ends at the keyboard's top edge,
+   so its pinned action bar (儲存 / 完成) stays in reach. */
+html[data-keyboard] .ds-subpage {
+    bottom: var(--ds-kb-inset, 0px);
 }

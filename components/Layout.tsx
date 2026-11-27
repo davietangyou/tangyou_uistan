@@ -54,13 +54,21 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
             const typing = !!el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !['button', 'checkbox', 'radio', 'file', 'range', 'submit'].includes((el as HTMLInputElement).type)) || el.isContentEditable);
             const open = typing && Math.abs(vv.scale - 1) < 0.01 && window.innerHeight - vv.height > 150;
             root.toggleAttribute('data-keyboard', open);
+            // Round 2: how much of the layout viewport the keyboard covers, so
+            // pinned bars (問 AI composer, sub-page action bar, voice button)
+            // can sit on top of it instead of underneath.
+            const inset = open ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
+            root.style.setProperty('--ds-kb-inset', `${inset}px`);
         };
         vv.addEventListener('resize', update);
+        vv.addEventListener('scroll', update);
         document.addEventListener('focusout', update);
         return () => {
             vv.removeEventListener('resize', update);
+            vv.removeEventListener('scroll', update);
             document.removeEventListener('focusout', update);
             root.removeAttribute('data-keyboard');
+            root.style.removeProperty('--ds-kb-inset');
         };
     }, []);
 

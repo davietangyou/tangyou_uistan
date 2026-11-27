@@ -8,6 +8,7 @@ import {FollowUps} from './FollowUps';
 import {PreferenceCard} from './PreferenceCard';
 import {Shortcuts} from './Shortcuts';
 import {UserBubble} from './UserBubble';
+import {useChatAnchor} from './useChatAnchor';
 
 /** Consult thread and composer. Most message cards, the follow-ups, composer and
  * shortcuts live in their own files next to this one (pure moves, Stage 11).
@@ -15,9 +16,10 @@ import {UserBubble} from './UserBubble';
  * to ChatPanel.tsx by the verify locked-copy contract. */
 export function ChatPanel({vm}: {vm: ConsultViewModel}) {
     const {chatLoading, chatMessages} = vm;
+    const panelRef = useChatAnchor(chatMessages, chatLoading);
 
     return (
-            <div className="ds-consult-panel">
+            <div ref={panelRef} className="ds-consult-panel">
                 {/* S4b: disclaimer leads the page, quiet caption (moved from below the composer). */}
                 <p className="ds-consult-disclaimer t-caption">
                     <Icon name="privacy" size={18} />

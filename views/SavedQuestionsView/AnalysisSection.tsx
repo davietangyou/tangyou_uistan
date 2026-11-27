@@ -1,5 +1,5 @@
 import ReactMarkdown from 'react-markdown';
-import {Button, Card, cx, Icon} from '../../components/ui';
+import {Button, Card, cx, EmptyState, Icon} from '../../components/ui';
 import type { SavedQuestionsViewModel } from './useSavedQuestionsViewModel';
 import {CountPill, ExpandToggle, IndexBadge, SectionHead} from './questionUi';
 
@@ -46,12 +46,11 @@ export function AnalysisSection({vm}: {vm: SavedQuestionsViewModel}) {
                     )}
 
                     {savedQuestions.length === 0 && !analysisLoading && (
-                        <div className="ds-sq-empty">
-                            <p className="t-body-strong">暫無保存的問題記錄。</p>
-                            <p className="t-caption t-ink-2">
+                        <EmptyState className="ds-sq-empty" icon="askAi" tone="sky" title="暫無保存的問題記錄。">
+                            <p className="t-caption">
                                 在「問問 AI」對話或下方「手動新增」想問醫生的問題，AI 就會在此為您自動歸納出 3-5 類別重點與精選提問！
                             </p>
-                        </div>
+                        </EmptyState>
                     )}
 
                     {savedQuestions.length > 0 && !analysisResult && !analysisLoading && (

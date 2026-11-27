@@ -1,4 +1,4 @@
-import {Button, Card, confirmThen, cx, Icon} from '../../components/ui';
+import {Button, Card, confirmThen, cx, EmptyState, Icon} from '../../components/ui';
 import type { SavedQuestionsViewModel } from './useSavedQuestionsViewModel';
 import {CountPill, ExpandToggle, IndexBadge, SectionHead} from './questionUi';
 
@@ -81,10 +81,9 @@ export function SavedListSection({vm}: {vm: SavedQuestionsViewModel}) {
 
                     {/* 問題列表 */}
                     {savedQuestions.length === 0 ? (
-                        <div className="ds-sq-empty">
-                            <p className="t-body-strong">老友記，你暫時未有保存任何問題。</p>
-                            <p className="t-caption t-ink-2">可以在「問問 AI」或問診建議中，點擊「保存問題」收納到這裡！</p>
-                        </div>
+                        <EmptyState className="ds-sq-empty" icon="savedQuestions" tone="lilac" title="老友記，你暫時未有保存任何問題。">
+                            <p className="t-caption">可以在「問問 AI」或問診建議中，點擊「保存問題」收納到這裡！</p>
+                        </EmptyState>
                     ) : (
                         <ol className="ds-sq-list">
                             {savedQuestions.map((q, idx) => {

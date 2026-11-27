@@ -1,4 +1,4 @@
-import {Button, Card, Icon} from '../../components/ui';
+import {BottomSheet, Button, Card, EmptyState, Icon} from '../../components/ui';
 import type { SavedQuestionsViewModel } from './useSavedQuestionsViewModel';
 import {CountPill, IndexBadge, SectionHead} from './questionUi';
 
@@ -13,6 +13,10 @@ export function NextClinicSection({vm}: {vm: SavedQuestionsViewModel}) {
         handleSaveClinicDate,
         handleAddNextClinicQuestion,
     } = vm;
+    const cancelDate = () => {
+        setTempClinicDate(nextClinicDate);
+        setIsEditingDate(false);
+    };
     return (
         <Card className="ds-sq-card ds-sq-clinic" aria-label="下次問診清單">
             {/* 【2. 下次問診清單 & 覆診日期】：展示病人精選的就診問題與提醒設定 */}
@@ -27,59 +31,58 @@ export function NextClinicSection({vm}: {vm: SavedQuestionsViewModel}) {
 
             {/* 下次覆診日期設定 */}
             <div className="ds-sq-date">
-                {isEditingDate ? (
-                    <div className="ds-sq-date-edit">
-                        <label className="ds-sq-field">
-                            <span className="t-label">下次問診時間：</span>
-                            <input
-                                type="date"
-                                value={tempClinicDate}
-                                onChange={e => setTempClinicDate(e.target.value)}
-                                className="ds-field-control ds-control"
-                            />
-                        </label>
-                        <div className="ds-sq-actions">
-                            <Button onClick={handleSaveClinicDate}>保存</Button>
-                            <Button
-                                variant="ghost"
-                                onClick={() => {
-                                    setTempClinicDate(nextClinicDate);
-                                    setIsEditingDate(false);
-                                }}
-                            >
-                                取消
-                            </Button>
-                        </div>
+                <div className="ds-sq-date-row">
+                    <div className="ds-sq-date-text">
+                        <span className="t-caption t-ink-2">下次問診時間：</span>
+                        <span className={nextClinicDate ? 't-title ds-sq-date-value' : 't-body-strong t-ink-2'}>
+                            <Icon name="calendar" size={20} />
+                            {nextClinicDate || '未設定問診日期'}
+                        </span>
                     </div>
-                ) : (
-                    <div className="ds-sq-date-row">
-                        <div className="ds-sq-date-text">
-                            <span className="t-caption t-ink-2">下次問診時間：</span>
-                            <span className={nextClinicDate ? 't-title ds-sq-date-value' : 't-body-strong t-ink-2'}>
-                                <Icon name="calendar" size={20} />
-                                {nextClinicDate || '未設定問診日期'}
-                            </span>
-                        </div>
-                        <Button
-                            variant="secondary"
-                            onClick={() => {
-                                setTempClinicDate(nextClinicDate || new Date().toISOString().split('T')[0]);
-                                setIsEditingDate(true);
-                            }}
-                        >
-                            <Icon name="edit" size={20} />
-                            <span>{nextClinicDate ? '修改日期' : '設定日期'}</span>
-                        </Button>
-                    </div>
-                )}
+                    <Button
+                        variant="secondary"
+                        onClick={() => {
+                            setTempClinicDate(nextClinicDate || new Date().toISOString().split('T')[0]);
+                            setIsEditingDate(true);
+                        }}
+                    >
+                        <Icon name="edit" size={20} />
+                        <span>{nextClinicDate ? '修改日期' : '設定日期'}</span>
+                    </Button>
+                </div>
             </div>
+
+            {/* S4: the date is picked in a bottom sheet (same draft, same 保存 / 取消). */}
+            <BottomSheet
+                open={isEditingDate}
+                onClose={cancelDate}
+                title="設定覆診日期"
+                hideClose
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={cancelDate}>取消</Button>
+                        <Button onClick={handleSaveClinicDate}>保存</Button>
+                    </>
+                }
+            >
+                <div className="ds-sq-date-edit">
+                    <label className="ds-sq-field">
+                        <span className="t-label">下次問診時間：</span>
+                        <input
+                            type="date"
+                            value={tempClinicDate}
+                            onChange={e => setTempClinicDate(e.target.value)}
+                            className="ds-field-control ds-control"
+                        />
+                    </label>
+                </div>
+            </BottomSheet>
 
             {/* 下次問診清單列表 */}
             {nextClinicQuestions.length === 0 ? (
-                <div className="ds-sq-empty">
-                    <p className="t-body-strong">目前尚未挑選下次問診問題。</p>
-                    <p className="t-caption t-ink-2">可在上方「AI 總結」或下方「所有保存問題」中點擊加入！</p>
-                </div>
+                <EmptyState className="ds-sq-empty" icon="calendar" tone="sage" title="目前尚未挑選下次問診問題。">
+                    <p className="t-caption">可在上方「AI 總結」或下方「所有保存問題」中點擊加入！</p>
+                </EmptyState>
             ) : (
                 <ol className="ds-sq-list">
                     {nextClinicQuestions.map((q, idx) => (

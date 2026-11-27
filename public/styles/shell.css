@@ -72,27 +72,28 @@
     color: var(--c-ink-2);
 }
 
-/* Home: brand eyebrow, then the greeting; the font toggle sits at the top
-   right beside them (one row of chrome, not two). */
-.ds-shell-header-home {
+/* Compact pages (home, 問題紀錄, 個人檔案): brand eyebrow, then the page's
+   lead heading; the font toggle sits at the top right beside them (one row of
+   chrome, not two). The lead heading reserves room for the toggle. */
+.ds-shell-header-compact {
     position: relative;
     display: block;
     padding-bottom: 0;
 }
 
-.ds-shell-header-home .ds-shell-font-toggle {
+.ds-shell-header-compact .ds-shell-font-toggle {
     position: absolute;
     z-index: 1;
     top: 18px;
     right: var(--ds-page-pad);
 }
 
-.ds-shell-column:has(.ds-shell-header-home) .ds-home-greeting {
+.ds-shell-column:has(.ds-shell-header-compact) .ds-page-lead {
     margin-top: 2px;
     padding-right: 128px;
 }
 
-.large-font.ds-shell-column:has(.ds-shell-header-home) .ds-home-greeting {
+.large-font.ds-shell-column:has(.ds-shell-header-compact) .ds-page-lead {
     padding-right: 148px;
 }
 

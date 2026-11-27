@@ -7,7 +7,7 @@ export function PageHeader({vm}: {vm: SavedQuestionsViewModel}) {
     return (
         <header className="ds-sq-header">
             <div className="ds-sq-header-text">
-                <h2 className="t-h1">問題紀錄</h2>
+                <h2 className="t-h1 ds-page-lead">問題紀錄</h2>
                 <p className="t-body t-ink-2">AI 自動總結常見類別，挑選重要問題加入下次問診清單！</p>
             </div>
             <Button variant="secondary" onClick={() => setView(View.Consult)} className="ds-sq-header-btn">

@@ -19,8 +19,13 @@ interface LayoutProps {
  * 跟著內容一起捲走，首屏留給內容。首頁的品牌名「糖友導航」只對讀屏可見（DOM 文字保留）。
  * 返回首頁一律經底部導航。
  */
+// S4: pages whose first heading shares the top row with the font toggle (one
+// row of chrome). Each page marks that heading with `.ds-page-lead`.
+const COMPACT_HEADER_VIEWS = new Set<View>([View.Home, View.SavedQuestions, View.Me]);
+
 export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLargeFont, view}) => {
     const isHome = view === View.Home;
+    const isCompact = view !== undefined && COMPACT_HEADER_VIEWS.has(view);
     const FontIcon = uiIcons.fontSize;
     const PrivacyIcon = uiIcons.privacy;
     const headerRef = useRef<HTMLElement>(null);
@@ -40,7 +45,7 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
     return (
         <div className="ds-shell-canvas">
             <div className={`ds-shell-column min-h-screen flex flex-col ${isLargeFont ? 'large-font' : ''}`}>
-                <header ref={headerRef} className={`ds-root ds-shell-header ${isHome ? 'ds-shell-header-home' : ''}`}>
+                <header ref={headerRef} className={`ds-root ds-shell-header${isHome ? ' ds-shell-header-home' : ''}${isCompact ? ' ds-shell-header-compact' : ''}`}>
                     <div className="ds-shell-brand">
                         {isHome && <p className="ds-shell-eyebrow">DiaGuide HK</p>}
                         <h1 className={`ds-shell-title ${isHome ? 'ds-sr-only' : ''}`}>糖友導航</h1>

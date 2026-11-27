@@ -34,7 +34,7 @@ export const MeView: React.FC<MeViewProps> = (props) => {
         <div className="ds-root ds-profile">
             {/* 頂部標題 */}
             <header className="ds-pf-header">
-                <h2 className="t-h1">個人檔案</h2>
+                <h2 className="t-h1 ds-page-lead">個人檔案</h2>
                 <p className="t-body t-ink-2">
                     隨時查看與直接修改您的健康資料，所有變更即時保存，為 AI 提供準確的分析基礎。
                 </p>

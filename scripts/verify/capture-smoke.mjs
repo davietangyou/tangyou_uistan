@@ -128,7 +128,7 @@ async function hardReload(cdp) {
     await cdp.send('Page.reload', { ignoreCache: true });
     const start = Date.now();
     while (Date.now() - start < 20000) {
-        const ready = await evaluate(cdp, `!window.__smokeOldDoc && document.readyState !== 'loading' && Boolean(document.querySelector('[data-verify^="nav-"], [data-verify="ob-name"]'))`).catch(() => false);
+        const ready = await evaluate(cdp, `!window.__smokeOldDoc && document.readyState !== 'loading' && Boolean(document.querySelector('[data-verify^="nav-"], [data-verify="ob-name"], [data-verify="ob-welcome-start"]'))`).catch(() => false);
         if (ready) break;
         await delay(100);
     }
@@ -174,6 +174,11 @@ function chatCalls(calls) { return calls.filter((c) => String(c.url).includes('/
 async function onboarding(cdp) {
     await navigate(cdp, BASE_URL);
     await reload(cdp, 'clear');
+    // Welcome is presentation-only (no fields saved). Advance if it is shown.
+    if (await has(cdp, H('ob-welcome-start'))) {
+        await touchGate(cdp, 'onboarding-welcome');
+        await tap(cdp, H('ob-welcome-start'));
+    }
     await waitHook(cdp, H('ob-name'));
     await touchGate(cdp, 'onboarding-1');
     await fill(cdp, H('ob-name'), '陳生');

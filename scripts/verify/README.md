@@ -78,7 +78,7 @@ element that does that job. Hooks are attributes only — no behaviour.
 | Hook | Function |
 |---|---|
 | `nav-HOME` `nav-GLUCOSE` `nav-CONSULT` `nav-SAVED_QUESTIONS` `nav-ME` | go to that view (View enum value) |
-| `ob-name` `ob-age` `ob-gender-<男/女/其他>` `ob-next` `ob-finish` `ob-later` | onboarding fields and steps |
+| `ob-welcome-start` `ob-name` `ob-age` `ob-gender-<男/女/其他>` `ob-next` `ob-finish` `ob-later` | onboarding welcome, fields and steps |
 | `font-toggle` | large/standard font |
 | `records-tab-<BG/SYMPTOM/HBA1C>` (Segmented `name`-`value`) | records tab |
 | `rec-open-bg` `rec-open-hba1c` `rec-open-symptom` | open an entry form |

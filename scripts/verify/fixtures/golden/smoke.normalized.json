@@ -105,6 +105,7 @@
       "me: controls >= 56px": true,
       "onboarding-1: controls >= 56px": true,
       "onboarding-2: controls >= 56px": true,
+      "onboarding-welcome: controls >= 56px": true,
       "questions-adding: controls >= 56px": true,
       "questions: controls >= 56px": true,
       "records: controls >= 56px": true,
@@ -160,6 +161,11 @@
       "min": 56
     },
     "onboarding-2": {
+      "below": 0,
+      "large": true,
+      "min": 56
+    },
+    "onboarding-welcome": {
       "below": 0,
       "large": true,
       "min": 56

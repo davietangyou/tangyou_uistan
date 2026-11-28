@@ -146,7 +146,19 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
             // can sit on top of it instead of underneath.
             const inset = open ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
             root.style.setProperty('--ds-kb-inset', `${inset}px`);
-            if (hud) hud.textContent = `inner ${window.innerHeight} client ${root.clientHeight} frame ${Math.round(frame.top)}/${Math.round(frame.height)}\nvv ${Math.round(vv.height)} top ${Math.round(vv.offsetTop)} scale ${vv.scale.toFixed(2)} scrollY ${Math.round(window.scrollY)}\ncovered ${Math.round(covered)} open ${open} chat ${chat} canvas ${Math.round(box?.getBoundingClientRect().bottom ?? 0)}`;
+            if (hud) {
+                if (open && !wasOpenForHud) { peak.n++; peak.y = 0; peak.top = 0; peak.canvas = 0; }
+                if (open) {
+                    peak.y = Math.max(peak.y, window.scrollY);
+                    peak.top = Math.max(peak.top, vv.offsetTop);
+                    peak.canvas = Math.max(peak.canvas, Math.round(box?.scrollTop ?? 0));
+                } else if (peak.y || peak.top || peak.canvas || peak.n) {
+                    lastPeak = `last open #${peak.n}: max scrollY ${Math.round(peak.y)} offsetTop ${Math.round(peak.top)} canvasScroll ${peak.canvas}`;
+                }
+                wasOpenForHud = open;
+                hud.style.transform = `translateY(${Math.round(vv.offsetTop)}px)`;
+            }
+            if (hud) hud.textContent = `inner ${window.innerHeight} client ${root.clientHeight} frame ${Math.round(frame.top)}/${Math.round(frame.height)}\nvv ${Math.round(vv.height)} top ${Math.round(vv.offsetTop)} scale ${vv.scale.toFixed(2)} scrollY ${Math.round(window.scrollY)}\ncovered ${Math.round(covered)} open ${open} chat ${chat} canvas ${Math.round(box?.getBoundingClientRect().bottom ?? 0)} scroll ${Math.round(box?.scrollTop ?? 0)}\n${lastPeak}`;
             // R2-4: keyboard opened (or changed height) → the field being typed
             // into is brought above it, whether it sits in the page, a sub-page
             // or a sheet. 問 AI anchors its own composer (useChatAnchor).
@@ -160,6 +172,9 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
         };
         // ?kbdebug: live numbers on a real phone (nothing is shown otherwise).
         let hud: HTMLElement | null = null;
+        const peak = {n: 0, y: 0, top: 0, canvas: 0};
+        let lastPeak = '';
+        let wasOpenForHud = false;
         if (/[?&]kbdebug\b/.test(window.location.search)) {
             hud = document.createElement('pre');
             hud.style.cssText = 'position:fixed;top:env(safe-area-inset-top,0px);left:4px;right:4px;z-index:9999;margin:0;padding:4px 6px;font:11px/1.3 ui-monospace,monospace;color:#fff;background:rgba(0,0,0,.72);border-radius:6px;pointer-events:none;white-space:pre-wrap';
@@ -209,9 +224,17 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
         };
         for (const type of ['focusin', 'focusout', 'input']) document.addEventListener(type, schedule);
         document.addEventListener('input', onInput);
+        // The document never scrolls (R2-10). If Safari scrolls it anyway to
+        // reveal a field while the keyboard is up, put it back so the frame
+        // (and the composer on the keyboard) stays where the layout put it.
+        const onWindowScroll = () => {
+            if (open && (window.scrollY !== 0 || root.scrollTop !== 0)) window.scrollTo(0, 0);
+            updateNow();
+        };
         vv.addEventListener('resize', updateNow);
         vv.addEventListener('scroll', updateNow);
         window.addEventListener('resize', updateNow);
+        window.addEventListener('scroll', onWindowScroll, {passive: true});
         document.addEventListener('pointerdown', onDown, true);
         document.addEventListener('pointermove', onMove, true);
         document.addEventListener('pointerup', onUp, true);
@@ -226,6 +249,7 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
             vv.removeEventListener('resize', updateNow);
             vv.removeEventListener('scroll', updateNow);
             window.removeEventListener('resize', updateNow);
+            window.removeEventListener('scroll', onWindowScroll);
             document.removeEventListener('pointerdown', onDown, true);
             document.removeEventListener('pointermove', onMove, true);
             document.removeEventListener('pointerup', onUp, true);

@@ -129,9 +129,12 @@ export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
             following = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 80;
         };
         let height = scroller.clientHeight;
+        // Only a real thread rides (welcome / topic cards stay where they
+        // are; riding there piled up scroll on every open).
+        const hasThread = () => (panel.current?.querySelectorAll('.ds-consult-msg').length ?? 0) > 1 || !!panel.current?.querySelector('.ds-consult-loading');
         const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => {
             const next = scroller.clientHeight;
-            if (next < height && following && typingHere()) scroller.scrollTop += height - next;
+            if (next < height && following && typingHere() && hasThread()) scroller.scrollTop += height - next;
             height = next;
         });
         ro?.observe(scroller);
@@ -141,7 +144,9 @@ export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
             timer = window.setTimeout(() => { if (typingHere()) anchor(true); }, 300);
         };
         const onFocus = (e: FocusEvent) => {
-            if ((e.target as HTMLElement | null)?.id === 'chat-input-box') later();
+            if ((e.target as HTMLElement | null)?.id !== 'chat-input-box') return;
+            onScroll(); // where the reader is now, before the keyboard shrinks the view
+            later();
         };
         document.addEventListener('focusin', onFocus);
         vv?.addEventListener('resize', later);

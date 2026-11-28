@@ -14,10 +14,21 @@ export function Composer({vm}: {vm: ConsultViewModel}) {
     // keyboard without panning the page to the field (the pan is what left a
     // gap and slid the frame); the layout then rests the composer on the
     // keyboard itself. A drag still scrolls the thread.
+    // The layer stays up until the tap's own gesture has ended (and its
+    // synthesized click is cancelled): if it vanished on focus, the rest of
+    // the tap landed on the now-focused field as a native caret tap and
+    // Safari scrolled the page to reveal the caret (the gap on the 2nd tap).
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const [editing, setEditing] = useState(false);
+    const [holding, setHolding] = useState(false);
+    const holdTimer = useRef(0);
     const press = useRef<{id: number; x: number; y: number; moved: boolean} | null>(null);
-    const enterEditing = () => inputRef.current?.focus({preventScroll: true});
+    const enterEditing = () => {
+        setHolding(true);
+        window.clearTimeout(holdTimer.current);
+        holdTimer.current = window.setTimeout(() => setHolding(false), 450);
+        inputRef.current?.focus({preventScroll: true});
+    };
 
     return (
         <>
@@ -114,11 +125,14 @@ export function Composer({vm}: {vm: ConsultViewModel}) {
                         className="ds-consult-hold"
                         tabIndex={-1}
                         aria-hidden="true"
-                        hidden={editing}
+                        hidden={editing && !holding}
                         onPointerDown={e => {
                             if (e.button !== 0) return;
                             e.preventDefault();
                             press.current = {id: e.pointerId, x: e.clientX, y: e.clientY, moved: false};
+                            // Like the reference: the press stays with the layer even if
+                            // the composer is still gliding down from a close.
+                            try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* not capturable */ }
                         }}
                         onPointerMove={e => {
                             const p = press.current;
@@ -130,7 +144,11 @@ export function Composer({vm}: {vm: ConsultViewModel}) {
                             if (p && p.id === e.pointerId && !p.moved) enterEditing();
                         }}
                         onPointerCancel={() => { press.current = null; }}
-                        onClick={e => { if (e.detail === 0) enterEditing(); }}
+                        onTouchEnd={e => { if (e.cancelable) e.preventDefault(); }}
+                        onClick={e => {
+                            e.preventDefault();
+                            if (e.detail === 0) enterEditing();
+                        }}
                     />
 
                     <div className="ds-consult-tools">

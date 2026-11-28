@@ -28,7 +28,7 @@ export function SaveBar({vm}: {vm: MeViewModel}) {
 
             {saveSuccess && (
                 <p className="t-body-strong ds-pf-save-note" role="status">
-                    個人檔案已成功更新並同步至 AI 諮詢系統！
+                    「我的」資料已成功更新並同步至 AI 諮詢系統！
                 </p>
             )}
         </div>

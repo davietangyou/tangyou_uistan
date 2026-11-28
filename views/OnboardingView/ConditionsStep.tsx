@@ -231,10 +231,10 @@ export function ConditionsStep({vm}: {vm: OnboardingViewModel}) {
             <div className="ds-pf-tip">
                 <p className="t-body-strong ds-pf-tip-title">
                     <Icon name="insight" size={20} />
-                    <span>資料將同步到【個人檔案】</span>
+                    <span>資料將同步到【我的】</span>
                 </p>
                 <p className="t-body">
-                    首次設定已完成！其餘糖尿病專科用藥清單、飲食運動偏好及就診安排，可隨時在「個人檔案」中進一步完善。
+                    首次設定已完成！其餘糖尿病專科用藥清單、飲食運動偏好及就診安排，可隨時到「我的」去完善。
                 </p>
             </div>
 

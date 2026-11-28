@@ -11,10 +11,10 @@ export function LifestyleGuide({vm}: {vm: HomeViewModel}) {
     if (!isProfileEnriched) {
         const Icon = ProfileIcon;
         return (
-            <section className="ds-home-tile ds-home-tile-sage">
+            <section className="ds-home-tile ds-home-tile-sage is-row">
                 <p className="ds-home-tile-kicker">
                     <Icon size={18} strokeWidth={1.8} aria-hidden />
-                    個人檔案
+                    我的
                 </p>
                 <p className="ds-home-tile-value ds-home-tile-phrase">待完善</p>
                 <p className="ds-home-tile-note">可再補就醫與生活習慣</p>
@@ -31,7 +31,7 @@ export function LifestyleGuide({vm}: {vm: HomeViewModel}) {
 
     const Icon = SavedIcon;
     return (
-        <section className="ds-home-tile ds-home-tile-lilac">
+        <section className="ds-home-tile ds-home-tile-lilac is-row">
             <p className="ds-home-tile-kicker">
                 <Icon size={18} strokeWidth={1.8} aria-hidden />
                 問診清單

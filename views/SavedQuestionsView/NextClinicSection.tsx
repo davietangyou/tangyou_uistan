@@ -4,7 +4,7 @@ import {CountPill, IndexBadge, SectionHead} from './questionUi';
 
 export function NextClinicSection({vm}: {vm: SavedQuestionsViewModel}) {
     const {
-        nextClinicQuestions, nextClinicDate,
+        nextClinicQuestions, nextClinicDate, profile,
         isAddingNextQ, setIsAddingNextQ,
         newNextQText, setNewNextQText,
         isEditingDate, setIsEditingDate,
@@ -38,6 +38,11 @@ export function NextClinicSection({vm}: {vm: SavedQuestionsViewModel}) {
                             <Icon name="calendar" size={20} />
                             {nextClinicDate || '未設定問診日期'}
                         </span>
+                        {nextClinicDate && (profile.nextClinicTime || profile.nextClinicLocation) && (
+                            <span className="t-caption t-ink-2 ds-sq-date-meta">
+                                {[profile.nextClinicTime, profile.nextClinicLocation].filter(Boolean).join(' · ')}
+                            </span>
+                        )}
                     </div>
                     <Button
                         variant="secondary"

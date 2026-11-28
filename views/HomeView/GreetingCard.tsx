@@ -11,7 +11,7 @@ export function GreetingCard({vm}: {vm: HomeViewModel}) {
             <button
                 type="button"
                 className="ds-home-avatar ds-control"
-                aria-label="查看個人資料"
+                aria-label="前往「我的」"
                 onClick={() => setView(View.Me)}
             >
                 <ProfileIcon size={22} strokeWidth={1.8} aria-hidden />

@@ -520,3 +520,41 @@
 .ds-home-clinic-copy { padding-right: 104px; }
 .ds-home-clinic-art { display: none; }
 .large-font .ds-home-ask { padding-right: 112px; background-size: auto 196px; }
+
+/* =============================================================================
+   Contract items (owner 2026-11-28): 今日服藥 read-only tile beside 最新血糖,
+   覆診 time/location line, and the 「我的 · 待完善」 prompt as a full row.
+   ============================================================================= */
+/* minmax(0,1fr): a keep-all note can no longer widen its column past the
+   screen (the large-font clip on the right tile). */
+.ds-home-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.ds-home-tile { min-width: 0; }
+.ds-home-tile-note { word-break: normal; overflow-wrap: anywhere; }
+.ds-home-tile-sun { background: var(--c-sun-100); }
+.ds-home-tile-sun .ds-home-tile-kicker { color: var(--c-sun-700); }
+
+.ds-home-tile.is-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "kicker btn" "value btn" "note btn";
+    align-items: center;
+    column-gap: 14px;
+    row-gap: 2px;
+    padding: 14px 16px;
+}
+.ds-home-tile.is-row .ds-home-tile-kicker { grid-area: kicker; }
+.ds-home-tile.is-row .ds-home-tile-value { grid-area: value; margin: 0; font-size: var(--t-title); }
+.ds-home-tile.is-row .ds-home-tile-note { grid-area: note; }
+.ds-home-tile.is-row .ds-home-tile-btn { grid-area: btn; width: auto; min-width: 96px; margin: 0; padding: 8px 18px; }
+
+.ds-home-clinic-meta {
+    margin: 2px 0 0;
+    font-family: var(--ds-font);
+    font-size: var(--t-caption);
+    line-height: var(--t-caption-lh);
+    font-weight: 600;
+    color: var(--c-lilac-700);
+    overflow-wrap: anywhere;
+}
+.ds-home-clinic-edit { display: flex; flex-direction: column; gap: 14px; }
+.ds-home-clinic .ds-nowrap { white-space: nowrap; }

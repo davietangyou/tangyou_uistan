@@ -7,6 +7,7 @@ import {ClinicTodayBanner} from './ClinicTodayBanner';
 import {ClinicCard} from './ClinicCard';
 import {LatestGlucoseCard} from './LatestGlucoseCard';
 import {LifestyleGuide} from './LifestyleGuide';
+import {TodayMedicationCard} from './TodayMedicationCard';
 
 export const HomeView: React.FC<HomeViewProps> = (props) => {
     const vm = useHomeViewModel(props);
@@ -19,8 +20,9 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
             <ClinicCard vm={vm} />
             <div className="ds-home-pair">
                 <LatestGlucoseCard vm={vm} />
-                <LifestyleGuide vm={vm} />
+                <TodayMedicationCard vm={vm} />
             </div>
+            <LifestyleGuide vm={vm} />
         </div>
     );
 };

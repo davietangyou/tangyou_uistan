@@ -103,7 +103,28 @@ export interface ViewStageProps {
     renderView: (view: View) => React.ReactNode;
 }
 
+/** Bottom-nav order, for the direction of a tab change (首次設定 has none). */
+const TAB_ORDER: readonly View[] = [View.Home, View.Glucose, View.Consult, View.SavedQuestions, View.Me];
+
+/**
+ * Consolidation (motion): the arriving page drifts in from the side of the
+ * tab that was tapped (12px, the same 240ms arrival), so moving right along
+ * the nav feels like moving right. Written to <html data-tab-dir> before paint.
+ */
+function useTabDirection(view: View) {
+    const prevRef = useRef<View>(view);
+    useLayoutEffect(() => {
+        const from = TAB_ORDER.indexOf(prevRef.current);
+        const to = TAB_ORDER.indexOf(view);
+        const root = document.documentElement;
+        if (from >= 0 && to >= 0 && from !== to) root.dataset.tabDir = to > from ? 'fwd' : 'back';
+        else delete root.dataset.tabDir;
+        prevRef.current = view;
+    }, [view]);
+}
+
 export function ViewStage({view, renderView}: ViewStageProps) {
+    useTabDirection(view);
     // Kept-alive pages visited so far, in first-visit order (stable slots).
     const visitedRef = useRef<View[]>([]);
     if (isKeptAlive(view) && !visitedRef.current.includes(view)) {

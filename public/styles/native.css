@@ -153,6 +153,17 @@ body {
     overscroll-behavior: none;
 }
 
+/* iOS keyboard fix (2026-11-28): iPhone Safari scrolls the document to show a
+   focused field even with overflow: hidden, so on a tap the whole frame (nav,
+   問 AI capsule) slid up by a different amount each time. Pinning body (as
+   the reference app does) leaves the document nothing to scroll; nothing
+   else moves, the canvas was already the only scroller. */
+body {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+}
+
 #root {
     height: 100%;
 }

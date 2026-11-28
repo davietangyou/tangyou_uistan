@@ -1,0 +1,46 @@
+北极星第四轮 · 三项约定落地 + 巩固成果（2026-11-28，UTC+8）
+分支 feat/northstar-v2-20261128（未合并 main）。Davie 于 09:49 (UTC+8) 批准三项约定问题。
+
+一、三项约定
+1) 首页「今日服藥」唯读卡（views/HomeView/TodayMedicationCard.tsx）
+   - 与「最新血糖」并排（原「個人檔案 待完善 / 問診清單」小卡改为下方整行）。
+   - 只读：profile.medicationDetails 与 dia_reminders_v2（domain loadReminders，useMemo 读一次）。不写任何存储、不标记已服、不读 dia_taken_logs_v2、提醒规则未动。
+   - 显示规则：有提醒 → 「N 次」+「下一次 HH:MM · 藥名」（今日已过 → 今日提醒時間已過）；只有档案用药 → 「N 種藥物」+ 未設定服藥時間；都没有 → 未設定 / 先加入藥物資料。按钮「管理藥物」→ 我的。
+2) 覆诊卡时间与地点（项目主人明确批准的存储变更）
+   - 新增字段（UserProfile，均可选，存于原 dia_profile 内，键名不变）：
+       nextClinicTime?: string      // "HH:MM" 24 小时制；仅当匹配 ^([01]\d|2[0-3]):[0-5]\d$ 才写入
+       nextClinicLocation?: string  // 自由文字，trim 后非空才写入，最长 80 字
+   - 写入：新函数 domain/questions.ts saveNextClinicDetails(profile, {date, time?, location?})。nextClinicDate 的写法与含义与 saveNextClinicDate 完全一致（内部直接调用它）；清空时删除这两个键，不留空串，所以从未使用的档案形状与以前逐字节相同。saveNextClinicDate 未改，问题页改期仍用它，并保留已有时间/地点。
+   - 读取：loadProfileFromStorage 未改（...parsed 自然带出）；旧数据无这两个键时 UI 只显示日期，行为与以前相同。clinicDateReminder 仍只看 nextClinicDate。
+   - 未送 AI：server/、/api/gemini/* 未改，两个字段不进入提示词。
+   - UI：首页覆诊卡「改期/新增覆診資料」底部表单 = 覆診日期 + 時間（選填，type=time）+ 地點（選填）；卡片与问题页「下次問診清單」在有日期时多一行「09:30 · 地點」。
+   - verify（只新增，旧断言不变）：
+       domain：legacyClinicExtras（旧档案无两键）、clinicExtrasRoundTrip、clinicDetails{full, dateOnlyEqualsLegacy=true, clearedKeys 不含两键, invalidTime=null, legacySaveKeepsExtras}；
+       smoke：新 clinic 流程（经 UI 写入 → 只多两个键、其他字段不变 → 清空后两键移除、日期保留）+ home-clinic-sheet 触控门；
+       新 hook：home-clinic-edit / -date / -time / -location / -save（README 已列）。
+3) 叫法统一：入口统称「我的」，提示用「去完善」，完成度判断（isProfileEnriched / IdentityCard）逻辑不变。
+   改动：我的 页大标题 個人檔案→我的；首页提示卡标题 個人檔案→我的（待完善 / 去完善 不变）；保存提示「個人檔案已成功更新…」→「「我的」資料已成功更新…」；首次设定提示 【個人檔案】→【我的】、「可隨時到「我的」去完善」；首页头像 aria-label 查看個人資料→前往「我的」。注释与锁定文字未动。
+   部署 1：b1322771-a797-4922-8c07-78af5e220b61（约 10:00 UTC+8）。
+
+二、巩固成果（每处对应「哪一刻更顺」）
+测量方法（自测，非 Lighthouse）：CDP，390×844@2x，CPU 4× 降速，网络 1.6 Mbps / 150 ms，回访用户（已有档案），首页；本地 gzip 静态服务器（与线上同级，基线线上实测 FCP 4.00s / LCP 5.17s 与本地 3.91s / 5.05s 吻合），各 5 次取中位数。
+1) 打开 app 的第一屏
+   - 分包：首页与首次设定留在入口包；紀錄（含 recharts）、問 AI / 問題（含 react-markdown）、我的 拆成独立 chunk，首屏后空闲时预取。入口 JS 923 kB → 301 kB（gzip 281 → 94 kB）。
+   - 已预取的 chunk 同步渲染（不用 React.lazy 的一次性挂起，避免 React 约 300ms 的 fallback 停留）：首次点 tab 的耗时与改前持平（紀錄 155–204 vs 180–272 ms；問 AI 141–185 vs 144–190 ms；再次进入 35–60 ms 不变）。
+   - index.html 预载提示（同一批 URL，只是提前开始）：12 个 CSS 分片、Google Fonts CSS（+ preconnect）、首页两张卡片插图。CSS 分片由 1.93s 才开始 → 0.17s 开始；LCP 元素（覆诊卡插图）由 JS 渲染后才发现 → 一开始就下载。
+   - 结果（同一会话 A/B 中位数）：FCP 3.89 → 3.20 s；LCP 5.03 → 4.32 s；TBT 800 → 586 ms；CLS 0 → 0。
+2) 再次打开
+   - public/_headers：/assets/*（内容哈希）一年 immutable；/art/*、/icons/* 一天 + SWR。HTML 与 /styles/*（无哈希）保持默认每次校验。
+3) 换 tab 的那一刻：到达动画保留 240ms / --ds-ease，加 12px 方向位移（往右边的 tab 从右进、往左从左进），只用 transform/opacity，不触发重排；ViewStage 在绘制前写 html[data-tab-dir]。prefers-reduced-motion 下无动画（已实测 animation none、按压 transition 0s）。
+4) 遮罩淡入改用统一曲线 --ds-ease（原为孤立的 ease-out），与其上的底部表单/对话框同一节奏。
+5) 刘海屏：用 CDP 安全区仿真（上 59 / 下 34）发现首页问候与「問題紀錄/我的」右上字号按钮压在状态栏下；已改为从安全区下方开始（普通浏览器 inset 为 0，无变化）。见 p4-safe-before/ 与 p4-safe-after/。
+6) 大字模式首页右侧小卡被裁：根因是 1fr 1fr 栅格 + keep-all 长句把列撑宽；改 minmax(0,1fr) 并允许备注换行，同时该卡改为整行。
+7) 已检查且无需改动：滚动（我的/紀錄/首页 程序化滚动 p95 帧 17.3–17.5ms，>33ms 帧 0，改前改后一致）；键盘（Layout 已用 visualViewport 推起输入栏）；橡皮筋（canvas overscroll contain、html none）；点击高亮（transparent）；iOS :active（React 根节点已挂 touch 监听）。
+
+三、新约定问题
+- Tailwind Play CDN（index.html 的 cdn.tailwindcss.com，运行时 JIT 编译器）：仅作对比实验（未上线）移除后，FCP 3.20 → 2.22 s、TBT 586 → 208 ms。它的 preflight 重置影响全局样式，属于依赖，按约定未动。是否改为构建期产出的静态 CSS（或仅保留 preflight 的静态版本）需项目主人决定。
+- Google Fonts 仍为运行时外部请求（原有，未新增）；如需完全离线可改为随包字体，同样需决定。
+
+四、提交与截图
+- 提交：e3343e1 9c5b0a9 227d419（三项），d5b4377 6a788f7 f34bda7 b6d2b27（巩固）。
+- 截图：/workspace/northstar-shots/p4-contract-sheet.png、p4-contract/、p4-after/、p4-after-sheet.png、p4-safe-before/、p4-safe-after/、p4-safe-after-sheet.png、p4-motion-midtransition-to-me.png。测量脚本 tools/p4-perf.mjs、p4-interact.mjs、p4-repeat.mjs、p4-motion.mjs、p4-safe.mjs。

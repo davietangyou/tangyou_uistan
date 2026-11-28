@@ -43,8 +43,11 @@ export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
         const visibleTop = (vv?.offsetTop ?? 0) + 12;
         let bandBottom = window.innerHeight - 12;
         if (composer) {
-            // Use the painted box (sticky + keyboard transform), not style.bottom.
-            bandBottom = composer.getBoundingClientRect().top - 12;
+            // Use the painted box (sticky), not style.bottom; minus any
+            // keyboard glide still running, so we aim at where it rests.
+            const t = getComputedStyle(composer).transform;
+            const glide = t && t !== 'none' ? new DOMMatrixReadOnly(t).m42 : 0;
+            bandBottom = composer.getBoundingClientRect().top - glide - 12;
         }
         let target = bottom - bandBottom;
         if (bottom - top > bandBottom - visibleTop) target = top - visibleTop;
@@ -116,7 +119,12 @@ export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
             const el = document.activeElement;
             return !!el && el.id === 'chat-input-box' && !!panel.current?.contains(el);
         };
+        let frame = 0;
         const later = () => {
+            // Next frame (after Layout has fitted the scroller to the
+            // keyboard), then once more when the keyboard has settled.
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(() => { if (typingHere()) anchor(false); });
             window.clearTimeout(timer);
             timer = window.setTimeout(() => { if (typingHere()) anchor(false); }, 120);
         };
@@ -127,6 +135,7 @@ export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
         vv?.addEventListener('resize', later);
         return () => {
             window.clearTimeout(timer);
+            cancelAnimationFrame(frame);
             document.removeEventListener('focusin', onFocus);
             vv?.removeEventListener('resize', later);
         };

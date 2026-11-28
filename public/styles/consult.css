@@ -1825,9 +1825,11 @@ html[data-keyboard] .ds-consult-composer {
    nav, and sticky keeps it there when the thread grows. The shell footer
    is clipped on this view (locked disclaimer already lives in the thread)
    so it cannot sit between the capsule and the nav.
-   Keyboard: the capsule keeps its nav-side `bottom` and rises with
-   --ds-kb-inset via transform (see Layout). The previous `bottom` override
-   is replaced so we do not retarget a second edge mid-motion.
+   Keyboard (iOS fix, same day): while the 問 AI input is focused Layout
+   lays the page scroller over the visual viewport (html[data-kb-chat]), so
+   the capsule simply sticks to the scroller's bottom, i.e. the keyboard's
+   top edge (accessory bar included). No transform: on iPhone Safari pans
+   the page itself, and a second lift on top of that left a gap.
    ============================================================================= */
 .ds-shell-column:has(.ds-consult) .ds-shell-footer {
     position: absolute;
@@ -1877,20 +1879,16 @@ html[data-keyboard] .ds-consult-composer {
     /* Resolve tab height on this element so large-font (--shell-tab-h: 72px)
        is honoured; --shell-nav-h is declared on :root and was staying at 64px. */
     bottom: calc(var(--shell-nav-offset) + var(--shell-tab-h) + var(--shell-nav-pad) * 2);
-    transform: translateY(var(--ds-composer-shift, 0px));
-    transition: transform var(--ds-kb-ease-ms, 0ms) var(--ds-kb-ease, var(--ds-ease));
 }
-html[data-keyboard] .ds-consult-composer {
-    /* Keep the same `bottom` (above the nav's rest position). Lift by the
-       difference so the capsule rides the visual viewport, 8px above it. */
-    bottom: calc(var(--shell-nav-offset) + var(--shell-tab-h) + var(--shell-nav-pad) * 2);
-    --ds-composer-shift: calc(
-        var(--shell-nav-offset) + var(--shell-tab-h) + var(--shell-nav-pad) * 2
-        - var(--ds-kb-inset, 0px) - 8px
-    );
+/* Keyboard up on the 問 AI input: the nav is gone, the scroller ends at the
+   keyboard, the capsule rests on it. Column fills the shorter scroller. */
+html[data-kb-chat] .ds-view-stage:has(.ds-consult) {
+    min-height: calc(var(--ds-vv-h, 100svh) - var(--shell-header-h, 0px));
 }
-@media (prefers-reduced-motion: reduce) {
-    .ds-consult-composer {
-        transition: none !important;
-    }
+html[data-kb-chat] .ds-consult {
+    padding-bottom: 0;
+}
+html[data-kb-chat] .ds-consult-composer {
+    bottom: 0;
+    padding-bottom: 8px;
 }

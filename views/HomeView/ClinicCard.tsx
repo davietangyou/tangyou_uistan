@@ -1,5 +1,5 @@
 import {View} from '../../utils/types';
-import {BottomSheet, Button, Field, uiIcons} from '../../components/ui';
+import {BottomSheet, Button, Field} from '../../components/ui';
 import type {HomeViewModel} from './useHomeViewModel';
 
 export function ClinicCard({vm}: {vm: HomeViewModel}) {
@@ -11,7 +11,6 @@ export function ClinicCard({vm}: {vm: HomeViewModel}) {
         dateReminderStatus, daysDiff,
         handleSaveDate,
     } = vm;
-    const CalendarIcon = uiIcons.calendar;
     const cancelEdit = () => {
         setTempDate(nextClinicDate);
         setIsEditingDate(false);
@@ -36,10 +35,6 @@ export function ClinicCard({vm}: {vm: HomeViewModel}) {
                 <h2 className="ds-home-clinic-title">下次覆診</h2>
                 <p className="ds-home-clinic-date">{dateLine}</p>
             </div>
-            <span className="ds-home-clinic-art" aria-hidden>
-                <span className="ds-home-clinic-orb" />
-                <CalendarIcon size={36} strokeWidth={1.6} />
-            </span>
 
             <div className="ds-home-clinic-actions">
                 <button

@@ -499,3 +499,24 @@
         transition: none !important;
     }
 }
+
+/* =============================================================================
+   Phase 3 — pattern language: the hero and clinic cards carry one soft-3D
+   clay object on a flat pastel field (static webp under /art/), replacing
+   the generic line icon in a frosted tile.
+   ============================================================================= */
+.ds-home-ask {
+    position: relative;
+    overflow: hidden;
+    padding-right: 128px;
+    background: #cfeaf5 url("../art/home-ask.webp") right -6px top 50% / auto 210px no-repeat;
+}
+.ds-home-ask-sub { color: #3f6f80; }
+.ds-home-clinic {
+    overflow: hidden;
+    background: #e7defb url("../art/home-clinic.webp") right -10px top -44px / auto 210px no-repeat;
+    border-color: transparent;
+}
+.ds-home-clinic-copy { padding-right: 104px; }
+.ds-home-clinic-art { display: none; }
+.large-font .ds-home-ask { padding-right: 112px; background-size: auto 196px; }

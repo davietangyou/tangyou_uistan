@@ -74,6 +74,8 @@ export interface UserProfile {
     // === 新增：下次問診清單與問診日期提醒 ===
     nextClinicDate?: string; // e.g. "2026-08-30" or "2026-08-30 09:30"
     nextClinicQuestions?: string[]; // 下次問診清單問題
+    nextClinicTime?: string; // 下次覆診時間 "HH:MM"（24 小時制，選填；舊資料無此欄位）
+    nextClinicLocation?: string; // 下次覆診地點（自由文字，選填；舊資料無此欄位）
     // === 新增：待核實的推論與風險 (對應 Selective Memory) ===
     inferredNotes?: string[]; // AI 推論但不應直接進入 Context Injector 的內容
     riskSignals?: string[];   // AI 偵測到的潛在心理或社會風險

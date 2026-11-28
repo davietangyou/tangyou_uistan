@@ -16,7 +16,7 @@ export { EXERCISE_TYPE_OPTIONS, calculateExerciseFromHabits } from './exercise';
 export { loadLargeFontPreference, persistLargeFontPreference } from './font';
 export { loadChatMessages, persistChatMessages, clearChatMessages } from './chatMessages';
 export { loadReminders, persistReminders, loadTakenLogs, persistTakenLogs, autoTriggeredStorageKey, hasAutoTriggered, markAutoTriggered } from './reminders';
-export { toggleNextClinicQuestionOnProfile, addSavedDoctorQuestion, deleteSavedDoctorQuestion, editSavedDoctorQuestion, saveNextClinicDate, addNextClinicQuestion } from './questions';
+export { toggleNextClinicQuestionOnProfile, addSavedDoctorQuestion, deleteSavedDoctorQuestion, editSavedDoctorQuestion, saveNextClinicDate, saveNextClinicDetails, addNextClinicQuestion } from './questions';
 export { timeOfDayGreeting, personalGreeting } from './greeting';
 export { clinicDateReminder } from './clinicDate';
 export type { DateReminderStatus } from './clinicDate';

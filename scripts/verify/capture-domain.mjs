@@ -127,6 +127,12 @@ profile.legacyMigration = {
     diabetesType: migrated.diabetesType, savedDoctorQuestions: migrated.savedDoctorQuestions, nextClinicQuestions: migrated.nextClinicQuestions,
     conditionDetails: migrated.conditionDetails, clinicTypes: migrated.clinicTypes, isInsulinUser: migrated.isInsulinUser,
 };
+// owner-approved 2026-11-28: optional nextClinicTime / nextClinicLocation.
+// Old data has neither and must load without them; stored values round-trip.
+profile.legacyClinicExtras = { hasTime: 'nextClinicTime' in migrated, hasLocation: 'nextClinicLocation' in migrated, nextClinicDate: migrated.nextClinicDate };
+ls.clear();
+ls.setItem('dia_profile', JSON.stringify({ name: '新用戶', nextClinicDate: '2026-12-03', nextClinicTime: '09:30', nextClinicLocation: '葵涌普通科門診' }));
+profile.clinicExtrasRoundTrip = (({ nextClinicDate, nextClinicTime, nextClinicLocation }) => ({ nextClinicDate, nextClinicTime, nextClinicLocation }))(domain.loadProfileFromStorage());
 ls.clear();
 profile.noStoredProfile = JSON.stringify(domain.loadProfileFromStorage()) === JSON.stringify(empty);
 profile.exercise = {
@@ -148,6 +154,13 @@ const questions = {
     toggleNextOn: domain.toggleNextClinicQuestionOnProfile(qp, '舊問題').nextClinicQuestions,
     addNextAlsoSaves: (({ savedDoctorQuestions, nextClinicQuestions }) => ({ savedDoctorQuestions, nextClinicQuestions }))(domain.addNextClinicQuestion(qp, '新覆診問題')),
     nextClinicDate: domain.saveNextClinicDate(qp, '2026-12-03').nextClinicDate,
+    clinicDetails: {
+        full: (({ nextClinicDate, nextClinicTime, nextClinicLocation }) => ({ nextClinicDate, nextClinicTime, nextClinicLocation }))(domain.saveNextClinicDetails(qp, { date: '2026-12-03', time: '09:30', location: '  葵涌普通科門診  ' })),
+        dateOnlyEqualsLegacy: JSON.stringify(domain.saveNextClinicDetails(qp, { date: '2026-12-03' })) === JSON.stringify(domain.saveNextClinicDate(qp, '2026-12-03')),
+        clearedKeys: Object.keys(domain.saveNextClinicDetails({ ...qp, nextClinicTime: '09:30', nextClinicLocation: '診所' }, { date: '2026-12-03', time: '', location: '   ' })).filter((k) => k.startsWith('nextClinic')).sort(),
+        invalidTime: domain.saveNextClinicDetails(qp, { date: '2026-12-03', time: '25:00' }).nextClinicTime ?? null,
+        legacySaveKeepsExtras: (({ nextClinicDate, nextClinicTime, nextClinicLocation }) => ({ nextClinicDate, nextClinicTime, nextClinicLocation }))(domain.saveNextClinicDate({ ...qp, nextClinicTime: '09:30', nextClinicLocation: '診所' }, '2026-12-04')),
+    },
     clinicReminder: {
         today: domain.clinicDateReminder('2026-11-26', NOW),
         future: domain.clinicDateReminder('2026-12-03', NOW),

@@ -199,6 +199,11 @@
       "kg": "24.8",
       "lb": "24.7"
     },
+    "clinicExtrasRoundTrip": {
+      "nextClinicDate": "2026-12-03",
+      "nextClinicLocation": "葵涌普通科門診",
+      "nextClinicTime": "09:30"
+    },
     "conditionDetail": {
       "dmYears": {
         "conditionDetails": {
@@ -276,6 +281,11 @@
         "estimatedMins": 105
       }
     },
+    "legacyClinicExtras": {
+      "hasLocation": false,
+      "hasTime": false,
+      "nextClinicDate": ""
+    },
     "legacyMigration": {
       "clinicTypes": [
         "SOPC"
@@ -318,6 +328,24 @@
         "舊問題",
         "要減藥嗎？"
       ]
+    },
+    "clinicDetails": {
+      "clearedKeys": [
+        "nextClinicDate",
+        "nextClinicQuestions"
+      ],
+      "dateOnlyEqualsLegacy": true,
+      "full": {
+        "nextClinicDate": "2026-12-03",
+        "nextClinicLocation": "葵涌普通科門診",
+        "nextClinicTime": "09:30"
+      },
+      "invalidTime": null,
+      "legacySaveKeepsExtras": {
+        "nextClinicDate": "2026-12-04",
+        "nextClinicLocation": "診所",
+        "nextClinicTime": "09:30"
+      }
     },
     "clinicReminder": {
       "future": {

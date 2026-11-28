@@ -310,6 +310,29 @@ async function me(cdp) {
     check('me', 'HA medication added', p.medicationDetails.some((m) => m.name === pick) && p.medications.includes(pick), { pick, medications: p.medications });
 }
 
+/** Owner-approved 2026-11-28: optional nextClinicTime / nextClinicLocation via the home clinic sheet. */
+async function clinic(cdp) {
+    await reload(cdp, seed());
+    const before = J(await storage(cdp), 'dia_profile', {});
+    await tap(cdp, H('home-clinic-edit'));
+    await waitHook(cdp, H('home-clinic-time'));
+    await touchGate(cdp, 'home-clinic-sheet');
+    await fill(cdp, H('home-clinic-date'), '2026-12-03');
+    await fill(cdp, H('home-clinic-time'), '09:30');
+    await fill(cdp, H('home-clinic-location'), '葵涌普通科門診');
+    await tap(cdp, H('home-clinic-save'));
+    const p = J(await waitStorage(cdp, (x) => J(x, 'dia_profile', {}).nextClinicLocation === '葵涌普通科門診', 'clinic details saved'), 'dia_profile', {});
+    check('clinic', 'date/time/location saved as separate optional fields', p.nextClinicDate === '2026-12-03' && p.nextClinicTime === '09:30', { d: p.nextClinicDate, t: p.nextClinicTime });
+    const otherKeys = (o) => Object.keys(o).filter((k) => !['nextClinicDate', 'nextClinicTime', 'nextClinicLocation'].includes(k)).sort();
+    check('clinic', 'no other profile field changed', JSON.stringify(otherKeys(p)) === JSON.stringify(otherKeys(before)) && otherKeys(p).every((k) => JSON.stringify(p[k]) === JSON.stringify(before[k])));
+    await tap(cdp, H('home-clinic-edit'));
+    await fill(cdp, H('home-clinic-time'), '');
+    await fill(cdp, H('home-clinic-location'), '');
+    await tap(cdp, H('home-clinic-save'));
+    const c = J(await waitStorage(cdp, (x) => !('nextClinicLocation' in J(x, 'dia_profile', {})), 'clinic extras cleared'), 'dia_profile', {});
+    check('clinic', 'cleared extras are removed, date kept', !('nextClinicTime' in c) && c.nextClinicDate === '2026-12-03');
+}
+
 async function consult(cdp) {
     const history = [
         { id: 'welcome', role: 'assistant', content: '歡迎', isWelcome: true },
@@ -429,6 +452,7 @@ try {
         ['hba1c', () => hba1c(cdp)],
         ['questions', () => questions(cdp)],
         ['me', () => me(cdp)],
+        ['clinic', () => clinic(cdp)],
         ['consult', async () => { chatRequest = await consult(cdp); }],
         ['requests', async () => { req = await requests(cdp); }],
         ['shapes', async () => { shapeOut = await shapes(cdp); }],

@@ -69,6 +69,26 @@ export function saveNextClinicDate(profile: UserProfile, nextClinicDate: string)
     };
 }
 
+/**
+ * Save the next-clinic date together with the optional time and location.
+ * nextClinicDate keeps exactly the meaning of saveNextClinicDate; the two
+ * optional fields are written only when non-empty and removed when cleared,
+ * so a profile that never used them keeps its previous shape.
+ */
+export function saveNextClinicDetails(
+    profile: UserProfile,
+    details: { date: string; time?: string; location?: string }
+): UserProfile {
+    const next: UserProfile = { ...saveNextClinicDate(profile, details.date) };
+    const time = (details.time || '').trim();
+    const location = (details.location || '').trim();
+    if (/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) next.nextClinicTime = time;
+    else delete next.nextClinicTime;
+    if (location) next.nextClinicLocation = location.slice(0, 80);
+    else delete next.nextClinicLocation;
+    return next;
+}
+
 export function addNextClinicQuestion(profile: UserProfile, text: string): UserProfile | null {
     if (!text.trim()) return null;
     const savedQuestions = profile.savedDoctorQuestions || [];

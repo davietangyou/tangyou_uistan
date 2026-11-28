@@ -88,6 +88,7 @@ element that does that job. Hooks are attributes only — no behaviour.
 | `q-add-open` `q-input` `q-add-confirm` `q-delete` + `data-verify-id=<index>` `q-list-expand` | saved questions |
 | `me-open-<personal/diabetes/lifestyle/conditions/caregiver>` `me-name` `me-editor-done` `me-save` `me-med-pick` (the native select behind the sheet) | me / profile |
 | `consult-open` `chat-input` `chat-send` `chat-thread` `chat-new` | consult entry, compose, send, thread, new chat |
+| `home-clinic-edit` `home-clinic-date` `home-clinic-time` `home-clinic-location` `home-clinic-save` | home clinic sheet: date + optional time/location (`clinic` flow) |
 | `shortcut-<i>` `pref-option` + `data-verify-id=<valueCategory>` `pref-submit` `followup` | shortcuts, preference card, follow-ups |
 
 ## Layer 3 — goldens

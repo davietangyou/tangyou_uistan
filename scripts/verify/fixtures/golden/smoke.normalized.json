@@ -27,6 +27,11 @@
   },
   "gemini": "all /api/gemini/* calls answered in-page (window.fetch patched); none left the browser",
   "results": {
+    "clinic": {
+      "cleared extras are removed, date kept": true,
+      "date/time/location saved as separate optional fields": true,
+      "no other profile field changed": true
+    },
     "consult": {
       "glucose sent = stored records": true,
       "hba1c sent = stored records": true,
@@ -100,6 +105,7 @@
       "consult: controls >= 56px": true,
       "glucose-entry: controls >= 56px": true,
       "hba1c-entry: controls >= 56px": true,
+      "home-clinic-sheet: controls >= 56px": true,
       "home: controls >= 56px": true,
       "me-personal: controls >= 56px": true,
       "me: controls >= 56px": true,
@@ -141,6 +147,11 @@
       "min": 56
     },
     "home": {
+      "below": 0,
+      "large": true,
+      "min": 56
+    },
+    "home-clinic-sheet": {
       "below": 0,
       "large": true,
       "min": 56

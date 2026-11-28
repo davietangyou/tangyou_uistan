@@ -628,3 +628,7 @@ html[data-keyboard][data-subpages]:has(.ds-subpage-footer, .ds-rec-entry-page .d
     white-space: nowrap;
     border: 0;
 }
+
+/* Consolidation: placeholder while a tab's chunk arrives (normally already
+   prefetched) — page ground only, no spinner flash. */
+.ds-view-pending { min-height: 60dvh; }

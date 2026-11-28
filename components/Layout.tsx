@@ -1,6 +1,6 @@
 import React, {useEffect, useLayoutEffect, useRef} from 'react';
 import {View} from '../utils/types';
-import {installTapFocus, isTyping, keyboardGeometry, KEYBOARD_LAYERS, revealField} from './shell/keyboard';
+import {installFocusModality, installTapFocus, isTyping, keyboardGeometry, KEYBOARD_LAYERS, revealField} from './shell/keyboard';
 import {uiIcons} from './ui/icons';
 
 // 全局免責聲明（鎖定級文案，不可改字）。只在「 · 」處斷行，讓分隔點留在行尾。
@@ -43,6 +43,9 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
         observer.observe(header);
         return () => observer.disconnect();
     }, []);
+
+    // Round 5: keyboard (Tab) focus vs tap focus, for the quiet field frame.
+    useEffect(() => installFocusModality(), []);
 
     // S5: on-screen keyboard up → html[data-keyboard] (CSS fades the nav so it is
     // not pushed up over the field). Read from visualViewport; pinch-zoom (scale

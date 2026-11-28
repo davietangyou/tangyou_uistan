@@ -323,3 +323,49 @@ html[data-keyboard] .ds-shell-mic {
 html[data-keyboard][data-subpages]:has(.ds-subpage-footer, .ds-rec-entry-page .ds-rec-actions) .ds-shell-mic {
     bottom: calc(var(--ds-kb-inset, 0px) + 12px + (var(--touch-min) - var(--shell-mic)) / 2) !important;
 }
+
+/* =============================================================================
+   Focus, round 5 (2026-11-28): a typing field no longer wears the 3px green
+   ring (+ halo, + dark border) when it is tapped. Like the reference app's
+   quiet fields (border colour only), the frame just turns a soft sage.
+   Keyboard Tab navigation (html[data-focus-keys], set by Layout) keeps a
+   visible cue: the frame line in the focus green, one line, no halo. Buttons,
+   chips, tiles and every other control keep their 3px :focus-visible ring.
+   Applies to input / textarea / select fields, the 問 AI capsule, 隨手記 and
+   the 血糖 / 糖化 value boxes.
+   ========================================================================== */
+:root {
+    --ds-field-focus: #94A991;
+}
+:is(input:not([type=checkbox], [type=radio], [type=range], [type=button], [type=submit], [type=reset], [type=file], [type=color], [type=image], [type=hidden]), textarea, select):is(:focus, :focus-visible) {
+    outline: none;
+    border-color: var(--ds-field-focus);
+}
+.ds-consult-field:focus {
+    box-shadow: none;
+}
+.ds-rec-number:focus-within,
+.ds-consult-composer:focus-within {
+    outline: none;
+}
+.ds-rec-number:focus-within {
+    border-color: var(--ds-field-focus);
+    /* The value box has no border of its own: a hairline inside its frame. */
+    box-shadow: inset 0 0 0 1px var(--ds-field-focus);
+}
+.ds-consult-composer:focus-within .ds-consult-capsule {
+    border-color: var(--ds-field-focus);
+    box-shadow: 0 4px 16px rgba(51, 72, 56, 0.06);
+}
+html[data-focus-keys] :is(input:not([type=checkbox], [type=radio], [type=range], [type=button], [type=submit], [type=reset], [type=file], [type=color], [type=image], [type=hidden]), textarea, select):not(.ds-rec-number-input, .ds-consult-input):focus {
+    border-color: var(--c-focus);
+    box-shadow: inset 0 0 0 1px var(--c-focus);
+}
+html[data-focus-keys] .ds-rec-number:focus-within {
+    border-color: var(--c-focus);
+    box-shadow: inset 0 0 0 2px var(--c-focus);
+}
+html[data-focus-keys] .ds-consult-composer:focus-within .ds-consult-capsule {
+    border-color: var(--c-focus);
+    box-shadow: inset 0 0 0 1px var(--c-focus), 0 4px 16px rgba(51, 72, 56, 0.06);
+}

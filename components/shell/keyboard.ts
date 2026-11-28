@@ -165,3 +165,20 @@ export function installTapFocus(): () => void {
 export function focusOnMount(el: HTMLInputElement | HTMLTextAreaElement | null) {
     el?.focus({preventScroll: true});
 }
+
+/** Round 5: html[data-focus-keys] while the user moves focus with the keyboard
+ * (Tab / Shift+Tab), cleared by the next touch, pen or mouse press. Text fields
+ * match :focus-visible even when tapped, so CSS needs this to tell the two
+ * apart (a quiet frame for a tap, a clearer one for Tab). */
+export function installFocusModality(): () => void {
+    const root = document.documentElement;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Tab') root.setAttribute('data-focus-keys', ''); };
+    const onPointer = () => root.removeAttribute('data-focus-keys');
+    document.addEventListener('keydown', onKey, true);
+    document.addEventListener('pointerdown', onPointer, true);
+    return () => {
+        document.removeEventListener('keydown', onKey, true);
+        document.removeEventListener('pointerdown', onPointer, true);
+        root.removeAttribute('data-focus-keys');
+    };
+}

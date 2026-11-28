@@ -1814,3 +1814,83 @@ html[data-keyboard] .ds-consult-composer {
 .ds-consult-shortcut.is-sage { --topic-art: url("../art/topic-sage.webp"); }
 .ds-consult-shortcut.is-sun { --topic-art: url("../art/topic-sun.webp"); }
 .ds-consult-shortcut.is-rose { --topic-art: url("../art/topic-rose.webp"); }
+
+
+/* =============================================================================
+   Composer always above the nav (2026-11-28). sticky only pins once the
+   capsule has reached the nav; on a short thread (topic cards, one or two
+   bubbles, a tall screen) it used to sit in the middle of the column.
+   The consult column is stretched to the space below the header, the
+   composer is the last flex child (margin-top: auto) so it lands on the
+   nav, and sticky keeps it there when the thread grows. The shell footer
+   is clipped on this view (locked disclaimer already lives in the thread)
+   so it cannot sit between the capsule and the nav.
+   Keyboard: the capsule keeps its nav-side `bottom` and rises with
+   --ds-kb-inset via transform (see Layout). The previous `bottom` override
+   is replaced so we do not retarget a second edge mid-motion.
+   ============================================================================= */
+.ds-shell-column:has(.ds-consult) .ds-shell-footer {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+.ds-view-stage:has(.ds-consult) {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100dvh - var(--shell-header-h, 0px));
+    min-height: calc(100svh - var(--shell-header-h, 0px));
+    padding-bottom: 0;
+}
+/* Kept-alive consult lives in .ds-view-slot > .ds-view-pane > .ds-view-body.
+   Those wrappers must also fill, or .ds-consult's min-height: 100% resolves
+   against an auto-height parent and the capsule never reaches the nav. */
+.ds-view-stage:has(.ds-consult) > .ds-view-slot:not([hidden]),
+.ds-view-stage:has(.ds-consult) .ds-view-pane,
+.ds-view-stage:has(.ds-consult) .ds-view-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+.ds-consult {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    padding-bottom: calc(var(--shell-nav-offset) + var(--shell-tab-h) + var(--shell-nav-pad) * 2);
+}
+.ds-consult-panel {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding-bottom: 0;
+}
+.ds-consult-composer {
+    margin-top: auto;
+    /* Resolve tab height on this element so large-font (--shell-tab-h: 72px)
+       is honoured; --shell-nav-h is declared on :root and was staying at 64px. */
+    bottom: calc(var(--shell-nav-offset) + var(--shell-tab-h) + var(--shell-nav-pad) * 2);
+    transform: translateY(var(--ds-composer-shift, 0px));
+    transition: transform var(--ds-kb-ease-ms, 0ms) var(--ds-kb-ease, var(--ds-ease));
+}
+html[data-keyboard] .ds-consult-composer {
+    /* Keep the same `bottom` (above the nav's rest position). Lift by the
+       difference so the capsule rides the visual viewport, 8px above it. */
+    bottom: calc(var(--shell-nav-offset) + var(--shell-tab-h) + var(--shell-nav-pad) * 2);
+    --ds-composer-shift: calc(
+        var(--shell-nav-offset) + var(--shell-tab-h) + var(--shell-nav-pad) * 2
+        - var(--ds-kb-inset, 0px) - 8px
+    );
+}
+@media (prefers-reduced-motion: reduce) {
+    .ds-consult-composer {
+        transition: none !important;
+    }
+}

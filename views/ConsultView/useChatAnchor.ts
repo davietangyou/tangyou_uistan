@@ -43,8 +43,8 @@ export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
         const visibleTop = (vv?.offsetTop ?? 0) + 12;
         let bandBottom = window.innerHeight - 12;
         if (composer) {
-            const stuckAt = parseFloat(getComputedStyle(composer).bottom) || 0;
-            bandBottom = window.innerHeight - stuckAt - composer.offsetHeight - 12;
+            // Use the painted box (sticky + keyboard transform), not style.bottom.
+            bandBottom = composer.getBoundingClientRect().top - 12;
         }
         let target = bottom - bandBottom;
         if (bottom - top > bandBottom - visibleTop) target = top - visibleTop;

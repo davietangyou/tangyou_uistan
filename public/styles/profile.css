@@ -924,12 +924,9 @@
     min-height: 100dvh;
     padding: 0;
     gap: 0;
-    background:
-        radial-gradient(ellipse 90% 55% at 8% 92%, rgba(140, 168, 118, 0.28), transparent 58%),
-        radial-gradient(ellipse 70% 45% at 96% 86%, rgba(120, 150, 110, 0.22), transparent 52%),
-        radial-gradient(ellipse 50% 32% at 78% 6%, rgba(186, 198, 160, 0.28), transparent 55%),
-        radial-gradient(ellipse 40% 24% at 18% 12%, rgba(200, 214, 176, 0.18), transparent 60%),
-        var(--c-bg, #f5f6f6);
+    /* Phase 3: one soft watercolor plate (static asset, shipped with the app),
+       leaves only in two corners — the 被仿侧 idiom, our own artwork. */
+    background: #f6f9f2 url("../art/welcome-leaves.webp") center / cover no-repeat;
 }
 
 .ds-ob-welcome {
@@ -992,31 +989,6 @@
 }
 
 
-.ds-onboarding.is-welcome::before,
-.ds-onboarding.is-welcome::after {
-    content: "";
-    position: absolute;
-    pointer-events: none;
-    z-index: 0;
-    background-repeat: no-repeat;
-    background-size: contain;
-}
-.ds-onboarding.is-welcome::before {
-    top: -8%;
-    right: -12%;
-    width: 280px;
-    height: 280px;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 280 280'><g fill='none' stroke='%239bb392' stroke-width='1.2' opacity='0.55'><path d='M170 40c40 18 70 70 55 130-28-8-62-40-78-88 8-16 16-28 23-42z' fill='%23c5d6b8' fill-opacity='0.35'/><path d='M210 30c28 22 38 70 18 112-22-6-48-36-58-78 10-14 24-26 40-34z' fill='%23d7e4cc' fill-opacity='0.45'/><path d='M230 22c8 20 6 48-8 70' stroke='%237f9a76'/></g></svg>");
-    opacity: 0.9;
-}
-.ds-onboarding.is-welcome::after {
-    bottom: -10%;
-    left: -16%;
-    width: 340px;
-    height: 340px;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 340'><g fill='none' stroke='%239bb392' stroke-width='1.2' opacity='0.55'><path d='M80 300c-50-30-70-110-20-170 24 20 58 70 52 128-8 16-20 30-32 42z' fill='%23c5d6b8' fill-opacity='0.38'/><path d='M40 310c-20-36-8-90 28-130 16 22 28 64 10 112-10 8-24 14-38 18z' fill='%23d7e4cc' fill-opacity='0.42'/><path d='M30 315c18-24 40-40 70-48' stroke='%237f9a76'/></g></svg>");
-    opacity: 0.95;
-}
 .ds-onboarding.is-welcome .ds-ob-welcome { position: relative; z-index: 1; }
 
 .ds-ob-welcome-start:focus-visible {
@@ -1192,3 +1164,18 @@ html:has(.ds-onboarding.is-setup) .ds-shell-canvas[data-scroll-root] {
     .ds-ob-welcome-start,
     .ds-ob-setup-back { transition: none; }
 }
+
+/* =============================================================================
+   Phase 3 — pattern language. 被仿侧 art is soft raster (watercolor / matte
+   clay) on a flat pastel field, one object in a corner, the rest empty.
+   Ours now follows the same method with our own static webp art under
+   /art/ (no runtime network); line icons stay plain.
+   ============================================================================= */
+.ds-pf-identity {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    background: #dff2e6 url("../art/me-identity.webp") right bottom / cover no-repeat;
+}
+.ds-pf-identity-bar { background: rgba(255, 255, 255, 0.72); }
+.ds-pf-identity > p:last-child { padding-right: 76px; }

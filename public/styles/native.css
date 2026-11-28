@@ -212,6 +212,13 @@ html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop, .ds-app-dialog-backdrop) .d
    ============================================================================= */
 html[data-tab-dir="fwd"] .ds-view-stage > * { animation-name: ds-view-in-fwd; }
 html[data-tab-dir="back"] .ds-view-stage > * { animation-name: ds-view-in-back; }
+/* Round 4: once arrived, keep no transform. With fill "both" the end state
+   stayed as an identity matrix (not none), which made the page slot the
+   containing block of the fixed sub-pages and sheets mounted inside it: they
+   were sized to the page, not the screen, and their bottom bars could not rest
+   on the keyboard. Backwards fill keeps the first frame; the last frame is
+   the element's own (opacity 1, no transform), so nothing looks different. */
+html[data-tab-dir] .ds-view-stage > * { animation-fill-mode: backwards; }
 @keyframes ds-view-in-fwd {
     from { opacity: 0; transform: translateX(12px); }
     to { opacity: 1; transform: none; }
@@ -238,3 +245,81 @@ html[data-tab-dir="back"] .ds-view-stage > * { animation-name: ds-view-in-back; 
 .ds-app-dialog-backdrop,
 .ds-sheet-scrim,
 .ds-consult-memo-backdrop { animation-timing-function: var(--ds-ease); }
+
+/* =============================================================================
+   Keyboard, round 4 (2026-11-28): sub-pages, sheets and dialogs rest on the
+   keyboard the way 問 AI does. The layer keeps its full box (so nothing behind
+   it shows while the keyboard slides) and takes the covered part as bottom
+   padding (--ds-kb-inset, Safari's pan already counted), with the same 240ms
+   curve as the 問 AI canvas. The earlier `bottom: inset` rules are neutralised
+   so the two do not add up. Home-indicator padding is dropped while the
+   keyboard is up (the keyboard covers it), so pinned 儲存 / 完成 bars sit on
+   the keyboard with no band under them.
+   ========================================================================== */
+.ds-subpage,
+.ds-sheet-scrim,
+.ds-consult-memo-backdrop {
+    padding-bottom: var(--ds-kb-inset, 0px);
+    transition: padding-bottom var(--ds-kb-motion, 0ms) var(--ds-kb-ease, ease);
+}
+.ds-app-dialog-backdrop {
+    padding-bottom: calc(16px + var(--ds-kb-inset, 0px));
+    transition: padding-bottom var(--ds-kb-motion, 0ms) var(--ds-kb-ease, ease);
+}
+html[data-keyboard] .ds-subpage,
+html[data-keyboard] .ds-sheet-scrim,
+html[data-keyboard] .ds-consult-memo-backdrop {
+    bottom: 0;
+}
+.ds-sheet {
+    max-height: min(88vh, calc(100vh - 32px - env(safe-area-inset-top, 0px)), calc(100% - 16px));
+    /* A copy of the surface below the sheet: while the keyboard and the
+       sheet glide together, the strip between them is sheet, not scrim. */
+    box-shadow: var(--ds-e2), 0 var(--ds-kb-inset, 0px) 0 0 var(--c-surface);
+}
+.ds-consult-memo-dialog {
+    max-height: min(90vh, calc(100vh - 24px - env(safe-area-inset-top, 0px)), calc(100% - 16px));
+    box-shadow: var(--ds-e2), 0 var(--ds-kb-inset, 0px) 0 0 var(--c-surface);
+}
+.ds-app-dialog {
+    max-height: min(calc(100vh - 48px), 100%);
+}
+html[data-keyboard] .ds-sheet,
+html[data-keyboard] .ds-consult-memo-dialog {
+    max-height: min(88vh, calc(100% - 16px), calc(var(--ds-kb-visible, 100vh) - 16px));
+}
+html[data-keyboard] .ds-app-dialog {
+    max-height: min(100%, calc(var(--ds-kb-visible, 100vh) - 32px));
+}
+
+.ds-subpage-footer,
+.ds-sheet-footer,
+.ds-rec-entry-page .ds-rec-actions,
+.ds-ob-actions,
+.ds-ob-setup-bar {
+    transition: padding-bottom var(--ds-kb-motion, 0ms) var(--ds-kb-ease, ease);
+}
+html[data-keyboard] .ds-subpage-footer,
+html[data-keyboard] .ds-sheet-footer,
+html[data-keyboard] .ds-ob-actions {
+    padding-bottom: 12px;
+}
+html[data-keyboard] .ds-rec-entry-page .ds-rec-actions {
+    padding-bottom: 12px;
+}
+html[data-keyboard] .ds-ob-setup-bar {
+    padding-bottom: 12px;
+}
+html[data-keyboard] .ds-sheet:not(:has(> .ds-sheet-footer)) {
+    padding-bottom: calc(var(--ds-mic-on, 1) * (var(--shell-mic) + 12px) + 12px);
+}
+html[data-keyboard] .ds-consult-memo-dialog {
+    border-bottom-width: calc(var(--ds-mic-on, 1) * (var(--shell-mic) + 12px) + 12px);
+}
+/* The voice button rides on the keyboard too, without the home-indicator room. */
+html[data-keyboard] .ds-shell-mic {
+    bottom: calc(var(--ds-kb-inset, 0px) + 12px) !important;
+}
+html[data-keyboard][data-subpages]:has(.ds-subpage-footer, .ds-rec-entry-page .ds-rec-actions) .ds-shell-mic {
+    bottom: calc(var(--ds-kb-inset, 0px) + 12px + (var(--touch-min) - var(--shell-mic)) / 2) !important;
+}

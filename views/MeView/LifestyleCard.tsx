@@ -1,4 +1,5 @@
 import type {MeViewModel} from './useMeViewModel';
+import {focusOnMount} from '../../components/shell/keyboard';
 import type {GroupProps} from './MeView';
 import {EXERCISE_TYPE_OPTIONS} from './constants';
 import {cx, Icon} from '../../components/ui';
@@ -250,7 +251,7 @@ export function LifestyleCard({vm, open, onToggle}: {vm: MeViewModel} & GroupPro
                         value={profile.exerciseTypesOther || ''}
                         onChange={e => setProfile({ ...profile, exerciseTypesOther: e.target.value })}
                         className="ds-field-control ds-control"
-                        autoFocus
+                        ref={focusOnMount}
                     />
                 )}
             </div>

@@ -1,6 +1,6 @@
 import React, {useEffect, useLayoutEffect, useRef} from 'react';
 import {View} from '../utils/types';
-import {scrollRoot} from './shell/scrollRoot';
+import {installTapFocus, isTyping, keyboardGeometry, KEYBOARD_LAYERS, revealField} from './shell/keyboard';
 import {uiIcons} from './ui/icons';
 
 // 全局免責聲明（鎖定級文案，不可改字）。只在「 · 」處斷行，讓分隔點留在行尾。
@@ -23,35 +23,6 @@ interface LayoutProps {
 // S4: pages whose first heading shares the top row with the font toggle (one
 // row of chrome). Each page marks that heading with `.ds-page-lead`.
 const COMPACT_HEADER_VIEWS = new Set<View>([View.SavedQuestions, View.Me, View.Onboarding]);
-
-/** R2-4: bring a focused field into the part of the screen the keyboard leaves,
- * and out from under a pinned action bar (sticky 儲存 / 下一步 bars). A block
- * marked data-keyboard-reveal (a field with its own 確定 / 取消 row) is
- * revealed whole. */
-function revealField(focused: HTMLElement, vv: VisualViewport) {
-    const field = (focused.closest('[data-keyboard-reveal]') as HTMLElement | null) ?? focused;
-    field.scrollIntoView({block: 'nearest'});
-    let scroller: HTMLElement | null = field.parentElement;
-    while (scroller && !(/(auto|scroll)/.test(getComputedStyle(scroller).overflowY) && scroller.scrollHeight > scroller.clientHeight)) scroller = scroller.parentElement;
-    if (scroller === document.documentElement || scroller === document.body) scroller = null;
-    // R2-10: the document no longer scrolls; the page scroller is the shell
-    // canvas (unless a layer has clipped it, then nothing moves behind it).
-    if (!scroller) {
-        const root = scrollRoot();
-        if (root.contains(field) && /(auto|scroll)/.test(getComputedStyle(root).overflowY)) scroller = root;
-    }
-    const scrollBy = (dy: number) => scroller?.scrollBy(0, dy);
-    // Covered by the keyboard (page-level fields; fixed layers already end at it).
-    const limit = vv.offsetTop + vv.height - 16;
-    let r = field.getBoundingClientRect();
-    if (r.bottom > limit) { scrollBy(r.bottom - limit); r = field.getBoundingClientRect(); }
-    // Covered by a pinned bar (sticky 儲存 / 下一步) inside the same scroller.
-    const hit = document.elementFromPoint(r.left + 8, r.bottom - 4) as HTMLElement | null;
-    if (!hit || field.contains(hit) || hit.contains(field)) return;
-    let bar: HTMLElement | null = hit;
-    while (bar && !['sticky', 'fixed'].includes(getComputedStyle(bar).position)) bar = bar.parentElement;
-    if (bar && !bar.contains(field) && !bar.classList.contains('ds-shell-mic')) scrollBy(r.bottom - bar.getBoundingClientRect().top + 12);
-}
 
 export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLargeFont, view}) => {
     const isHome = view === View.Home;
@@ -89,7 +60,6 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
         const vv = window.visualViewport;
         if (!vv) return;
         const root = document.documentElement;
-        const isTyping = (el: Element | null): el is HTMLElement => !!el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !['button', 'checkbox', 'radio', 'file', 'range', 'submit'].includes((el as HTMLInputElement).type)) || (el as HTMLElement).isContentEditable);
         const canvas = () => document.querySelector<HTMLElement>('[data-scroll-root]');
         let open = false;
         let chat = false;
@@ -97,6 +67,8 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
         let frameW = 0;
         let frameH = 0;
         let release = 0;
+        let settle = 0;
+        let lastField: Element | null = null;
         const update = () => {
             const el = document.activeElement;
             const typing = isTyping(el);
@@ -104,23 +76,24 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
             const resized = frame.width !== frameW || frame.height !== frameH;
             frameW = frame.width;
             frameH = frame.height;
-            const zoomed = Math.abs(vv.scale - 1) > 0.01;
-            const top = Math.max(0, frame.top);
-            const visible = zoomed ? frame.height : Math.max(0, Math.min(frame.top + frame.height, vv.height) - top);
             // Beyond the reference: its surface ends at visualViewport.height, so
             // when Safari pans (offsetTop) the gap left above the keyboard is
             // exactly that pan. Ending at the visual viewport's bottom in page
             // terms (offsetTop + height) keeps the top still (no shift, no
             // flash; the pan just hides it) and the bottom on the keyboard.
-            const layoutHeight = zoomed ? frame.height : Math.max(0, Math.min(frame.height, vv.offsetTop + vv.height - frame.top));
-            const covered = frame.height - visible;
+            const {layoutHeight, covered, inset: keyboardInset, zoomed} = keyboardGeometry(frame, vv);
             open = typing && !zoomed && (open ? covered > 1 : covered > 120);
-            const nextChat = open && (el as HTMLElement).id === 'chat-input-box';
+            // Round 4: every field on the page itself (not in a sub-page, sheet
+            // or dialog) gets the canvas treatment 問 AI has; fields in those
+            // layers get the layer's own padding (--ds-kb-inset, CSS).
+            const inLayer = open && !!(el as HTMLElement).closest(KEYBOARD_LAYERS);
+            const box = canvas();
+            const pageField = open && !inLayer && !!box?.contains(el);
+            const nextChat = pageField && !!(el as HTMLElement).closest('.ds-consult');
             root.toggleAttribute('data-keyboard', open);
             const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
             root.style.setProperty('--ds-kb-motion', resized || reduce ? '0ms' : 'var(--ds-kb-duration, 240ms)');
-            const box = canvas();
-            if (nextChat) {
+            if (pageField) {
                 window.clearTimeout(release);
                 if (!root.hasAttribute('data-kb-canvas')) {
                     // Start from the full frame in px so the height can animate.
@@ -134,18 +107,23 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
                 root.style.setProperty('--ds-canvas-h', `${Math.round(frame.height)}px`);
                 window.clearTimeout(release);
                 release = window.setTimeout(() => {
-                    if (root.hasAttribute('data-kb-chat')) return;
+                    if (root.hasAttribute('data-kb-chat') || root.hasAttribute('data-kb-page')) return;
                     root.removeAttribute('data-kb-canvas');
                     root.style.removeProperty('--ds-canvas-h');
                 }, reduce ? 0 : 320);
             }
             chat = nextChat;
             root.toggleAttribute('data-kb-chat', chat);
+            root.toggleAttribute('data-kb-page', pageField);
             // Round 2: how much of the layout viewport the keyboard covers, so
             // pinned bars (問 AI composer, sub-page action bar, voice button)
             // can sit on top of it instead of underneath.
-            const inset = open ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
+            const inset = open ? keyboardInset : 0;
             root.style.setProperty('--ds-kb-inset', `${inset}px`);
+            // Round 4: what the user can actually see while it is up (Safari's
+            // pan hides the top of a layer), so sheets and dialogs fit in it.
+            if (open) root.style.setProperty('--ds-kb-visible', `${Math.round(vv.height)}px`);
+            else root.style.removeProperty('--ds-kb-visible');
             if (hud) {
                 if (open && !wasOpenForHud) { peak.n++; peak.y = 0; peak.top = 0; peak.canvas = 0; }
                 if (open) {
@@ -162,13 +140,21 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
             // R2-4: keyboard opened (or changed height) → the field being typed
             // into is brought above it, whether it sits in the page, a sub-page
             // or a sheet. 問 AI anchors its own composer (useChatAnchor).
-            if (open && inset !== lastInset && el && el.id !== 'chat-input-box') {
+            // Round 4: also when focus moves to another field with the keyboard
+            // up (tap or the accessory bar's ∧ ∨), and once more after the
+            // 240ms height change, when the scroller can scroll that far.
+            if (open && el && el.id !== 'chat-input-box' && (inset !== lastInset || el !== lastField)) {
                 const field = el as HTMLElement;
                 requestAnimationFrame(() => {
                     if (document.activeElement === field) revealField(field, vv);
                 });
+                window.clearTimeout(settle);
+                settle = window.setTimeout(() => {
+                    if (document.activeElement === field && root.hasAttribute('data-keyboard')) revealField(field, vv, true);
+                }, 280);
             }
             lastInset = inset;
+            lastField = open ? el : null;
         };
         // ?kbdebug: live numbers on a real phone (nothing is shown otherwise).
         let hud: HTMLElement | null = null;
@@ -235,6 +221,7 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
         vv.addEventListener('scroll', updateNow);
         window.addEventListener('resize', updateNow);
         window.addEventListener('scroll', onWindowScroll, {passive: true});
+        const removeTapFocus = installTapFocus();
         document.addEventListener('pointerdown', onDown, true);
         document.addEventListener('pointermove', onMove, true);
         document.addEventListener('pointerup', onUp, true);
@@ -254,9 +241,11 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
             document.removeEventListener('pointermove', onMove, true);
             document.removeEventListener('pointerup', onUp, true);
             document.removeEventListener('pointercancel', onCancel, true);
+            removeTapFocus();
+            window.clearTimeout(settle);
             hud?.remove();
-            for (const a of ['data-keyboard', 'data-kb-chat', 'data-kb-canvas']) root.removeAttribute(a);
-            for (const v of ['--ds-kb-inset', '--ds-canvas-h', '--ds-kb-motion']) root.style.removeProperty(v);
+            for (const a of ['data-keyboard', 'data-kb-chat', 'data-kb-page', 'data-kb-canvas']) root.removeAttribute(a);
+            for (const v of ['--ds-kb-inset', '--ds-kb-visible', '--ds-canvas-h', '--ds-kb-motion']) root.style.removeProperty(v);
         };
     }, []);
 

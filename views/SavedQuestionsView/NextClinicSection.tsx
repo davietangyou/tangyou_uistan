@@ -1,4 +1,5 @@
 import {BottomSheet, Button, Card, EmptyState, Icon} from '../../components/ui';
+import {focusOnMount} from '../../components/shell/keyboard';
 import type { SavedQuestionsViewModel } from './useSavedQuestionsViewModel';
 import {CountPill, IndexBadge, SectionHead} from './questionUi';
 
@@ -125,7 +126,7 @@ export function NextClinicSection({vm}: {vm: SavedQuestionsViewModel}) {
                                 handleAddNextClinicQuestion();
                             }
                         }}
-                        autoFocus
+                        ref={focusOnMount}
                     />
                     <div className="ds-sq-actions">
                         <Button onClick={handleAddNextClinicQuestion} disabled={!newNextQText.trim()}>

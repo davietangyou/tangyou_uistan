@@ -1,4 +1,5 @@
 import {Button, Card, confirmThen, cx, EmptyState, Icon} from '../../components/ui';
+import {focusOnMount} from '../../components/shell/keyboard';
 import type { SavedQuestionsViewModel } from './useSavedQuestionsViewModel';
 import {CountPill, ExpandToggle, IndexBadge, SectionHead} from './questionUi';
 
@@ -64,7 +65,7 @@ export function SavedListSection({vm}: {vm: SavedQuestionsViewModel}) {
                                         handleAddQuestion();
                                     }
                                 }}
-                                autoFocus
+                                ref={focusOnMount}
                             />
                             <div className="ds-sq-actions">
                                 <Button onClick={handleAddQuestion} disabled={!newQuestionText.trim()} data-verify="q-add-confirm">
@@ -114,7 +115,7 @@ export function SavedListSection({vm}: {vm: SavedQuestionsViewModel}) {
                                                             handleSaveEdit();
                                                         }
                                                     }}
-                                                    autoFocus
+                                                    ref={focusOnMount}
                                                 />
                                             ) : (
                                                 <div className="ds-sq-saved-text">

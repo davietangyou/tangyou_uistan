@@ -83,13 +83,32 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
         const update = () => {
             const el = document.activeElement as HTMLElement | null;
             const typing = !!el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !['button', 'checkbox', 'radio', 'file', 'range', 'submit'].includes((el as HTMLInputElement).type)) || el.isContentEditable);
-            const open = typing && Math.abs(vv.scale - 1) < 0.01 && window.innerHeight - vv.height > 150;
+            // Threshold is 40px (was 150): start riding the keyboard as soon
+            // as it is clearly up. `typing` already rules out URL-bar resizes.
+            const open = typing && Math.abs(vv.scale - 1) < 0.01 && window.innerHeight - vv.height > 40;
             root.toggleAttribute('data-keyboard', open);
             // Round 2: how much of the layout viewport the keyboard covers, so
             // pinned bars (問 AI composer, sub-page action bar, voice button)
             // can sit on top of it instead of underneath.
             const inset = open ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
+            // Follow live inset with 0ms when visualViewport reports often
+            // (iOS during the IME animation). A single large step after a
+            // quiet stretch eases 300ms (Android often reports once). A late
+            // jump long after focus stays 0ms so we do not add a second move
+            // once the keyboard is already still.
+            const now = performance.now();
+            const delta = Math.abs(inset - lastInset);
+            const dt = now - lastInsetAt;
+            const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+            let easeMs = 0;
+            if (!reduce && delta > 64 && dt > 50) {
+                const sinceFocus = now - lastKbFocusAt;
+                if (sinceFocus < 160) easeMs = 300;
+            }
+            if (!reduce && delta > 0 && dt < 50) easeMs = 0;
+            root.style.setProperty('--ds-kb-ease-ms', `${easeMs}ms`);
             root.style.setProperty('--ds-kb-inset', `${inset}px`);
+            lastInsetAt = now;
             // R2-4: keyboard opened (or changed height) → the field being typed
             // into is brought above it, whether it sits in the page, a sub-page
             // or a sheet. 問 AI anchors its own composer (useChatAnchor).
@@ -102,6 +121,14 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
             lastInset = inset;
         };
         let lastInset = 0;
+        let lastInsetAt = 0;
+        let lastKbFocusAt = 0;
+        const onFocusIn = (e: FocusEvent) => {
+            const t = e.target as HTMLElement | null;
+            if (!t) return;
+            const typing = t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && !['button', 'checkbox', 'radio', 'file', 'range', 'submit'].includes((t as HTMLInputElement).type)) || t.isContentEditable;
+            if (typing) lastKbFocusAt = performance.now();
+        };
         // R2-9: a growing text box (two-line question fields grow with what is
         // typed) keeps itself and its 確定 / 取消 above the keyboard.
         let growFrame = 0;
@@ -115,6 +142,7 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
         };
         vv.addEventListener('resize', update);
         vv.addEventListener('scroll', update);
+        document.addEventListener('focusin', onFocusIn);
         document.addEventListener('focusout', update);
         document.addEventListener('input', onInput);
         return () => {
@@ -122,9 +150,11 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
             document.removeEventListener('input', onInput);
             vv.removeEventListener('resize', update);
             vv.removeEventListener('scroll', update);
+            document.removeEventListener('focusin', onFocusIn);
             document.removeEventListener('focusout', update);
             root.removeAttribute('data-keyboard');
             root.style.removeProperty('--ds-kb-inset');
+            root.style.removeProperty('--ds-kb-ease-ms');
         };
     }, []);
 

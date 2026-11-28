@@ -108,6 +108,11 @@
     --ds-duration-fast: 120ms;
     --ds-duration: 200ms;
     --ds-duration-slow: 240ms;
+    /* Keyboard: close to iOS / modern Android IME rise (~300ms, ease-out). */
+    --ds-kb-ease: cubic-bezier(0.32, 0.72, 0, 1);
+    --ds-kb-duration: 300ms;
+    --ds-kb-ease-ms: 0ms;
+
     --touch-min: 48px;
     --touch-primary: 56px;
     --ds-font: 'Noto Sans HK', 'PingFang HK', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;

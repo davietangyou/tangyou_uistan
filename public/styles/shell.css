@@ -265,8 +265,19 @@ html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop) .ds-shell-nav {
     visibility: hidden;
 }
 
-html:not([data-subpages]) .ds-shell-nav {
-    transition: transform var(--ds-duration-slow) var(--ds-ease), opacity var(--ds-duration-slow) var(--ds-ease), visibility 0s;
+/* Visibility is delayed only while hiding, so the slide/fade can play.
+   A 0s visibility transition (the previous rule) hid the bar on the first
+   frame and the move was invisible. Keyboard uses the IME-like curve. */
+.ds-shell-nav {
+    transition: transform var(--ds-duration-slow) var(--ds-ease), opacity var(--ds-duration-slow) var(--ds-ease), visibility 0s linear var(--ds-duration-slow);
+}
+html[data-keyboard] .ds-shell-nav {
+    transition-duration: var(--ds-kb-duration, 300ms), var(--ds-kb-duration, 300ms), 0s;
+    transition-timing-function: var(--ds-kb-ease, var(--ds-ease)), var(--ds-kb-ease, var(--ds-ease)), linear;
+    transition-delay: 0s, 0s, var(--ds-kb-duration, 300ms);
+}
+html:not([data-subpages]):not([data-keyboard]):not(:has(.ds-sheet-scrim, .ds-consult-memo-backdrop)) .ds-shell-nav {
+    transition-delay: 0s, 0s, 0s;
 }
 
 /* Global voice button: white, light, always reachable; sits above the nav

@@ -1787,3 +1787,30 @@ html[data-keyboard] .ds-consult-composer {
 html[data-keyboard] .ds-consult-composer {
     bottom: calc(var(--ds-kb-inset, 0px) + 8px);
 }
+
+/* =============================================================================
+   Phase 3 — pattern language: guide spot art is one clay object on a mint
+   blob (static webp); topic cards carry a quiet hill backdrop in the card's
+   own pastel, lower-right, like the 被仿侧 topic plates.
+   ============================================================================= */
+.ds-consult-guide-orb {
+    top: -12px;
+    right: -8px;
+    width: 88px;
+    height: 88px;
+    border-radius: 0;
+    background: url("../art/consult-guide.webp") center / contain no-repeat;
+    box-shadow: none;
+}
+.ds-consult-shortcut::before {
+    inset: 0;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    background: var(--topic-art) right bottom / cover no-repeat;
+}
+.ds-consult-shortcut.is-sky { --topic-art: url("../art/topic-sky.webp"); }
+.ds-consult-shortcut.is-lilac { --topic-art: url("../art/topic-lilac.webp"); }
+.ds-consult-shortcut.is-sage { --topic-art: url("../art/topic-sage.webp"); }
+.ds-consult-shortcut.is-sun { --topic-art: url("../art/topic-sun.webp"); }
+.ds-consult-shortcut.is-rose { --topic-art: url("../art/topic-rose.webp"); }

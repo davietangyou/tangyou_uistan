@@ -1,0 +1,35 @@
+北极星第四轮 · 第三阶段：图案语言重做（2026-11-28 08:10 UTC+8）
+分支 feat/northstar-v2-20261128（未合并 main）
+
+一、被仿侧图案手法调研
+- 地址比对：https://diaguide-hk.thetax.workers.dev 为构建产物；https://tangyou-pro.alphathought.org 可用(200)，是同一源码的 Vite 开发服务器（src/assets/...）。两边图片逐个 md5 一致（ai-card-refined / appointment-card / robot / topic-glucose / topic-diet / topic-emergency / topic-medication），即两者同版；pro 那边会话直接跳过欢迎页进 1/5 设定，故以 workers.dev 为截图对象。
+- 介质：全部为位图 webp（2–17 KB），没有 SVG 插画、没有 CSS 渐变球、没有 emoji。两种笔迹：
+  1) 水彩：欢迎页 leaves-background（640×1391，近白薄荷底 #f6faf4 左右，仅右上一枝、左下一丛半透明叶片，无描边，亮度 176–255，中间约 70% 空白）；「我的」identity-background（薄荷水彩洗 + 右下两座圆丘 + 小芽）。
+  2) 哑光黏土 3D：首页 AI 卡（淡天蓝平铺底 + 右侧浅色圆斑 + 白色机器人 + 三条绿色动势短线），覆诊卡（淡丁香底 + 圆斑 + 日历时钟 + 紫色动势短线），问 AI 引导 robot（同色页底 + 薄荷斑 + 机器人）。
+  3) 主题卡底图：卡片同色系纯色 + 右下两层圆丘，对比度极低（亮度跨度 ~20），opacity .45、object-position right bottom。
+- 排布：一张图只放一个物件、靠右或角落，占卡片约 1/3，其余是与卡底同色的留白；文字压在留白上，图在文字层下。线性图标保持 24px / 1.8 描边、无底圈。
+
+二、模仿侧为何显得不自然（见 /workspace/northstar-shots/p3-welcome-before.png）
+1. 介质不同：我们用 inline SVG 描边叶 + 4 层 radial-gradient，被仿侧是水彩位图；描边线条硬、细且一致，读起来像「图标」不像「插画」。
+2. 晕染发脏：多层径向渐变在灰底 #f5f6f6 上形成大块灰绿色斑，像污渍而非纸面。
+3. 叶形几何化、只露一角被裁切，缺少叶脉与半透明叠色，没有「生长」感。
+4. 首页/问 AI 用「线性图标 + 半透明白方块」或「CSS 高光球」代替插画，和水彩叶不是一家人；光源、材质、配色各自为政。
+5. 主题卡用白色径向光斑代替底图，像高光反射，不像风景。
+
+三、本轮改动（均为呈现层；硬合同、dia_*、计算、/api、consultText、提醒规则、server/vite/package 均未动）
+- 新增静态资源 public/art/*.webp（共约 35 KB，随 app 发布，无运行时网络请求）：
+  welcome-leaves（自有生成水彩叶，降饱和、色相移向薄荷、向纸底提亮 28%）、home-ask（黏土对话气泡 + 绿色三点 + 小星）、home-clinic（黏土夹板 + 紫色对勾徽章）、consult-guide（薄荷斑 + 黏土对话气泡，圆形羽化 alpha）、me-identity（薄荷水彩 + 圆丘 + 小芽）、topic-sky/lilac/sage/sun/rose（PIL 绘制两层圆丘 + 极淡纸纹）。生成图只做「同介质、自有物件」，未搬运被仿侧位图。
+- 欢迎页：去掉 SVG 叶与径向渐变，改单张水彩底图 cover。
+- 首页：问问 AI 卡与覆诊卡改为整卡底图（物件在右侧），删除线性图标 + 白方块 tile；文字区右侧留白避让。
+- 问 AI：引导球改为 consult-guide 插画；主题卡 ::before 改为同色圆丘底图。
+- 我的：身份卡底改为 me-identity 水彩；「還未填寫」行右侧留白避让小芽。
+- 空状态/线性图标：被仿侧同样是「白圆 + 线性图标」或「丁香卡 + 线性图标」，与我们一致，本轮不改（宁缺毋滥）。
+- 生图仅用于黏土物件与水彩叶；圆丘这种简单形状用代码绘制。曾生成一个「机器人脸」吉祥物，因过于接近被仿侧 robot 且偏扁平，弃用。
+
+四、验证与发布
+- npm run lint / build / verify（VERIFY_BASE_URL=http://127.0.0.1:9210/）全绿，合同 golden 无差异。
+- 对照图：/workspace/northstar-shots/p3-welcome-before.png、p3-welcome-compare.png、p3-home-compare.png、p3-consult-compare.png、p3-me-compare.png（每张：改前 | 改后 | 被仿侧），以及 p3-mimic-before/、p3-mimic-after/、p3-mimic-after-large/。
+
+五、新合同问题
+- 无新增。旧的三个（服药只读卡、覆诊时间/地点字段、去完善/個人檔案/我的 命名）仍未实施。
+- 观察（非本轮改动）：大字模式下首页「個人檔案 待完善」小卡右缘被裁，改前已存在，留待后续。

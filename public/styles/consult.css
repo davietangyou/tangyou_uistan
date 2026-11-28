@@ -1825,11 +1825,10 @@ html[data-keyboard] .ds-consult-composer {
    nav, and sticky keeps it there when the thread grows. The shell footer
    is clipped on this view (locked disclaimer already lives in the thread)
    so it cannot sit between the capsule and the nav.
-   Keyboard (iOS fix, same day): while the 問 AI input is focused Layout
-   lays the page scroller over the visual viewport (html[data-kb-chat]), so
-   the capsule simply sticks to the scroller's bottom, i.e. the keyboard's
-   top edge (accessory bar included). No transform: on iPhone Safari pans
-   the page itself, and a second lift on top of that left a gap.
+   Keyboard (aligned with the reference app, same day): while the 問 AI
+   input is focused Layout sizes the page scroller to the visible height
+   (html[data-kb-canvas]); the capsule sticks to its bottom and its nav
+   clearance eases to 0 with the same 240ms curve, so nothing jumps.
    ============================================================================= */
 .ds-shell-column:has(.ds-consult) .ds-shell-footer {
     position: absolute;
@@ -1882,13 +1881,42 @@ html[data-keyboard] .ds-consult-composer {
 }
 /* Keyboard up on the 問 AI input: the nav is gone, the scroller ends at the
    keyboard, the capsule rests on it. Column fills the shorter scroller. */
-html[data-kb-chat] .ds-view-stage:has(.ds-consult) {
-    min-height: calc(var(--ds-vv-h, 100svh) - var(--shell-header-h, 0px));
+.ds-consult,
+.ds-consult-composer {
+    transition-property: padding-bottom, bottom;
+    transition-duration: var(--ds-kb-motion, 0ms);
+    transition-timing-function: var(--ds-kb-ease, ease);
+}
+html[data-kb-canvas] .ds-view-stage:has(.ds-consult) {
+    min-height: calc(var(--ds-canvas-h, 100svh) - var(--shell-header-h, 0px));
 }
 html[data-kb-chat] .ds-consult {
     padding-bottom: 0;
 }
 html[data-kb-chat] .ds-consult-composer {
     bottom: 0;
-    padding-bottom: 8px;
+    padding-bottom: 4px;
+}
+
+/* Tap-to-type layer over the 問 AI field (Composer; reference: .chat-hold-input).
+   Same grid cell as the textarea, invisible; gone while typing. */
+.ds-consult-capsule .ds-consult-input {
+    grid-row: 1;
+}
+.ds-consult-hold {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: stretch;
+    justify-self: stretch;
+    z-index: 1;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: text;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+.ds-consult-hold[hidden] {
+    display: none;
 }

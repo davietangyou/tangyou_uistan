@@ -272,9 +272,9 @@ html:has(.ds-sheet-scrim, .ds-consult-memo-backdrop) .ds-shell-nav {
     transition: transform var(--ds-duration-slow) var(--ds-ease), opacity var(--ds-duration-slow) var(--ds-ease), visibility 0s linear var(--ds-duration-slow);
 }
 html[data-keyboard] .ds-shell-nav {
-    transition-duration: var(--ds-kb-duration, 300ms), var(--ds-kb-duration, 300ms), 0s;
+    transition-duration: var(--ds-kb-duration, 240ms), var(--ds-kb-duration, 240ms), 0s;
     transition-timing-function: var(--ds-kb-ease, var(--ds-ease)), var(--ds-kb-ease, var(--ds-ease)), linear;
-    transition-delay: 0s, 0s, var(--ds-kb-duration, 300ms);
+    transition-delay: 0s, 0s, var(--ds-kb-duration, 240ms);
 }
 html:not([data-subpages]):not([data-keyboard]):not(:has(.ds-sheet-scrim, .ds-consult-memo-backdrop)) .ds-shell-nav {
     transition-delay: 0s, 0s, 0s;

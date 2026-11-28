@@ -109,8 +109,8 @@
     --ds-duration: 200ms;
     --ds-duration-slow: 240ms;
     /* Keyboard: close to iOS / modern Android IME rise (~300ms, ease-out). */
-    --ds-kb-ease: cubic-bezier(0.32, 0.72, 0, 1);
-    --ds-kb-duration: 300ms;
+    --ds-kb-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --ds-kb-duration: 240ms;
 
     --touch-min: 48px;
     --touch-primary: 56px;

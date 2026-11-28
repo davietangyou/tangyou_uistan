@@ -188,14 +188,15 @@ body {
    starts on its non-scrolling parts (header, scrim) must not scroll the page
    underneath: clip the canvas. Its scrollTop is kept, so closing the layer
    returns to the same place. */
-/* 問 AI input focused with the keyboard up (Layout: html[data-kb-chat]):
-   the scroller covers exactly the visual viewport, wherever Safari has
-   panned it, so its bottom edge is the keyboard's top edge. */
-html[data-kb-chat] .ds-shell-canvas[data-scroll-root] {
-    top: var(--ds-vv-top, 0px);
+/* 問 AI input focused with the keyboard up (Layout: html[data-kb-canvas]):
+   as in the reference app, the page scroller takes the visible height and
+   eases to it (240ms), so its bottom, and the composer pinned there, move
+   with the keyboard. Top stays at 0 (Safari's pan is not chased). */
+html[data-kb-canvas] .ds-shell-canvas[data-scroll-root] {
     bottom: auto;
-    height: var(--ds-vv-h, 100%);
+    height: var(--ds-canvas-h, 100%);
     min-height: 0;
+    transition: height var(--ds-kb-motion, 0ms) var(--ds-kb-ease, ease);
 }
 
 html[data-subpages] .ds-shell-canvas[data-scroll-root],

@@ -119,14 +119,26 @@ export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
             const el = document.activeElement;
             return !!el && el.id === 'chat-input-box' && !!panel.current?.contains(el);
         };
-        let frame = 0;
+        // The page scroller eases to the keyboard (240ms, Layout). While the
+        // thread is followed to its end (reference: < 80px from the bottom)
+        // the content rides up with it frame by frame instead of being
+        // covered and then jumped; one anchor runs once it has settled.
+        const scroller = scrollRoot();
+        let following = true;
+        const onScroll = () => {
+            following = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 80;
+        };
+        let height = scroller.clientHeight;
+        const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => {
+            const next = scroller.clientHeight;
+            if (next < height && following && typingHere()) scroller.scrollTop += height - next;
+            height = next;
+        });
+        ro?.observe(scroller);
+        scroller.addEventListener('scroll', onScroll, {passive: true});
         const later = () => {
-            // Next frame (after Layout has fitted the scroller to the
-            // keyboard), then once more when the keyboard has settled.
-            cancelAnimationFrame(frame);
-            frame = requestAnimationFrame(() => { if (typingHere()) anchor(false); });
             window.clearTimeout(timer);
-            timer = window.setTimeout(() => { if (typingHere()) anchor(false); }, 120);
+            timer = window.setTimeout(() => { if (typingHere()) anchor(true); }, 300);
         };
         const onFocus = (e: FocusEvent) => {
             if ((e.target as HTMLElement | null)?.id === 'chat-input-box') later();
@@ -135,7 +147,8 @@ export function useChatAnchor(messages: ChatMessage[], waiting: boolean) {
         vv?.addEventListener('resize', later);
         return () => {
             window.clearTimeout(timer);
-            cancelAnimationFrame(frame);
+            ro?.disconnect();
+            scroller.removeEventListener('scroll', onScroll);
             document.removeEventListener('focusin', onFocus);
             vv?.removeEventListener('resize', later);
         };

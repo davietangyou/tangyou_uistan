@@ -1,3 +1,4 @@
+import {useRef, useState} from 'react';
 import type {ConsultViewModel} from './useConsultViewModel';
 import {Icon} from '../../components/ui';
 
@@ -6,6 +7,17 @@ export function Composer({vm}: {vm: ConsultViewModel}) {
     const {attachedImage, chatInput, chatLoading, fileInputRef, handleSendChatMessage, isListening, setAttachedImage, setChatInput, toggleVoiceInput} = vm;
 
     const canSend = !((!chatInput.trim() && !attachedImage) || chatLoading);
+
+    // Keyboard (aligned with the reference app's ChatComposer): while the
+    // field is not being typed in, a transparent button lies over it. A still
+    // tap focuses the field with preventScroll, so iPhone Safari opens the
+    // keyboard without panning the page to the field (the pan is what left a
+    // gap and slid the frame); the layout then rests the composer on the
+    // keyboard itself. A drag still scrolls the thread.
+    const inputRef = useRef<HTMLTextAreaElement>(null);
+    const [editing, setEditing] = useState(false);
+    const press = useRef<{id: number; x: number; y: number; moved: boolean} | null>(null);
+    const enterEditing = () => inputRef.current?.focus({preventScroll: true});
 
     return (
         <>
@@ -80,6 +92,7 @@ export function Composer({vm}: {vm: ConsultViewModel}) {
 
                     <label htmlFor="chat-input-box" className="ds-sr-only">輸入您的控糖疑問</label>
                     <textarea
+                        ref={inputRef}
                         id="chat-input-box"
                         data-verify="chat-input"
                         className="ds-consult-input t-body ds-control"
@@ -87,12 +100,37 @@ export function Composer({vm}: {vm: ConsultViewModel}) {
                         placeholder={attachedImage ? "可補充您的提問（例如：我食呢隻藥成日胃唔舒服，有冇影響？）..." : "輸入問題…"}
                         value={chatInput}
                         onChange={e => setChatInput(e.target.value)}
+                        onFocus={() => setEditing(true)}
+                        onBlur={() => setEditing(false)}
                         onKeyDown={e => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
                                 handleSendChatMessage(chatInput);
                             }
                         }}
+                    />
+                    <button
+                        type="button"
+                        className="ds-consult-hold"
+                        tabIndex={-1}
+                        aria-hidden="true"
+                        hidden={editing}
+                        onPointerDown={e => {
+                            if (e.button !== 0) return;
+                            e.preventDefault();
+                            press.current = {id: e.pointerId, x: e.clientX, y: e.clientY, moved: false};
+                        }}
+                        onPointerMove={e => {
+                            const p = press.current;
+                            if (p && p.id === e.pointerId && Math.hypot(e.clientX - p.x, e.clientY - p.y) > 8) p.moved = true;
+                        }}
+                        onPointerUp={e => {
+                            const p = press.current;
+                            press.current = null;
+                            if (p && p.id === e.pointerId && !p.moved) enterEditing();
+                        }}
+                        onPointerCancel={() => { press.current = null; }}
+                        onClick={e => { if (e.detail === 0) enterEditing(); }}
                     />
 
                     <div className="ds-consult-tools">

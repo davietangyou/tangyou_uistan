@@ -77,68 +77,76 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
     // not pushed up over the field). Read from visualViewport; pinch-zoom (scale
     // ≠ 1) and a keyboard with no focused text field do not count.
     //
-    // iOS fix (2026-11-28, real-device test of the P5 build): Safari does not
-    // shrink the layout viewport; it pans the visual viewport (offsetTop) to
-    // show the focused field, by a different amount on every tap. Detection
-    // therefore uses only how much shorter the visual viewport is than the
-    // page at rest (no offsetTop, with hysteresis), and while the 問 AI input
-    // is focused (html[data-kb-chat]) the page scroller itself is laid over
-    // the visual viewport (--ds-vv-top / --ds-vv-h). The pinned composer then
-    // rests on the keyboard with plain sticky bottom: 0, wherever Safari has
-    // panned to; no transform rides on top of Safari's own movement.
+    // Keyboard (2026-11-28, aligned with the reference app's inputViewport):
+    // the page frame (body, pinned) is measured, its visible part is
+    // min(frame bottom, visualViewport.height) − frame top, and Safari's pan
+    // (offsetTop) is not used to detect it. Open past 120px covered, stays open while
+    // anything is covered. While the 問 AI input is focused the page scroller
+    // takes that visible height (html[data-kb-canvas], --ds-canvas-h) with a
+    // 240ms height transition, so the composer (sticky at its bottom) moves
+    // with the keyboard. A tap on blank page closes the keyboard.
     useEffect(() => {
         const vv = window.visualViewport;
         if (!vv) return;
         const root = document.documentElement;
         const isTyping = (el: Element | null): el is HTMLElement => !!el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !['button', 'checkbox', 'radio', 'file', 'range', 'submit'].includes((el as HTMLInputElement).type)) || (el as HTMLElement).isContentEditable);
-        let base = window.innerHeight; // page height with no keyboard
+        const canvas = () => document.querySelector<HTMLElement>('[data-scroll-root]');
         let open = false;
         let chat = false;
         let lastInset = 0;
-        let lastOffsetTop = 0;
-        const composer = () => document.querySelector<HTMLElement>('.ds-consult-composer');
+        let frameW = 0;
+        let frameH = 0;
+        let release = 0;
         const update = () => {
             const el = document.activeElement;
             const typing = isTyping(el);
-            if (!typing) base = window.innerHeight;
-            else base = Math.max(base, window.innerHeight);
-            const covered = base - vv.height;
-            const zoomed = Math.abs(vv.scale - 1) >= 0.01;
-            // Opens past 100px (any phone keyboard), stays open down to 60px
-            // so an address-bar or accessory-bar change mid-typing cannot
-            // flicker it closed.
-            const nextOpen = typing && !zoomed && covered > (open ? 60 : 100);
-            const nextChat = nextOpen && (el as HTMLElement).id === 'chat-input-box';
-            // Composer's on-screen top before the change, for a one-shot glide.
-            const box = chat !== nextChat ? composer() : null;
-            const before = box ? box.getBoundingClientRect().top - lastOffsetTop : 0;
-            open = nextOpen;
-            chat = nextChat;
+            const frame = document.body.getBoundingClientRect();
+            const resized = frame.width !== frameW || frame.height !== frameH;
+            frameW = frame.width;
+            frameH = frame.height;
+            const zoomed = Math.abs(vv.scale - 1) > 0.01;
+            const top = Math.max(0, frame.top);
+            const visible = zoomed ? frame.height : Math.max(0, Math.min(frame.top + frame.height, vv.height) - top);
+            // Beyond the reference: its surface ends at visualViewport.height, so
+            // when Safari pans (offsetTop) the gap left above the keyboard is
+            // exactly that pan. Ending at the visual viewport's bottom in page
+            // terms (offsetTop + height) keeps the top still (no shift, no
+            // flash; the pan just hides it) and the bottom on the keyboard.
+            const layoutHeight = zoomed ? frame.height : Math.max(0, Math.min(frame.height, vv.offsetTop + vv.height - frame.top));
+            const covered = frame.height - visible;
+            open = typing && !zoomed && (open ? covered > 1 : covered > 120);
+            const nextChat = open && (el as HTMLElement).id === 'chat-input-box';
             root.toggleAttribute('data-keyboard', open);
-            root.toggleAttribute('data-kb-chat', chat);
-            if (chat) {
-                root.style.setProperty('--ds-vv-top', `${Math.round(vv.offsetTop)}px`);
-                root.style.setProperty('--ds-vv-h', `${Math.round(vv.height)}px`);
-            } else {
-                root.style.removeProperty('--ds-vv-top');
-                root.style.removeProperty('--ds-vv-h');
+            const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+            root.style.setProperty('--ds-kb-motion', resized || reduce ? '0ms' : 'var(--ds-kb-duration, 240ms)');
+            const box = canvas();
+            if (nextChat) {
+                window.clearTimeout(release);
+                if (!root.hasAttribute('data-kb-canvas')) {
+                    // Start from the full frame in px so the height can animate.
+                    root.style.setProperty('--ds-canvas-h', `${Math.round(frame.height)}px`);
+                    root.setAttribute('data-kb-canvas', '');
+                    void box?.offsetHeight;
+                }
+                root.style.setProperty('--ds-canvas-h', `${Math.round(layoutHeight)}px`);
+            } else if (chat || root.hasAttribute('data-kb-canvas')) {
+                // Grow back to the full frame, then hand sizing back to inset: 0.
+                root.style.setProperty('--ds-canvas-h', `${Math.round(frame.height)}px`);
+                window.clearTimeout(release);
+                release = window.setTimeout(() => {
+                    if (root.hasAttribute('data-kb-chat')) return;
+                    root.removeAttribute('data-kb-canvas');
+                    root.style.removeProperty('--ds-canvas-h');
+                }, reduce ? 0 : 320);
             }
+            chat = nextChat;
+            root.toggleAttribute('data-kb-chat', chat);
             // Round 2: how much of the layout viewport the keyboard covers, so
             // pinned bars (問 AI composer, sub-page action bar, voice button)
             // can sit on top of it instead of underneath.
             const inset = open ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
             root.style.setProperty('--ds-kb-inset', `${inset}px`);
-            lastOffsetTop = vv.offsetTop;
-            if (box && box.isConnected) {
-                // The new place is already final (correct on the first frame);
-                // only the way there is animated, and it always ends at none.
-                const after = box.getBoundingClientRect().top - vv.offsetTop;
-                const dy = Math.round(before - after);
-                const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-                if (!reduce && Math.abs(dy) > 2 && Math.abs(dy) < window.innerHeight * 0.8 && typeof box.animate === 'function') {
-                    box.animate([{transform: `translateY(${dy}px)`}, {transform: 'none'}], {duration: 300, easing: 'cubic-bezier(0.32, 0.72, 0, 1)'});
-                }
-            }
+            if (hud) hud.textContent = `inner ${window.innerHeight} client ${root.clientHeight} frame ${Math.round(frame.top)}/${Math.round(frame.height)}\nvv ${Math.round(vv.height)} top ${Math.round(vv.offsetTop)} scale ${vv.scale.toFixed(2)} scrollY ${Math.round(window.scrollY)}\ncovered ${Math.round(covered)} open ${open} chat ${chat} canvas ${Math.round(box?.getBoundingClientRect().bottom ?? 0)}`;
             // R2-4: keyboard opened (or changed height) → the field being typed
             // into is brought above it, whether it sits in the page, a sub-page
             // or a sheet. 問 AI anchors its own composer (useChatAnchor).
@@ -149,6 +157,24 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
                 });
             }
             lastInset = inset;
+        };
+        // ?kbdebug: live numbers on a real phone (nothing is shown otherwise).
+        let hud: HTMLElement | null = null;
+        if (/[?&]kbdebug\b/.test(window.location.search)) {
+            hud = document.createElement('pre');
+            hud.style.cssText = 'position:fixed;top:env(safe-area-inset-top,0px);left:4px;right:4px;z-index:9999;margin:0;padding:4px 6px;font:11px/1.3 ui-monospace,monospace;color:#fff;background:rgba(0,0,0,.72);border-radius:6px;pointer-events:none;white-space:pre-wrap';
+            document.body.appendChild(hud);
+        }
+        // Like rAF-coalesced focus changes in the reference; viewport events
+        // are applied at once.
+        let pending = 0;
+        const schedule = () => {
+            if (!pending) pending = requestAnimationFrame(() => { pending = 0; update(); });
+        };
+        const updateNow = () => {
+            cancelAnimationFrame(pending);
+            pending = 0;
+            update();
         };
         // R2-9: a growing text box (two-line question fields grow with what is
         // typed) keeps itself and its 確定 / 取消 above the keyboard.
@@ -161,34 +187,52 @@ export const Layout: React.FC<LayoutProps> = ({children, isLargeFont, setIsLarge
                 if (document.activeElement === field) revealField(field, vv);
             });
         };
-        // During focusout the field is still document.activeElement: look
-        // again next frame, so closing starts with the keyboard, not after it.
-        let blurFrame = 0;
-        const onFocusOut = () => {
-            update();
-            cancelAnimationFrame(blurFrame);
-            blurFrame = requestAnimationFrame(update);
+        // Reference: a still tap on blank page (not a control, no text being
+        // selected) while typing closes the keyboard.
+        const interactive = 'input,textarea,select,button,a,label,summary,[role="button"],[role="link"],[role="slider"],[role="checkbox"],[role="radio"],[contenteditable]:not([contenteditable="false"]),[tabindex]:not([tabindex="-1"])';
+        const appRoot = document.getElementById('root');
+        const blank = (t: EventTarget | null) => t instanceof Element && !!appRoot?.contains(t) && !t.closest(interactive);
+        let tap: {id: number; x: number; y: number; field: HTMLElement; moved: boolean} | null = null;
+        const onDown = (e: PointerEvent) => {
+            const f = document.activeElement;
+            tap = e.isPrimary && e.button === 0 && blank(e.target) && isTyping(f) ? {id: e.pointerId, x: e.clientX, y: e.clientY, field: f, moved: false} : null;
         };
-        vv.addEventListener('resize', update);
-        vv.addEventListener('scroll', update);
-        window.addEventListener('resize', update);
-        document.addEventListener('focusin', update);
-        document.addEventListener('focusout', onFocusOut);
+        const onMove = (e: PointerEvent) => {
+            if (tap?.id === e.pointerId && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 8) tap.moved = true;
+        };
+        const onCancel = () => { tap = null; };
+        const onUp = (e: PointerEvent) => {
+            const t = tap;
+            tap = null;
+            if (!t || t.id !== e.pointerId || t.moved || !blank(e.target) || Math.hypot(e.clientX - t.x, e.clientY - t.y) > 8 || !window.getSelection()?.isCollapsed || document.activeElement !== t.field) return;
+            t.field.blur();
+        };
+        for (const type of ['focusin', 'focusout', 'input']) document.addEventListener(type, schedule);
         document.addEventListener('input', onInput);
+        vv.addEventListener('resize', updateNow);
+        vv.addEventListener('scroll', updateNow);
+        window.addEventListener('resize', updateNow);
+        document.addEventListener('pointerdown', onDown, true);
+        document.addEventListener('pointermove', onMove, true);
+        document.addEventListener('pointerup', onUp, true);
+        document.addEventListener('pointercancel', onCancel, true);
+        update();
         return () => {
             cancelAnimationFrame(growFrame);
-            cancelAnimationFrame(blurFrame);
+            cancelAnimationFrame(pending);
+            window.clearTimeout(release);
+            for (const type of ['focusin', 'focusout', 'input']) document.removeEventListener(type, schedule);
             document.removeEventListener('input', onInput);
-            vv.removeEventListener('resize', update);
-            vv.removeEventListener('scroll', update);
-            window.removeEventListener('resize', update);
-            document.removeEventListener('focusin', update);
-            document.removeEventListener('focusout', onFocusOut);
-            root.removeAttribute('data-keyboard');
-            root.removeAttribute('data-kb-chat');
-            root.style.removeProperty('--ds-kb-inset');
-            root.style.removeProperty('--ds-vv-top');
-            root.style.removeProperty('--ds-vv-h');
+            vv.removeEventListener('resize', updateNow);
+            vv.removeEventListener('scroll', updateNow);
+            window.removeEventListener('resize', updateNow);
+            document.removeEventListener('pointerdown', onDown, true);
+            document.removeEventListener('pointermove', onMove, true);
+            document.removeEventListener('pointerup', onUp, true);
+            document.removeEventListener('pointercancel', onCancel, true);
+            hud?.remove();
+            for (const a of ['data-keyboard', 'data-kb-chat', 'data-kb-canvas']) root.removeAttribute(a);
+            for (const v of ['--ds-kb-inset', '--ds-canvas-h', '--ds-kb-motion']) root.style.removeProperty(v);
         };
     }, []);
 

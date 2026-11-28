@@ -1,7 +1,7 @@
 # 手动搭建与迭代应用指南
 ## macOS 本地 + Linux 线上
 
-版本：1.5
+版本：1.6
 适用项目：tangyou_uistan
 适用模式：dev 模式（`npm run dev`）
 
@@ -110,9 +110,13 @@ curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9002/styles/app.css
 
 `app.css` 只含字体引入与 `@import`，顺序即层叠顺序，不可调换。分文件大致按“基础与原生控件 → 大字根规则 → 设计令牌 → 共用组件 → 外壳 → 各视图 → 跨视图修饰 → 移动端原生手感”的层次排列，后面的文件覆盖前面的文件，与合成一个文件时的效果相同；实际列表与顺序以 `app.css` 为准。新增样式写进所属分文件；新增分文件时，同时在 `app.css` 中按层次加上对应的 `@import`。`.large-font` 根规则（可继承的字距、词距与行高）与 `.ds-control`（控件不继承这组间距）共同构成大字机制。对应的 React 基础组件在 `components/ui/`，外壳级组件（页面舞台、子页及其返回栈、页面滚动根）在 `components/shell/`。文档本身不滚动：`html` / `body` 固定为视口高度，底栏各页在外壳画布（`Layout` 上标记 `data-scroll-root` 的元素）里滚动，规则见 `native.css`，读写页面滚动统一经 `components/shell/scrollRoot.ts`；子页与底部层保留各自的滚动容器。这样 iPhone Safari 的地址栏和工具栏不会随每次滑动伸缩；同步 ZIP 时这两个目录与各视图的分文件目录（如 `views/GlucoseView/sections/`、`views/MeView/`）都属于已跟踪源码，需要保留。
 
-`index.html` 另引入 `public/manifest.webmanifest` 与 `public/icons/` 下的图标（主画面安装、全屏），并设 `viewport-fit=cover`；同步 ZIP 时这些静态资源与样式目录一样需要保留。
+`index.html` 另引入 `public/manifest.webmanifest` 与 `public/icons/` 下的图标（主画面安装、全屏），并设 `viewport-fit=cover`；页面插画是 `public/art/` 下的静态 webp 图片。同步 ZIP 时这些静态资源与样式目录一样需要保留；缺少 `public/art/` 时页面仍能使用，但插画位置会空出来。
 
-本文只覆盖 dev 模式。若改走 `npm run build && npm start`，构建会把整个 `public/styles/` 原样复制为 `dist/styles/`（入口 `app.css` 与全部分文件），页面链接变为相对路径 `./styles/app.css`。`npm run build` 可能打印：
+`index.html` 的 `<head>` 还让同一批地址提前并行下载：字体服务的 preconnect 与字体样式表的 preload、`public/styles/` 各分文件的 preload，以及首页两张插画的 preload。它们只改变下载开始的时机，层叠顺序仍由 `app.css` 的 `@import` 决定。preload 列表与 `app.css` 的分文件列表一一对应：新增分文件时，在 `index.html` 补上同名 preload 可以保持首屏速度；漏掉不影响样式正确，只是该文件晚一步下载。
+
+`public/_headers` 是 Cloudflare Workers 静态资源的缓存规则，dev 模式与 `npm start` 都不读取它，见《线上无服务器部署实例（Cloudflare Workers）.txt》第 5 节。
+
+本文只覆盖 dev 模式。若改走 `npm run build && npm start`，构建会把整个 `public/` 原样复制进 `dist/`：`public/styles/` 成为 `dist/styles/`（入口 `app.css` 与全部分文件），`public/art/`、`public/icons/` 与 `public/_headers` 同理，页面链接变为相对路径 `./styles/app.css`。`npm run build` 可能打印：
 
 ```
 ./styles/app.css doesn't exist at build time, it will remain unchanged to be resolved at runtime
@@ -211,8 +215,9 @@ https://tangyou-app.alphathought.org/
 建议的冒烟项：
 
 - 文字 AI 问答：发送一条血糖或饮食相关问题，确认回复正常返回；
-- 拍照识药：在底栏「我的」（个人档案页）→「糖尿病相關信息」→「拍照 / 上傳藥物照片」上传一张药袋/药盒照片，确认识药接口返回；
+- 拍照识药：在底栏「我的」→「糖尿病相關信息」→「拍照 / 上傳藥物照片」上传一张药袋/药盒照片，确认识药接口返回；
 - 问题总结：在底栏「問題」（问题纪录页）→「AI 總結」触发一次总结，确认分类与建议问题正常；
+- 覆诊资料：在底栏「首頁」的覆诊卡点「新增覆診資料」或「改期」，填写日期、选填时间与地点后保存，确认首页覆诊卡随之更新；
 - 语音输入：聚焦输入框，点击全局麦克风录音，确认转写结果填入。全局麦克风只在当前画面（弹层 > 子页 > 页面）有可输入文字的栏位时出现，录音中保持可见；問 AI 页改用输入列内的「語音輸入」。
 
 若线上反向代理尚未配置，可以在服务器本机用 `curl` 验证 health；是否对外开放 9002 取决于安全组与防火墙，本文档不展开。
@@ -283,6 +288,8 @@ npm run verify -- --skip-build --ui   # 再加 UI 参考层（DOM 快照、文�
 | `vite.config.ts` | 重启 |
 | `server.ts` / `server/**` | 重启 |
 | `public/styles/` 下任一文件或 `index.html` 中的样式链接 | 确认入口与分文件都在；刷新或重启后检查大字开/关外观 |
+| `public/art/` | 确认图片在位；刷新浏览器即可，通常无需重启 |
+| `public/_headers` | dev 模式无需重启；只影响 Cloudflare Workers 部署形态 |
 | `scripts/verify/**` | 通常无需重启；改动后跑一次 `npm run verify -- --skip-build` |
 | `wrangler.jsonc` / `cloudflare/**` | dev 模式无需重启；只影响 Cloudflare Workers 部署形态 |
 | 前端源码 | 手动流程下重启（Vite 热更新只在运行中生效） |
@@ -890,6 +897,8 @@ sudo ss -ltnp | grep 9002
 ├── public/styles/app.css
 ├── public/manifest.webmanifest
 ├── public/icons/
+├── public/art/
+├── public/_headers（仅 Workers 部署形态使用）
 ├── domain/
 ├── scripts/verify/
 ├── services/
@@ -925,6 +934,8 @@ sudo ss -ltnp | grep 9002
             ├── public/styles/app.css
             ├── public/manifest.webmanifest
             ├── public/icons/
+            ├── public/art/
+            ├── public/_headers（仅 Workers 部署形态使用）
             ├── domain/
             ├── scripts/verify/
             ├── services/

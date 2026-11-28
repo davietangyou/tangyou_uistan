@@ -1,6 +1,6 @@
 # tangyou_uistan 仓库纯净性与 AI 迭代成果回灌实践
 
-版本：1.4
+版本：1.5
 适用项目：tangyou_uistan
 适用环境：macOS
 
@@ -151,7 +151,7 @@
 | 类别 | 例子 | 处置 |
 | --- | --- | --- |
 | **本地专属、永不导入** | `.git`、`node_modules`、`.env`、`.env.local`、`.env.server.local`、`.dev.vars`、`.wrangler/`、`.idea`、`.vscode`、`.npmrc`、`.DS_Store`、`__MACOSX` | 出站不提供；入站按路径排除；不进入候选区 |
-| **项目内在、但受保护** | `package.json`、`package-lock.json`、`.nvmrc`、`.env.example`、`.gitignore`、`vite.config.ts`、`server.ts`、`wrangler.jsonc`、`metadata.json`、`index.html`、`public/styles/`（`app.css` 及其 @import 的分文件）、`views/ConsultView/consultText.ts`、`domain/options.ts`、`tsconfig.json`、`importantdocsneedkown/` | 入站显示 diff，由人显式决定接受、回绝或部分合并 |
+| **项目内在、但受保护** | `package.json`、`package-lock.json`、`.nvmrc`、`.env.example`、`.gitignore`、`vite.config.ts`、`server.ts`、`wrangler.jsonc`、`metadata.json`、`index.html`、`public/styles/`（`app.css` 及其 @import 的分文件）、`public/_headers`、`views/ConsultView/consultText.ts`、`domain/options.ts`、`tsconfig.json`、`importantdocsneedkown/` | 入站显示 diff，由人显式决定接受、回绝或部分合并 |
 | **工具产物、默认拒绝** | `bun.lock`、`bun.lockb`、`AGENTS.md`、`.aider*`、`.cursor*`、`.claude/`、`.windsurf/`、`.continue/`、`.github/copilot-instructions.md` | 出站不提供；入站排除或归档到渠道目录 |
 | **未知文件** | 新工具带来的新文件 | 进入渠道目录的 `unknown/`，人工分类后再决定 |
 
@@ -529,6 +529,7 @@ wrangler.jsonc
 metadata.json
 index.html
 public/styles
+public/_headers
 views/ConsultView/consultText.ts
 domain/options.ts
 tsconfig.json
@@ -560,6 +561,10 @@ done < "$STAGE/protected.txt"
 
 若导出物删掉了这一行、把样式重新内联进 `index.html`，或改写了 `public/styles/` 下的入口与分文件，需要显式判断，而不是当作无关清理。这组样式表是页面皮肤与大字规则的现行位置。
 
+`index.html` 的 `<head>` 里还有一组 preconnect / preload（字体、`public/styles/` 各分文件、首页插画），只让同一批地址提前并行下载。它们被删或改动时同样值得判断；同时核对 preload 中的分文件与 `app.css` 的 @import 列表是否一致——不一致不会让样式出错，但会让漏列的文件晚一步下载。
+
+`public/_headers` 决定 Cloudflare Workers 生产环境的静态资源缓存（带哈希的 `/assets/*` 长缓存，`/art/*`、`/icons/*` 一天，`index.html` 与 `/styles/*` 每次再验证）。导出物改写或删除它，会直接改变线上用户何时拿到新版本，属于需要人显式决定的改动；规则含义见《线上无服务器部署实例（Cloudflare Workers）.txt》第 5 节。
+
 `public/styles/app.css` 是样式入口，只含字体引入与按层叠顺序排列的 `@import`，各分文件（`public/styles/*.css`）承载具体规则；实际列表与顺序以 `app.css` 为准。`.large-font` 根规则与 `.ds-control` 是大字机制的组成部分。评审导出物对样式的改动时，重点看：@import 是否被删或调换顺序、被引用的分文件是否缺失、整块视图样式是否被删。核对 @import 列表：
 
 ```bash
@@ -583,7 +588,7 @@ grep -E '^\*deleting' "$STAGE/export_vs_base.txt" || true
 
 若导出物明显缺少大量未触碰文件，删除候选多为噪声，不据此删除。
 
-导出物给出 `*deleting` 时，任何当前仓库已跟踪的路径都值得停下来看一眼，其中分量较重的几类是：`public/`（`styles/*.css`、`manifest.webmanifest`、`icons/` 等静态资源）、`components/` 与 `views/` 下的源码目录（含 `components/ui/`、`components/shell/`、各视图的分文件——如 `views/GlucoseView/sections/`、`views/MeView/`——与 `views/ConsultView/consultText.ts`）、`domain/`、`scripts/verify/`（含 `fixtures/golden/`）、`.env.example`、`server/`、`cloudflare/`、`wrangler.jsonc`。AI Studio 的导出物常常只是没有看见近期新增或拆分出的文件，所以对已跟踪路径的删除默认更接近“工具没看见”，予以保留，除非能说明这是有意删除；某一轮具体新增了哪些文件，可在《历史迭代阶段/》对应归档中查到。
+导出物给出 `*deleting` 时，任何当前仓库已跟踪的路径都值得停下来看一眼，其中分量较重的几类是：`public/`（`styles/*.css`、`art/`（页面插画 webp，二进制文件在导出物里尤其容易缺席）、`manifest.webmanifest`、`icons/`、`_headers` 等静态资源）、`components/` 与 `views/` 下的源码目录（含 `components/ui/`、`components/shell/`、各视图的分文件——如 `views/GlucoseView/sections/`、`views/MeView/`——与 `views/ConsultView/consultText.ts`）、`domain/`、`scripts/verify/`（含 `fixtures/golden/`）、`.env.example`、`server/`、`cloudflare/`、`wrangler.jsonc`。AI Studio 的导出物常常只是没有看见近期新增或拆分出的文件，所以对已跟踪路径的删除默认更接近“工具没看见”，予以保留，除非能说明这是有意删除；某一轮具体新增了哪些文件，可在《历史迭代阶段/》对应归档中查到。
 
 ### 5.11 候选区验证
 
@@ -596,7 +601,7 @@ npm run build
 
 `npm ci` 严格按 `package-lock.json` 安装；若 lockfile 与 `package.json` 不同步，`npm ci` 会失败，此时可以改用 `npm install`，并把 `package-lock.json` 作为受保护文件重新评审。
 
-`npm run build` 可能打印 `./styles/app.css doesn't exist at build time, it will remain unchanged to be resolved at runtime`。这是预期现象：样式是 `public/` 下的静态资源，构建后 `dist/styles/` 应包含 `app.css` 与全部分文件，与源文件一致。不必为消除这行提示而把它改成 Vite 模块导入。
+`npm run build` 可能打印 `./styles/app.css doesn't exist at build time, it will remain unchanged to be resolved at runtime`。这是预期现象：样式是 `public/` 下的静态资源，构建后 `dist/styles/` 应包含 `app.css` 与全部分文件，与源文件一致；`dist/art/` 与 `dist/_headers` 也应在位。不必为消除这行提示而把它改成 Vite 模块导入。
 
 运行时验证（用临时 env，端口 9102，避开线上 9002）：
 
@@ -753,7 +758,7 @@ EOF
 - 工具产物已清扫；
 - 未知文件已隔离；
 - 受保护基线已逐项评审；
-- 删除候选已逐项判断，尤其是 `public/styles/`、`domain/`、`scripts/verify/` 等已跟踪路径；
+- 删除候选已逐项判断，尤其是 `public/styles/`、`public/art/`、`domain/`、`scripts/verify/` 等已跟踪路径；
 - 候选区 lint / build / health 通过，`/styles/app.css` 可访问；
 - 暂存区没有 `verify-results/`，diff 中没有硬编码密钥或令牌。
 
@@ -801,7 +806,7 @@ iteration_channels/
 | 预览变化 | `rsync -avn --delete --itemize-changes --exclude-from="$STAGE/exclude.txt" "$EXPORT/" "$BASE_WT/"` |
 | 叠加到候选 | `rsync -av --itemize-changes --exclude-from="$STAGE/exclude.txt" "$EXPORT/" "$CAND_WT/"` |
 | 未知文件 | `git -C "$CAND_WT" ls-files --others --exclude-standard` |
-| 候选区验证 | `npm ci --prefer-offline --no-audit --no-fund && npm run lint && npm run build`（确认 `dist/styles/` 含 `app.css` 与全部分文件；可选 `npm run verify`） |
+| 候选区验证 | `npm ci --prefer-offline --no-audit --no-fund && npm run lint && npm run build`（确认 `dist/styles/` 含 `app.css` 与全部分文件，`dist/art/` 与 `dist/_headers` 在位；可选 `npm run verify`） |
 | 干净 clone 测试 | `git clone -b "$BRANCH" "$REPO" "$CLEAN_CLONE"` |
 | 移除候选 worktree | `git worktree remove "$CAND_WT"` |
 | squash 合并 | `git merge --squash "$BRANCH"` |

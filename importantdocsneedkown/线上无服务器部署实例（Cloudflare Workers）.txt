@@ -1,6 +1,6 @@
 # 线上无服务器部署实例（Cloudflare Workers）
 
-版本：1.6
+版本：1.7
 渠道状态：本渠道已在生产启用。测试地址 `https://tangyou-app.davie12580.workers.dev` 与正式域名 `https://tangyou-app.alphathought.org` 均由 Worker「tangyou-app」承接（Route 已启用）。DNS 橙云 A 记录未改，上报路径仍回源旧伺服器（配置见第 9 节，回滚见第 10 节）。线上当前运行哪个提交、哪个 Worker 版本，以 `npx --yes wrangler@4.168.0 deployments list` 的实时结果为准；每次发布的提交、版本 ID 与回滚目标属于时间点事实，沉淀在《历史迭代阶段/》对应归档中。
 
 ---
@@ -184,6 +184,7 @@ Worker 对 `/chtatain-datacent/*` 做反向代理：方法、路径、查询串�
 | `cloudflare/worker.ts` | Workers 入口：路径分流、`GeminiEgress` DO 类、上报反向代理 |
 | `cloudflare/cloudflare-node.d.ts` | `cloudflare:node` 的最小类型声明，仅供 `npm run lint`，避免新增类型依赖 |
 | `wrangler.jsonc` | Worker 名、入口、兼容日期、Static Assets、DO 绑定与迁移、`UPLOAD_ORIGIN`、正式域名 Route（以文件中的现行内容为准，不要假设它仍是注释） |
+| `public/_headers` | 静态资源的缓存头。构建时随 `public/` 一起复制进 `dist/`，由 Static Assets 读取：`/assets/*`（Vite 产物，文件名带内容哈希，内容一变文件名就变）一年且 `immutable`；`/art/*`、`/icons/*` 一天，过期后后台再验证；`index.html` 与 `/styles/*` 不写规则，沿用平台默认的每次再验证——`/styles/*.css` 文件名不带哈希，长缓存会让改过的样式迟迟不生效 |
 | `package.json` | `cf:dev`、`cf:deploy` 两个脚本；既有脚本与依赖不变 |
 | `.gitignore` | `.dev.vars*`、`.wrangler`（本地密钥与本地状态） |
 
@@ -194,6 +195,7 @@ Worker 对 `/chtatain-datacent/*` 做反向代理：方法、路径、查询串�
 | 项 | Node（server.ts） | Workers |
 | --- | --- | --- |
 | 前端 | 线上 systemd 当前为 dev 模式（Vite middleware）；`npm start` 为 `dist/` | 始终为 `vite build` 产物 `dist/` |
+| 静态资源缓存头 | 不读取 `public/_headers`，静态文件沿用 Vite / Express 的默认响应头 | 按 `public/_headers` 加 `Cache-Control`（见第 5 节）；两种形态的缓存行为不同属预期 |
 | SPA 回落 | 任何非 `/api/` 的 GET 回 `index.html` | 导航请求与未命中静态文件的 GET 回 `index.html`（已验证） |
 | 非 `/api` 的 POST 等未知请求 | Express 默认 404 | 交给 Static Assets 处理，状态码可能不同（前端不发出此类请求） |
 | `GET /api`、`GET /api/` | 404 `{"error":"找不到對應的 API 端點。"}`（dev 与 `npm start` 均已实测） | 相同（经 DO 内同一个 Express），无差异 |
@@ -430,9 +432,10 @@ npm ci →（涉及 Workers 代码时先 npm run cf:dev 冒烟）→ npm run cf:
 | 12 MB 请求体（`recognize-medications` 9 MB 图片） | 200；Node 端同样 200 |
 | 28 MB 请求体 | 413；Node 端同样 413 |
 | `/`、`/styles/app.css` | 200，`text/html` / `text/css` |
+| 静态资源缓存头 | `/assets/<哈希文件名>.js` 带 `Cache-Control: public, max-age=31536000, immutable`；`/art/<文件名>.webp` 带 `public, max-age=86400, stale-while-revalidate=604800`；`/` 与 `/styles/app.css` 不带长缓存 |
 | SPA 回落（导航与非导航） | 200，内容与 `index.html` 相同 |
 | `/api/nope`、`/api` | 404 `{"error":"找不到對應的 API 端點。"}` |
 | 上报代理（POST multipart、GET、OPTIONS、302） | 路径、查询串、`fixed-pwd`、`check-same-md5`、请求体均原样到达桩服务；302 原样返回 |
 | DO 故障模拟（临时测试配置，DO 的 fetch 直接抛错） | 503 `{"error":"AI 服務暫時無法處理請求，請稍後再試。"}`，`Cache-Control: no-store`，日志 `[gemini-egress] Durable Object request failed` |
 | 上报代理请求头过滤 | 桩服务收到 `fixed-pwd`、`check-same-md5`、`authorization`、`content-type`、`content-length`、自定义头；未收到任何 `cf-*`（运行时自带的 `cf-worker` 除外）、客户端自带 `x-forwarded-*`、`x-real-ip`、`forwarded`、`connection`、`keep-alive`、`upgrade`；`x-forwarded-for` 为 `CF-Connecting-IP` 的值 |
-| 验证门指向 Worker（`VERIFY_BASE_URL`） | DOM 与 7 条流程全部通过；与 Node 端对比差异只来自 baseUrl、图表自增 id 等与环境相关的细节 |
+| 验证门指向 Worker（`VERIFY_BASE_URL`） | DOM 与浏览器冒烟的全部流程通过（流程随 `scripts/verify/` 演进，以其现行内容为准）；与 Node 端对比差异只来自 baseUrl、图表自增 id 等与环境相关的细节 |
